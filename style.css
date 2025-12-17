@@ -352,19 +352,89 @@ textarea::placeholder {
     color: var(--text-primary);
 }
 
-.m-delete-mini {
+.m-action-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.m-action-trigger {
     background: transparent;
     border: none;
     color: var(--text-secondary);
     font-size: 1.2rem;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.2s;
-    padding: 4px 8px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
 }
 
-.moment-item-compact:hover .m-delete-mini {
-    opacity: 1;
+.m-action-trigger:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.m-action-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    width: 150px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.m-action-menu.active {
+    display: flex;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.m-action-menu button {
+    background: transparent;
+    border: none;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.m-action-menu button:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.m-btn-delete {
+    color: #fca5a5 !important;
+}
+
+.m-btn-cancel {
+    border-top: 1px solid var(--border-subtle) !important;
+    font-size: 0.8rem !important;
+    color: var(--text-secondary) !important;
+    justify-content: center;
 }
 
 .page-content {

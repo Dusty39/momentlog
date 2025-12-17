@@ -117,29 +117,40 @@ function saveMoments() {
 }
 
 function createMoment(text) {
-    const newMoment = {
-        id: crypto.randomUUID(),
-        content: text.trim(),
-        createdAt: Date.now(),
-        location: currentLocation,
-        media: [...currentMedia],
-        song: currentSong,
-        theme: dom.themeSelect.value
-    };
-
-    // Optimistic UI update
-    moments.unshift(newMoment);
+    if (window._editingId) {
+        const idx = moments.findIndex(m => m.id === window._editingId);
+        if (idx !== -1) {
+            moments[idx].content = text.trim();
+            moments[idx].media = [...currentMedia];
+            moments[idx].location = currentLocation;
+            moments[idx].song = currentSong;
+            moments[idx].theme = dom.themeSelect.value;
+        }
+        window._editingId = null;
+        dom.addBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ekle
+        `;
+    } else {
+        const newMoment = {
+            id: crypto.randomUUID(),
+            content: text.trim(),
+            createdAt: Date.now(),
+            location: currentLocation,
+            media: [...currentMedia],
+            song: currentSong,
+            theme: dom.themeSelect.value
+        };
+        moments.unshift(newMoment);
+    }
 
     if (saveMoments()) {
-        // Reset State
         currentMedia = [];
         currentSong = null;
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
         dom.input.style.height = 'auto';
+        renderTimeline();
         renderPreview();
-    } else {
-        moments.shift();
     }
 }
 
@@ -479,7 +490,20 @@ function renderTimeline(filter = "") {
                     <span class="m-date">${dayStr}</span>
                     <span class="m-divider">|</span>
                     <span class="m-location">${locText}</span>
-                    <button class="m-delete-mini" onclick="event.stopPropagation(); window.requestDelete('${moment.id}')">&times;</button>
+                    <div class="m-action-wrapper">
+                        <button class="m-action-trigger" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">⋮</button>
+                        <div class="m-action-menu" id="menu-${moment.id}">
+                            <button onclick="event.stopPropagation(); window.editMoment('${moment.id}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                Düzenle
+                            </button>
+                            <button class="m-btn-delete" onclick="event.stopPropagation(); window.requestDelete('${moment.id}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                Sil
+                            </button>
+                            <button class="m-btn-cancel" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">Vazgeç</button>
+                        </div>
+                    </div>
                 `;
                 list.appendChild(item);
             });
@@ -586,6 +610,49 @@ window.playLocationStory = (locText) => {
         story.start();
     }
 };
+
+window.toggleMomentMenu = (id) => {
+    const allMenus = document.querySelectorAll('.m-action-menu');
+    allMenus.forEach(m => {
+        if (m.id !== `menu-${id}`) m.classList.remove('active');
+    });
+    const menu = document.getElementById(`menu-${id}`);
+    menu.classList.toggle('active');
+};
+
+window.editMoment = (id) => {
+    const moment = moments.find(m => m.id === id);
+    if (!moment) return;
+
+    // Put into edit mode
+    dom.input.value = moment.content;
+    dom.input.style.height = 'auto';
+    dom.input.style.height = (dom.input.scrollHeight) + 'px';
+
+    // Set state for editing
+    window._editingId = id;
+    currentMedia = [...moment.media];
+    currentLocation = moment.location;
+    currentSong = moment.song;
+    dom.themeSelect.value = moment.theme || 'default';
+
+    renderPreview();
+    dom.input.focus();
+
+    // Close menu
+    window.toggleMomentMenu(id);
+
+    // Change Add button text or mode if needed (Optional: but simple is better for now)
+    dom.addBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg> Güncelle
+    `;
+};
+
+// Close menus on click outside
+document.addEventListener('click', () => {
+    const allMenus = document.querySelectorAll('.m-action-menu');
+    allMenus.forEach(m => m.classList.remove('active'));
+});
 
 function escapeHtml(text) {
     const div = document.createElement('div');
