@@ -25,6 +25,7 @@ const dom = {
     exportBtn: document.getElementById('exportBtn'),
     importInput: document.getElementById('importInput'),
     immersiveView: document.getElementById('immersiveView'),
+    playAllBtn: document.getElementById('playAllBtn'),
 
     // Tools
     photoInput: document.getElementById('photoInput'),
@@ -99,6 +100,16 @@ function setupEventListeners() {
 
     // Import
     dom.importInput.addEventListener('change', importData);
+
+    // Play All Story
+    dom.playAllBtn?.addEventListener('click', () => {
+        if (moments.length > 0) {
+            const story = new StoryMode(moments);
+            story.start();
+        } else {
+            alert("Henüz oynatılacak bir anı yok.");
+        }
+    });
 }
 
 // --- Data Operations ---
@@ -483,9 +494,23 @@ function renderTimeline(filter = "") {
 
         const months = Object.keys(grouped[year]); // Months stay in order of moments usually
         months.forEach(month => {
+            const monthMoments = grouped[year][month];
             const monthSec = document.createElement('div');
             monthSec.className = 'archival-month';
-            monthSec.innerHTML = `<h4 class="month-title">${month}</h4>`;
+            monthSec.innerHTML = `
+                <div class="month-header-row">
+                    <h4 class="month-title">${month}</h4>
+                    <button class="month-story-btn" title="${month} Hikayesini Oynat">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    </button>
+                </div>
+            `;
+
+            monthSec.querySelector('.month-story-btn').onclick = (e) => {
+                e.stopPropagation();
+                const story = new StoryMode(monthMoments);
+                story.start();
+            };
 
             const list = document.createElement('div');
             list.className = 'moment-list-compact';
@@ -502,7 +527,7 @@ function renderTimeline(filter = "") {
                 item.innerHTML = `
                     <span class="m-date">${dayStr}</span>
                     <span class="m-divider">|</span>
-                    <span class="m-location">${locText}</span>
+                    <span class="m-location" onclick="event.stopPropagation(); window.playLocationStory('${locText}')">${locText}</span>
                     <div class="m-action-wrapper">
                         <button class="m-action-trigger" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">⋮</button>
                         <div class="m-action-menu" id="menu-${moment.id}">

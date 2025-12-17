@@ -309,6 +309,31 @@ textarea::placeholder {
     text-transform: capitalize;
 }
 
+.month-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.month-story-btn {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--accent);
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.month-story-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+
 .moment-list-compact {
     display: flex;
     flex-direction: column;
@@ -737,4 +762,194 @@ textarea::placeholder {
 
 .song-preview {
     border-color: var(--accent);
+}
+
+/* --- STORY MODE STYLES --- */
+.story-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.story-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 2010;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+}
+
+.story-progress-bar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    gap: 4px;
+    z-index: 2020;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    width: 0%;
+}
+
+.story-content {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.story-card {
+    width: 100%;
+    background: var(--bg-surface);
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.story-header {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.story-date {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.story-location {
+    font-size: 0.9rem;
+    color: var(--accent);
+}
+
+.story-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.story-img {
+    width: 100%;
+    border-radius: 16px;
+    object-fit: cover;
+    max-height: 40vh;
+}
+
+.story-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.story-audio-indicator {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.story-controls {
+    position: absolute;
+    bottom: 40px;
+    display: flex;
+    gap: 30px;
+    z-index: 2020;
+}
+
+.story-controls button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-controls button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Theme Overrides for Story */
+.theme-neon .story-card {
+    border: 2px solid #ff00ff;
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.3);
+}
+
+.theme-neon .story-text {
+    font-family: 'Space Mono', monospace;
+    color: #00f2ff;
+}
+
+.theme-polaroid .story-card {
+    background: #f4f1ea;
+}
+
+.theme-polaroid .story-date,
+.theme-polaroid .story-text {
+    color: #333;
+    font-family: 'Permanent Marker', cursive;
+}
+
+@media (max-width: 600px) {
+    .story-content {
+        padding: 10px;
+    }
+
+    .story-card {
+        border-radius: 20px;
+    }
 }
