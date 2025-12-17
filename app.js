@@ -8,9 +8,11 @@ const STORAGE_KEY = 'momentLog_data_v2'; // Changed key to avoid conflict/reset
 const MAX_PHOTOS = 5;
 
 let moments = [];
-let currentMedia = []; // { type: 'image'|'audio', data: 'base64...' }
+let currentMedia = [];
 let currentLocation = null;
+let currentSong = null; // { title: '', id: '' }
 let isRecording = false;
+let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
 
@@ -27,6 +29,9 @@ const dom = {
     // Tools
     photoInput: document.getElementById('photoInput'),
     recordBtn: document.getElementById('recordBtn'),
+    dictateBtn: document.getElementById('dictateBtn'),
+    musicBtn: document.getElementById('musicBtn'),
+    themeSelect: document.getElementById('themeSelect'),
 
     // Status/Preview
     previewArea: document.getElementById('mediaPreview'),
@@ -64,6 +69,12 @@ function setupEventListeners() {
 
     // Audio handling
     dom.recordBtn.addEventListener('click', toggleRecording);
+
+    // Dictation handling
+    dom.dictateBtn.addEventListener('click', toggleDictation);
+
+    // Music handling
+    dom.musicBtn.addEventListener('click', handleMusicPick);
 
     // Search
     dom.searchInput.addEventListener('input', (e) => {
@@ -110,24 +121,24 @@ function createMoment(text) {
         id: crypto.randomUUID(),
         content: text.trim(),
         createdAt: Date.now(),
-        location: currentLocation, // Auto-fetched
+        location: currentLocation,
         media: [...currentMedia],
-        // theme removed, now handled by automatic collage layout
+        song: currentSong,
+        theme: dom.themeSelect.value
     };
 
     // Optimistic UI update
     moments.unshift(newMoment);
 
     if (saveMoments()) {
-        // Reset State only on success
+        // Reset State
         currentMedia = [];
-        // Keep location for next moment
+        currentSong = null;
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
         dom.input.style.height = 'auto';
-        renderPreview(); // Clear preview UI
+        renderPreview();
     } else {
-        // Rollback
         moments.shift();
     }
 }
@@ -243,12 +254,20 @@ async function fetchLocation() {
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
                 const data = await response.json();
                 const address = data.address;
-                const placeName = address.suburb || address.neighbourhood || address.city || address.town || address.county || "Bilinmeyen Yer";
-                const city = address.province || address.state || address.city || "";
+
+                // Detailed Format: Mahalle, İlçe/İl
+                const neighborhood = address.neighbourhood || address.suburb || address.village || "";
+                const district = address.district || address.city_district || address.town || "";
+                const city = address.city || address.province || address.state || "";
+
+                let locationText = "";
+                if (neighborhood) locationText += neighborhood;
+                if (district) locationText += (locationText ? ", " : "") + district;
+                if (city) locationText += (locationText ? "/" : "") + city;
 
                 currentLocation = {
                     lat, lng,
-                    text: `${placeName}${city ? ', ' + city : ''}`
+                    text: locationText || "Bilinmeyen Konum"
                 };
             } catch (e) {
                 currentLocation = { lat, lng, text: `${lat.toFixed(4)}, ${lng.toFixed(4)}` };
@@ -260,6 +279,65 @@ async function fetchLocation() {
             useMockLocation();
         }
     );
+}
+
+function toggleDictation() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Tarayıcınız dikte özelliğini desteklemiyor.");
+        return;
+    }
+
+    if (!isDictating) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'tr-TR';
+        recognition.interimResults = true;
+
+        recognition.onstart = () => {
+            isDictating = true;
+            dom.dictateBtn.classList.add('recording');
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0].transcript)
+                .join('');
+            dom.input.value = transcript;
+            dom.input.style.height = (dom.input.scrollHeight) + 'px';
+        };
+
+        recognition.onerror = () => { stopDictation(); };
+        recognition.onend = () => { stopDictation(); };
+
+        recognition.start();
+        window._currentRecognition = recognition;
+    } else {
+        stopDictation();
+    }
+}
+
+function stopDictation() {
+    if (window._currentRecognition) window._currentRecognition.stop();
+    isDictating = false;
+    dom.dictateBtn.classList.remove('recording');
+}
+
+function handleMusicPick() {
+    const query = prompt(" Spotify'da aramak istediğiniz şarkı ismi:");
+    if (!query) return;
+
+    // We simulate a search and use the Spotify search URL for embedding
+    // In a real app we'd use Spotify API, here we allow pasting a link or just saving the query
+    // Simplified: We try to detect if it's already a link, else we keep the query
+    if (query.includes('spotify.com')) {
+        let trackId = query.split('track/')[1]?.split('?')[0];
+        if (trackId) {
+            currentSong = { title: "Spotify Şarkısı", id: trackId };
+        }
+    } else {
+        currentSong = { title: query, isSearch: true };
+    }
+    renderPreview();
 }
 
 function exportData() {
@@ -332,6 +410,14 @@ function renderPreview() {
 
         dom.previewArea.appendChild(el);
     });
+
+    if (currentSong) {
+        const sel = document.createElement('div');
+        sel.className = 'preview-item song-preview';
+        sel.innerHTML = `<div class="audio-badge">🎵 ${currentSong.title.substring(0, 8)}...</div>`;
+        sel.onclick = () => { currentSong = null; renderPreview(); };
+        dom.previewArea.appendChild(sel);
+    }
 }
 
 function renderTimeline(filter = "") {
@@ -352,54 +438,57 @@ function renderTimeline(filter = "") {
         return;
     }
 
-    filteredMoments.forEach(moment => {
-        const page = document.createElement('article');
-        page.className = 'journal-page';
-        page.onclick = () => openImmersiveView(moment);
+    // Grouping Logic: Year -> Month -> Moments
+    const grouped = {};
+    filteredMoments.forEach(m => {
+        const d = new Date(m.createdAt);
+        const year = d.getFullYear();
+        const month = d.toLocaleDateString('tr-TR', { month: 'long' });
 
-        const dateObj = new Date(moment.createdAt);
-        const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const timeStr = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        if (!grouped[year]) grouped[year] = {};
+        if (!grouped[year][month]) grouped[year][month] = [];
+        grouped[year][month].push(m);
+    });
 
-        const locationHtml = moment.location
-            ? `<span class="location-tag">📍 ${moment.location.text}</span>`
-            : '';
+    // Render years
+    const years = Object.keys(grouped).sort((a, b) => b - a);
+    years.forEach(year => {
+        const yearSec = document.createElement('section');
+        yearSec.className = 'archival-year';
+        yearSec.innerHTML = `<h3 class="year-title">${year}</h3>`;
 
-        const images = moment.media.filter(m => m.type === 'image');
-        const audios = moment.media.filter(m => m.type === 'audio');
+        const months = Object.keys(grouped[year]); // Months stay in order of moments usually
+        months.forEach(month => {
+            const monthSec = document.createElement('div');
+            monthSec.className = 'archival-month';
+            monthSec.innerHTML = `<h4 class="month-title">${month}</h4>`;
 
-        let collageHtml = '';
-        if (images.length > 0) {
-            const count = images.length;
-            const gridClass = `collage-grid grid-${count}`;
-            collageHtml = `<div class="${gridClass}">`;
-            images.forEach(img => {
-                collageHtml += `<div class="collage-item"><img src="${img.data}" loading="lazy"></div>`;
+            const list = document.createElement('div');
+            list.className = 'moment-list-compact';
+
+            grouped[year][month].forEach(moment => {
+                const item = document.createElement('div');
+                item.className = 'moment-item-compact';
+                item.onclick = () => openImmersiveView(moment);
+
+                const dateObj = new Date(moment.createdAt);
+                const dayStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+                const locText = moment.location ? moment.location.text : "Konum Yok";
+
+                item.innerHTML = `
+                    <span class="m-date">${dayStr}</span>
+                    <span class="m-divider">|</span>
+                    <span class="m-location">${locText}</span>
+                    <button class="m-delete-mini" onclick="event.stopPropagation(); window.requestDelete('${moment.id}')">&times;</button>
+                `;
+                list.appendChild(item);
             });
-            collageHtml += `</div>`;
-        }
 
-        let audioHtml = '';
-        if (audios.length > 0) {
-            audioHtml = `<div class="audio-section">${audios.length} Sesli Not</div>`;
-        }
+            monthSec.appendChild(list);
+            yearSec.appendChild(monthSec);
+        });
 
-        page.innerHTML = `
-            <div class="page-header">
-                <span class="page-date">${dateStr} <small>${timeStr}</small></span>
-                <button class="menu-btn" onclick="event.stopPropagation(); window.requestDelete('${moment.id}')">⋮</button>
-            </div>
-            ${collageHtml}
-            <div class="page-content">
-                <div class="page-text">${escapeHtml(moment.content).substring(0, 150)}${moment.content.length > 150 ? '...' : ''}</div>
-                <div class="page-footer-meta">
-                    ${locationHtml}
-                    ${audioHtml}
-                </div>
-            </div>
-        `;
-
-        dom.timeline.appendChild(page);
+        dom.timeline.appendChild(yearSec);
     });
 }
 
@@ -407,6 +496,9 @@ function openImmersiveView(moment) {
     const view = dom.immersiveView;
     const dateObj = new Date(moment.createdAt);
     const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Apply Theme
+    view.className = `immersive-modal theme-${moment.theme || 'default'}`;
 
     const images = moment.media.filter(m => m.type === 'image');
     const audio = moment.media.find(m => m.type === 'audio');
@@ -418,24 +510,33 @@ function openImmersiveView(moment) {
         backgroundAudio.play().catch(() => console.log("Auto-play blocked"));
     }
 
+    // Spotify Embed
+    let spotifyHtml = '';
+    if (moment.song) {
+        if (moment.song.id) {
+            spotifyHtml = `<div class="spotify-embed">
+                <iframe src="https://open.spotify.com/embed/track/${moment.song.id}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            </div>`;
+        } else {
+            spotifyHtml = `<div class="song-tag">🎵 ${moment.song.title}</div>`;
+        }
+    }
+
     // Interspersed Layout Logic
-    // We break the content into paragraphs and intersperse them between images
     const paragraphs = moment.content.split('\n').filter(p => p.trim() !== '');
     let bodyHtml = '';
     let imgIdx = 0;
 
     paragraphs.forEach((p, idx) => {
         bodyHtml += `<p class="interspersed-text">${escapeHtml(p)}</p>`;
-        // After every paragraph, maybe add an image
         if (imgIdx < images.length) {
-            bodyHtml += `<img src="${images[imgIdx].data}" class="immersive-img">`;
+            bodyHtml += `<div class="img-container"><img src="${images[imgIdx].data}" class="immersive-img"></div>`;
             imgIdx++;
         }
     });
 
-    // Add remaining images if any
     while (imgIdx < images.length) {
-        bodyHtml += `<img src="${images[imgIdx].data}" class="immersive-img">`;
+        bodyHtml += `<div class="img-container"><img src="${images[imgIdx].data}" class="immersive-img"></div>`;
         imgIdx++;
     }
 
@@ -447,6 +548,7 @@ function openImmersiveView(moment) {
             <header class="immersive-header">
                 <h2 class="immersive-date">${dateStr}</h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
+                ${spotifyHtml}
             </header>
             <div class="immersive-body">
                 ${bodyHtml}
@@ -461,6 +563,7 @@ function openImmersiveView(moment) {
         if (backgroundAudio) backgroundAudio.pause();
         view.classList.add('hidden');
         document.body.style.overflow = '';
+        view.className = 'immersive-modal hidden';
     };
 }
 
