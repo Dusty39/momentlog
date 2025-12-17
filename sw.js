@@ -7,7 +7,7 @@ const ASSETS = [
     './story-mode.js',
     './icon.png',
     './manifest.json',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'
+    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap'
 ];
 
 // Install Event

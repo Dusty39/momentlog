@@ -50,7 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('Service Worker Registered'))
+            .then(reg => {
+                console.log('Service Worker Registered');
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New content is available, force reload
+                            if (confirm("Yeni bir güncelleme mevcut! Uygulamayı yenilemek ister misiniz?")) {
+                                location.reload();
+                            }
+                        }
+                    };
+                };
+            })
             .catch(err => console.error('SW Registration Failed', err));
     }
 });
@@ -132,7 +145,7 @@ function createMoment(text) {
         `;
     } else {
         const newMoment = {
-            id: crypto.randomUUID(),
+            id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
             content: text.trim(),
             createdAt: Date.now(),
             location: currentLocation,

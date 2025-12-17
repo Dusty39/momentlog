@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.2">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -126,8 +126,14 @@
             <!-- Content will be injected via JS -->
         </div>
     </div>
-    <script src="story-mode.js"></script>
-    <script src="app.js" type="module"></script>
+    <div id="footer-version"
+        style="text-align: center; padding: 20px; opacity: 0.3; font-size: 0.7rem; color: var(--text-secondary);">
+        momentLog v1.3 | <button onclick="location.reload(true)"
+            style="background:none; border:none; color:inherit; text-decoration:underline; font-size:inherit; cursor:pointer;">Zorla
+            Yenile</button>
+    </div>
+    <script src="story-mode.js?v=1.2"></script>
+    <script src="app.js?v=1.2"></script>
 </body>
 
 </html>
