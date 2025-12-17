@@ -80,6 +80,7 @@ header {
     background: rgba(255, 255, 255, 0.1);
     color: white;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .search-container {
@@ -129,11 +130,19 @@ h1 {
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-card);
-    padding: 24px;
+    padding: 32px;
     margin-bottom: 40px;
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
     position: relative;
     z-index: 10;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--border-subtle);
+}
+
+.input-section:focus-within {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.7);
 }
 
 textarea {
@@ -207,7 +216,8 @@ textarea::placeholder {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid var(--border-subtle);
-    padding-top: 16px;
+    padding-top: 24px;
+    gap: 20px;
 }
 
 .tool-group {
@@ -244,13 +254,13 @@ textarea::placeholder {
 
 /* Premium Save Button */
 .primary-btn {
-    background: var(--text-primary);
-    color: var(--bg-main);
+    background: linear-gradient(135deg, #fff, #e2e8f0);
+    color: #000;
     border: none;
-    font-weight: 600;
-    padding: 0 24px;
-    height: 44px;
-    border-radius: var(--radius-btn);
+    font-weight: 700;
+    padding: 0 28px;
+    height: 48px;
+    border-radius: 14px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -261,6 +271,13 @@ textarea::placeholder {
 .primary-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.input-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
 }
 
 /* Timeline - Journal Pages */
@@ -404,11 +421,15 @@ textarea::placeholder {
 
 /* Location Status Badge in Input */
 .location-badge:not(.hidden) {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+    padding: 4px 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    font-weight: 500;
 }
 
 .hidden {
@@ -528,6 +549,47 @@ textarea::placeholder {
 }
 
 @media (max-width: 640px) {
+    body {
+        padding: 12px;
+    }
+
+    #app {
+        padding-bottom: 80px;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    .input-section {
+        padding: 16px;
+        margin-bottom: 30px;
+    }
+
+    .input-toolbar {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .tool-group {
+        width: 100%;
+        order: 2;
+    }
+
+    .input-actions {
+        width: 100%;
+        order: 1;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-bottom: 16px;
+        align-items: stretch;
+    }
+
+    .primary-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .immersive-date {
         font-size: 1.8rem;
     }
