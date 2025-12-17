@@ -30,11 +30,24 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event
+// Fetch Event - Network First Strategy
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || fetch(event.request);
-        })
-    );
+    // Skip cross-origin requests (like fonts) for simple network fallback
+    if (event.request.url.startsWith(self.location.origin)) {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Update cache with new version
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+    } else {
+        // External assets (like fonts) use Cache First
+        event.respondWith(
+            caches.match(event.request).then((res) => res || fetch(event.request))
+        );
+    }
 });
