@@ -583,12 +583,34 @@ textarea::placeholder {
     }
 }
 
+/* IMMEERIVE MODAL - TOP HEADER FOR THEME SELECTOR */
+.immersive-view-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 40px 0;
+    margin-bottom: -44px;
+    /* Align with close button */
+}
+
+.immersive-theme-select {
+    z-index: 1011;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
 .immersive-content {
-    max-width: 600px;
+    max-width: 800px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 30px;
+    padding: 20px;
 }
 
 .close-immersive {
@@ -668,8 +690,89 @@ textarea::placeholder {
     border-radius: 20px;
 }
 
-.immersive-img:hover {
-    transform: scale(1.02);
+/* COLLAGE LAYOUT */
+.collage-container {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    margin: 40px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+.collage-item {
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.collage-item:hover {
+    transform: scale(1.05) rotate(0deg) !important;
+    z-index: 100;
+}
+
+.polaroid-frame {
+    background: white;
+    padding: 12px 12px 40px 12px;
+    /* Large bottom for writing style */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    position: relative;
+}
+
+.polaroid-frame img {
+    border-radius: 2px;
+}
+
+.scattered-text {
+    max-width: 300px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* PINBOARD THEME & PINS */
+.theme-pinboard {
+    background: #5d4037 !important;
+    /* Cork color fallback */
+    background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 0) !important;
+    background-size: 20px 20px !important;
+}
+
+.theme-pinboard .immersive-date {
+    font-family: 'Permanent Marker', cursive;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pin {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    background: #ff5252;
+    border-radius: 50%;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3), inset 0 -3px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.pin::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
 }
 
 .journal-page {

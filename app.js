@@ -564,8 +564,9 @@ function openImmersiveView(moment) {
     const dateObj = new Date(moment.createdAt);
     const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Apply Theme
-    view.className = `immersive-modal theme-${moment.theme || 'default'}`;
+    // Use current app theme as base
+    const activeTheme = dom.themeSelect.value;
+    view.className = `immersive-modal theme-${activeTheme}`;
 
     const images = moment.media.filter(m => m.type === 'image');
     const audio = moment.media.find(m => m.type === 'audio');
@@ -581,7 +582,7 @@ function openImmersiveView(moment) {
     let spotifyHtml = '';
     if (moment.song) {
         if (moment.song.id) {
-            spotifyHtml = `<div class="spotify-embed">
+            spotifyHtml = `<div class="spotify-embed" style="margin-bottom: 20px; width: 100%; max-width: 400px;">
                 <iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media; autoplay"></iframe>
             </div>`;
         } else {
@@ -589,49 +590,90 @@ function openImmersiveView(moment) {
         }
     }
 
-    // Interspersed Layout Logic
-    const paragraphs = moment.content.split('\n').filter(p => p.trim() !== '');
-    let bodyHtml = '';
-    let imgIdx = 0;
-
-    paragraphs.forEach((p, idx) => {
-        bodyHtml += `<p class="interspersed-text">${escapeHtml(p)}</p>`;
-        if (imgIdx < images.length) {
-            bodyHtml += `<div class="img-container"><img src="${images[imgIdx].data}" class="immersive-img"></div>`;
-            imgIdx++;
-        }
-    });
-
-    while (imgIdx < images.length) {
-        bodyHtml += `<div class="img-container"><img src="${images[imgIdx].data}" class="immersive-img"></div>`;
-        imgIdx++;
-    }
+    // Modal Header with Theme Selector
+    const themeOptions = Array.from(dom.themeSelect.options)
+        .map(opt => `<option value="${opt.value}" ${opt.value === activeTheme ? 'selected' : ''}>${opt.text}</option>`)
+        .join('');
 
     view.innerHTML = `
-        <button class="close-immersive">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+        <button class="close-immersive" id="closeImmersive">×</button>
+        <div class="immersive-view-header">
+            <select class="immersive-theme-select" id="modalThemeSelect">
+                ${themeOptions}
+            </select>
+        </div>
         <div class="immersive-content">
             <header class="immersive-header">
                 <h2 class="immersive-date">${dateStr}</h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
                 ${spotifyHtml}
             </header>
-            <div class="immersive-body">
-                ${bodyHtml}
+            
+            <div class="collage-container">
+                <!-- Elements scattered here -->
             </div>
         </div>
     `;
 
-    view.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    const collage = view.querySelector('.collage-container');
+    const items = [];
+    const paragraphs = moment.content.split('\n').filter(p => p.trim() !== '');
 
-    view.querySelector('.close-immersive').onclick = () => {
+    paragraphs.forEach(p => items.push({ type: 'text', content: p }));
+    images.forEach(img => items.push({ type: 'image', content: img.data }));
+
+    items.forEach((item, idx) => {
+        const collageItem = document.createElement('div');
+        collageItem.className = 'collage-item';
+
+        const rot = (Math.random() * 6 - 3).toFixed(2);
+        const xOff = (Math.random() * 40 - 20).toFixed(0);
+        const yOff = (Math.random() * 30 - 15).toFixed(0);
+
+        collageItem.style.transform = `rotate(${rot}deg) translate(${xOff}px, ${yOff}px)`;
+        collageItem.style.zIndex = idx;
+
+        if (item.type === 'text') {
+            collageItem.innerHTML = `<div class="scattered-text">${escapeHtml(item.content)}</div>`;
+        } else {
+            const hasPin = dom.themeSelect.value === 'pinboard' ? '<div class="pin"></div>' : '';
+            collageItem.innerHTML = `
+                <div class="img-container polaroid-frame">
+                    ${hasPin}
+                    <img src="${item.content}" class="immersive-img">
+                </div>`;
+        }
+        collage.appendChild(collageItem);
+    });
+
+    const modalThemeSelect = view.querySelector('#modalThemeSelect');
+    modalThemeSelect.onchange = (e) => {
+        const newTheme = e.target.value;
+        dom.themeSelect.value = newTheme;
+        dom.themeSelect.dispatchEvent(new Event('change'));
+        view.className = `immersive-modal theme-${newTheme}`;
+
+        const pins = view.querySelectorAll('.pin');
+        if (newTheme === 'pinboard' && pins.length === 0) {
+            view.querySelectorAll('.img-container').forEach(cont => {
+                const pin = document.createElement('div');
+                pin.className = 'pin';
+                cont.prepend(pin);
+            });
+        } else if (newTheme !== 'pinboard') {
+            pins.forEach(p => p.remove());
+        }
+    };
+
+    view.querySelector('#closeImmersive').onclick = () => {
         if (backgroundAudio) backgroundAudio.pause();
         view.classList.add('hidden');
         document.body.style.overflow = '';
         view.className = 'immersive-modal hidden';
     };
+
+    view.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 function handleAddMoment() {
