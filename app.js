@@ -101,6 +101,11 @@ function setupEventListeners() {
     // Import
     dom.importInput.addEventListener('change', importData);
 
+    // Theme change re-render
+    dom.themeSelect.addEventListener('change', () => {
+        renderTimeline(dom.searchInput.value);
+    });
+
     // Play All Story
     dom.playAllBtn?.addEventListener('click', () => {
         if (moments.length > 0) {
@@ -577,7 +582,7 @@ function openImmersiveView(moment) {
     if (moment.song) {
         if (moment.song.id) {
             spotifyHtml = `<div class="spotify-embed">
-                <iframe src="https://open.spotify.com/embed/track/${moment.song.id}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+                <iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media; autoplay"></iframe>
             </div>`;
         } else {
             spotifyHtml = `<div class="song-tag">🎵 ${moment.song.title}</div>`;
