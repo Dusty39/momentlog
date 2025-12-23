@@ -705,10 +705,10 @@ textarea::placeholder {
 }
 
 .immersive-header {
-    margin-bottom: 20px;
+    margin-bottom: 8px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
 }
 
 .immersive-date {
@@ -770,7 +770,7 @@ textarea::placeholder {
     position: relative;
     width: 100%;
     min-height: 400px;
-    margin: 40px 0;
+    margin: 16px 0;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
