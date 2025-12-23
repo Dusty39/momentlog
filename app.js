@@ -665,6 +665,12 @@ function openImmersiveView(moment) {
             <header class="immersive-header">
                 <h2 class="immersive-date">${dateStr}</h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
+                <div class="moment-notes">
+                    <textarea class="notes-input" 
+                              id="momentNotes" 
+                              maxlength="80"
+                              placeholder="Yer İsmi...">${moment.notes || ''}</textarea>
+                </div>
                 ${spotifyHtml}
             </header>
             
@@ -704,19 +710,6 @@ function openImmersiveView(moment) {
         }
         collage.appendChild(collageItem);
     });
-
-    // Add notes area to collage
-    const notesContainer = document.createElement('div');
-    notesContainer.className = 'collage-item';
-    notesContainer.innerHTML = `
-        <div class="moment-notes">
-            <label class="notes-label">Notlarım</label>
-            <textarea class="notes-input" 
-                      id="momentNotes" 
-                      placeholder="Bulunduğum yer hakkında notlar, anılar, duygular...">${moment.notes || ''}</textarea>
-        </div>
-    `;
-    collage.appendChild(notesContainer);
 
     // Save notes on change
     const notesInput = view.querySelector('#momentNotes');
