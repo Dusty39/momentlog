@@ -616,15 +616,16 @@ function openImmersiveView(moment) {
         backgroundAudio.play().catch(() => console.log("Auto-play blocked"));
     }
 
-    // Spotify Embed
-    let spotifyHtml = '';
-    if (moment.song) {
+    // Spotify - compact text only with invisible autoplay
+    let musicInfo = '';
+    let spotifyPlayer = '';
+    if (moment.song && moment.song.title) {
+        musicInfo = moment.song.title; // "Artist - Song" format
         if (moment.song.id) {
-            spotifyHtml = `<div class="spotify-embed" style="margin-bottom: 20px; width: 100%; max-width: 400px;">
-                <iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media; autoplay"></iframe>
-            </div>`;
-        } else {
-            spotifyHtml = `<div class="song-tag">🎵 ${moment.song.title}</div>`;
+            // Invisible iframe for autoplay
+            spotifyPlayer = `<iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" 
+                width="1" height="1" frameborder="0" allowtransparency="true" allow="encrypted-media; autoplay" 
+                style="position:absolute; opacity:0; pointer-events:none;"></iframe>`;
         }
     }
 
@@ -665,13 +666,27 @@ function openImmersiveView(moment) {
             <header class="immersive-header">
                 <h2 class="immersive-date">${dateStr}</h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
-                <div class="moment-notes">
-                    <textarea class="notes-input" 
-                              id="momentNotes" 
-                              maxlength="80"
-                              placeholder="Yer İsmi...">${moment.notes || ''}</textarea>
+                <div class="notes-music-row">
+                    <div class="moment-notes">
+                        <textarea class="notes-input" 
+                                  id="momentNotes" 
+                                  maxlength="80"
+                                  placeholder="Yer İsmi...">${moment.notes || ''}</textarea>
+                    </div>
+                    ${musicInfo ? `
+                        <div class="music-indicator">
+                            <div class="music-notes">
+                                <span class="note">♪</span>
+                                <span class="note">♫</span>
+                                <span class="note">♪</span>
+                            </div>
+                            <div class="music-text-wrapper">
+                                <span class="music-text ${musicInfo.length > 20 ? 'scroll' : ''}">${escapeHtml(musicInfo)}</span>
+                            </div>
+                        </div>
+                        ${spotifyPlayer}
+                    ` : ''}
                 </div>
-                ${spotifyHtml}
             </header>
             
             <div class="collage-container">
