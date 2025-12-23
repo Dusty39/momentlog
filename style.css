@@ -1217,3 +1217,20 @@ textarea::placeholder {
         border-radius: 20px;
     }
 }
+.theme-select {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-btn);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.theme-select:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
