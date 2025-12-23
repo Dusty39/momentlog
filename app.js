@@ -37,13 +37,18 @@ const dom = {
     // Status/Preview
     previewArea: document.getElementById('mediaPreview'),
     locationStatus: document.getElementById('locationStatus'),
+    appThemeBtn: document.getElementById('appThemeBtn'),
 };
+
+const APP_THEMES = ['default', 'light', 'vintage'];
+let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     loadMoments();
     renderTimeline();
     setupEventListeners();
+    applyAppTheme(currentAppTheme);
 
     // Auto-fetch location quietly
     fetchLocation();
@@ -115,6 +120,29 @@ function setupEventListeners() {
             alert("Henüz oynatılacak bir anı yok.");
         }
     });
+
+    // App Theme Switcher
+    dom.appThemeBtn?.addEventListener('click', () => {
+        const currentIndex = APP_THEMES.indexOf(currentAppTheme);
+        const nextIndex = (currentIndex + 1) % APP_THEMES.length;
+        currentAppTheme = APP_THEMES[nextIndex];
+        applyAppTheme(currentAppTheme);
+        localStorage.setItem('appTheme', currentAppTheme);
+    });
+}
+
+// --- App Theme System ---
+function applyAppTheme(theme) {
+    // Remove all theme classes
+    document.body.classList.remove('app-theme-light', 'app-theme-vintage');
+
+    // Apply selected theme
+    if (theme === 'light') {
+        document.body.classList.add('app-theme-light');
+    } else if (theme === 'vintage') {
+        document.body.classList.add('app-theme-vintage');
+    }
+    // 'default' has no class (uses :root variables)
 }
 
 // --- Data Operations ---
@@ -295,15 +323,13 @@ async function fetchLocation() {
                 const data = await response.json();
                 const address = data.address;
 
-                // Detailed Format: Mahalle, İlçe/İl
-                const neighborhood = address.neighbourhood || address.suburb || address.village || "";
-                const district = address.district || address.city_district || address.town || "";
-                const city = address.city || address.province || address.state || "";
+                // Simple Format: City, Country
+                const city = address.city || address.town || address.village || address.province || address.state || "";
+                const country = address.country || "";
 
                 let locationText = "";
-                if (neighborhood) locationText += neighborhood;
-                if (district) locationText += (locationText ? ", " : "") + district;
-                if (city) locationText += (locationText ? "/" : "") + city;
+                if (city) locationText = city;
+                if (country) locationText += (locationText ? ", " : "") + country;
 
                 currentLocation = {
                     lat, lng,
@@ -532,7 +558,7 @@ function renderTimeline(filter = "") {
                 item.innerHTML = `
                     <span class="m-date">${dayStr}</span>
                     <span class="m-divider">|</span>
-                    <span class="m-location" onclick="event.stopPropagation(); window.playLocationStory('${locText}')">${locText}</span>
+                    <span class="m-location" data-moment-id="${moment.id}">${locText}</span>
                     <div class="m-action-wrapper">
                         <button class="m-action-trigger" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">⋮</button>
                         <div class="m-action-menu" id="menu-${moment.id}">
@@ -556,6 +582,18 @@ function renderTimeline(filter = "") {
         });
 
         dom.timeline.appendChild(yearSec);
+    });
+
+    // Event delegation for location clicks
+    dom.timeline.querySelectorAll('.m-location').forEach(locEl => {
+        locEl.onclick = (e) => {
+            e.stopPropagation();
+            const momentId = locEl.getAttribute('data-moment-id');
+            const moment = moments.find(m => m.id == momentId);
+            if (moment) {
+                openImmersiveView(moment);
+            }
+        };
     });
 }
 
@@ -590,17 +628,38 @@ function openImmersiveView(moment) {
         }
     }
 
-    // Modal Header with Theme Selector
-    const themeOptions = Array.from(dom.themeSelect.options)
-        .map(opt => `<option value="${opt.value}" ${opt.value === activeTheme ? 'selected' : ''}>${opt.text}</option>`)
-        .join('');
+    // Theme options for popup
+    const themes = [
+        { value: 'default', label: 'Varsayılan', color: '#6366f1' },
+        { value: 'polaroid', label: 'Polaroid', color: '#f4f1ea' },
+        { value: 'neon', label: 'Neon', color: '#00f2ff' },
+        { value: 'cyberpunk', label: 'Cyberpunk', color: '#ff00ff' },
+        { value: 'vintage', label: 'Vintage', color: '#8d6e63' },
+        { value: 'ocean', label: 'Ocean', color: '#38bdf8' },
+        { value: 'paper', label: 'Paper', color: '#fdfdfd' },
+        { value: 'pinboard', label: 'Pinboard', color: '#5d4037' }
+    ];
+
+    const themeOptionsHtml = themes.map(theme => `
+        <button class="theme-option ${theme.value === activeTheme ? 'active' : ''}" data-theme="${theme.value}">
+            <div class="theme-option-icon" style="background: ${theme.color};"></div>
+            ${theme.label}
+        </button>
+    `).join('');
 
     view.innerHTML = `
         <button class="close-immersive" id="closeImmersive">×</button>
-        <div class="immersive-view-header">
-            <select class="immersive-theme-select" id="modalThemeSelect">
-                ${themeOptions}
-            </select>
+        <button class="theme-switcher-btn" id="themeSwitcherBtn" title="Tema Değiştir">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r=".5"></circle>
+                <circle cx="17.5" cy="10.5" r=".5"></circle>
+                <circle cx="8.5" cy="7.5" r=".5"></circle>
+                <circle cx="6.5" cy="12.5" r=".5"></circle>
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
+            </svg>
+        </button>
+        <div class="theme-popup" id="themePopup">
+            ${themeOptionsHtml}
         </div>
         <div class="immersive-content">
             <header class="immersive-header">
@@ -646,24 +705,69 @@ function openImmersiveView(moment) {
         collage.appendChild(collageItem);
     });
 
-    const modalThemeSelect = view.querySelector('#modalThemeSelect');
-    modalThemeSelect.onchange = (e) => {
-        const newTheme = e.target.value;
-        dom.themeSelect.value = newTheme;
-        dom.themeSelect.dispatchEvent(new Event('change'));
-        view.className = `immersive-modal theme-${newTheme}`;
+    // Add notes area to collage
+    const notesContainer = document.createElement('div');
+    notesContainer.className = 'collage-item';
+    notesContainer.innerHTML = `
+        <div class="moment-notes">
+            <label class="notes-label">Notlarım</label>
+            <textarea class="notes-input" 
+                      id="momentNotes" 
+                      placeholder="Bulunduğum yer hakkında notlar, anılar, duygular...">${moment.notes || ''}</textarea>
+        </div>
+    `;
+    collage.appendChild(notesContainer);
 
-        const pins = view.querySelectorAll('.pin');
-        if (newTheme === 'pinboard' && pins.length === 0) {
-            view.querySelectorAll('.img-container').forEach(cont => {
-                const pin = document.createElement('div');
-                pin.className = 'pin';
-                cont.prepend(pin);
-            });
-        } else if (newTheme !== 'pinboard') {
-            pins.forEach(p => p.remove());
-        }
+    // Save notes on change
+    const notesInput = view.querySelector('#momentNotes');
+    notesInput.onblur = () => {
+        moment.notes = notesInput.value;
+        saveMoments();
     };
+
+    // Theme switcher logic
+    const themeSwitcherBtn = view.querySelector('#themeSwitcherBtn');
+    const themePopup = view.querySelector('#themePopup');
+
+    themeSwitcherBtn.onclick = (e) => {
+        e.stopPropagation();
+        themePopup.classList.toggle('active');
+    };
+
+    // Close popup when clicking outside
+    document.addEventListener('click', function closePopup(e) {
+        if (!themePopup.contains(e.target) && !themeSwitcherBtn.contains(e.target)) {
+            themePopup.classList.remove('active');
+        }
+    });
+
+    // Theme selection
+    view.querySelectorAll('.theme-option').forEach(btn => {
+        btn.onclick = () => {
+            const newTheme = btn.getAttribute('data-theme');
+            dom.themeSelect.value = newTheme;
+            dom.themeSelect.dispatchEvent(new Event('change'));
+            view.className = `immersive-modal theme-${newTheme}`;
+
+            // Update active state
+            view.querySelectorAll('.theme-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update pins visibility
+            const pins = view.querySelectorAll('.pin');
+            if (newTheme === 'pinboard' && pins.length === 0) {
+                view.querySelectorAll('.img-container').forEach(cont => {
+                    const pin = document.createElement('div');
+                    pin.className = 'pin';
+                    cont.prepend(pin);
+                });
+            } else if (newTheme !== 'pinboard') {
+                pins.forEach(p => p.remove());
+            }
+
+            themePopup.classList.remove('active');
+        };
+    });
 
     view.querySelector('#closeImmersive').onclick = () => {
         if (backgroundAudio) backgroundAudio.pause();
