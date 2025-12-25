@@ -11,6 +11,8 @@
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap&subset=latin,latin-ext"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=1.3">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -51,11 +53,38 @@
             <div class="header-top">
                 <h1>momentLog</h1>
                 <div class="header-actions">
+                    <button id="notiBtn" class="icon-btn" title="Bildirimler">
+                        <div class="noti-badge-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                            <span id="notiBadge" class="noti-badge hidden">0</span>
+                        </div>
+                    </button>
                     <button id="profileBtn" class="icon-btn profile-btn" title="Profilim">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </button>
+                    <button id="mapBtn" class="icon-btn" title="Anı Haritası">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </button>
+                    <button id="userSearchBtn" class="icon-btn" title="Kullanıcı Ara"
+                        onclick="window.toggleUserSearch()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <polyline points="23 21 20 18 23 15"></polyline>
                         </svg>
                     </button>
                     <button id="exploreBtn" class="icon-btn" title="Keşfet (Akış)">
@@ -135,6 +164,17 @@
                                 <line x1="8" y1="23" x2="16" y2="23"></line>
                             </svg>
                         </button>
+                        <div id="voiceFilterTray" class="voice-filter-tray hidden">
+                            <span class="tray-label">Filtre:</span>
+                            <button class="filter-opt active" data-filter="none"
+                                onclick="window.setVoiceFilter('none', this)">Normal</button>
+                            <button class="filter-opt" data-filter="echo"
+                                onclick="window.setVoiceFilter('echo', this)">Yankı</button>
+                            <button class="filter-opt" data-filter="radio"
+                                onclick="window.setVoiceFilter('radio', this)">Radyo</button>
+                            <button class="filter-opt" data-filter="nature"
+                                onclick="window.setVoiceFilter('nature', this)">Doğa</button>
+                        </div>
                         <button class="tool-btn" id="dictateBtn" title="Dikte ile Yaz">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -156,6 +196,9 @@
                                 <circle cx="18" cy="16" r="3"></circle>
                             </svg>
                         </button>
+                        <select id="journalSelect" class="journal-select-input" title="Koleksiyon Seç">
+                            <option value="">📂 Koleksiyon Yok</option>
+                        </select>
 
                         <select id="themeSelect" class="theme-select" title="Tema Seç">
                             <option value="default">Varsayılan</option>
@@ -214,11 +257,24 @@
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </div>
-            </div>
+                <div id="userSearchArea" class="user-search-area hidden">
+                    <input type="text" placeholder="Kullanıcı adı veya isim ara..."
+                        oninput="window.performUserSearch(this.value)">
+                    <div id="userSearchResults" class="user-search-results"></div>
+                </div>
 
-            <div id="timeline" class="timeline-feed">
-                <!-- Moments will be injected here -->
-            </div>
+                <div id="nostalgiaSection" class="nostalgia-container hidden">
+                    <h3>📜 Bugün Ne Oldu?</h3>
+                    <div id="nostalgiaList" class="nostalgia-list"></div>
+                </div>
+
+                <div id="timeline" class="timeline-feed">
+                    <!-- Moments will be injected here -->
+                </div>
+
+                <div id="mapView" class="map-container-view hidden">
+                    <div id="mapInstance"></div>
+                </div>
         </main>
         <div id="immersiveView" class="immersive-modal hidden">
             <!-- Content will be injected via JS -->
@@ -232,7 +288,22 @@
             </div>
         </div>
     </div>
+    <!-- Notifications View -->
+    <div id="notiView" class="profile-view hidden">
+        <div class="profile-card">
+            <div class="profile-header-top">
+                <h2>Bildirimler</h2>
+                <button id="closeNoti" class="close-btn">&times;</button>
+            </div>
+            <div id="notiContent" class="noti-list-content">
+                <div class="loading">Yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs (Compat version for easier migration) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>

@@ -83,17 +83,19 @@ const DBService = {
 
         if (targetData.isPrivateProfile) {
             // Send request
-            return targetRef.update({
+            await targetRef.update({
                 pendingFollowers: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
             });
+            return this.addNotification(targetUid, { type: 'follow_request' });
         } else {
             // Direct follow
             await targetRef.update({
                 followers: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
             });
-            return db.collection('users').doc(currentUser.uid).update({
+            await db.collection('users').doc(currentUser.uid).update({
                 following: firebase.firestore.FieldValue.arrayUnion(targetUid)
             });
+            return this.addNotification(targetUid, { type: 'follow' });
         }
     },
 
@@ -122,9 +124,10 @@ const DBService = {
             followers: firebase.firestore.FieldValue.arrayUnion(requestUid)
         });
         // Add to requester's following
-        return db.collection('users').doc(requestUid).update({
+        await db.collection('users').doc(requestUid).update({
             following: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
         });
+        return this.addNotification(requestUid, { type: 'follow' });
     },
 
     // Takip İsteğini Reddet
@@ -143,7 +146,6 @@ const DBService = {
         if (!user) throw new Error("Giriş yapmalısınız!");
 
         try {
-            // Check for storage availability with a try-catch for safety
             let storageEnabled = false;
             try {
                 if (firebase.storage && firebase.storage().ref()) {
@@ -153,15 +155,11 @@ const DBService = {
                 console.warn("Storage check failed:", initErr);
             }
 
-            if (!storageEnabled) {
-                console.warn("Storage not available, fallback to Base64.");
-                return null;
-            }
+            if (!storageEnabled) return null;
 
             const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
             const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
 
-            // Manual Base64 to Blob conversion
             const dataParts = fileData.split(',');
             const mime = dataParts[0].match(/:(.*?);/)[1];
             const binary = atob(dataParts[1]);
@@ -175,26 +173,60 @@ const DBService = {
             const downloadURL = await snapshot.ref.getDownloadURL();
             return downloadURL;
         } catch (e) {
-            console.error("Firebase Storage Error (Falling back to Base64):", e);
-            // Return null to signify fallback
+            console.error("Storage upload error:", e);
             return null;
         }
     },
 
     // Anı Ekle
-    addMoment: async (moment) => {
+    async addMoment(data) {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 
-        return db.collection('moments').add({
-            ...moment,
+        const momentData = {
+            ...data,
             userId: user.uid,
             userDisplayName: user.displayName,
-            userPhotoURL: user.photoURL,
-            likesCount: 0,
-            commentsCount: 0,
-            createdAt: moment.createdAt || new Date().toISOString()
-        });
+            userPhotoURL: data.userPhotoURL || user.photoURL,
+            likes: [],
+            createdAt: data.createdAt || new Date().toISOString()
+        };
+
+        return db.collection('moments').add(momentData);
+    },
+
+    // Anı Güncelle
+    async updateMoment(id, data) {
+        return db.collection('moments').doc(id).update(data);
+    },
+
+    // Beğeni Aç/Kapat
+    async toggleLike(id) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const momentRef = db.collection('moments').doc(id);
+        const doc = await momentRef.get();
+        if (!doc.exists) return;
+
+        const data = doc.data();
+        const isLiked = data.likes.includes(user.uid);
+
+        if (isLiked) {
+            return momentRef.update({
+                likes: firebase.firestore.FieldValue.arrayRemove(user.uid)
+            });
+        } else {
+            await momentRef.update({
+                likes: firebase.firestore.FieldValue.arrayUnion(user.uid)
+            });
+            return this.addNotification(data.userId, { type: 'like', momentId: id });
+        }
+    },
+
+    // Görünürlük Ayarla
+    async setMomentVisibility(id, isPublic) {
+        return db.collection('moments').doc(id).update({ isPublic: isPublic });
     },
 
     // Kişisel Anıları Getir
@@ -209,8 +241,8 @@ const DBService = {
                 .get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (e) {
-            console.error("Firestore Index Error (Personal Feed):", e);
-            throw e; // app.js handles the alert
+            console.error("Personal Feed error:", e);
+            throw e;
         }
     },
 
@@ -219,82 +251,23 @@ const DBService = {
         try {
             const snapshot = await db.collection('moments')
                 .where('userId', '==', uid)
-                .where('isPublic', '==', true) // Only public moments for profile view
+                .where('isPublic', '==', true)
                 .orderBy('createdAt', 'desc')
                 .get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (e) {
-            console.error("Firestore Index Error (Profile View):", e);
+            console.error("Profile View error:", e);
             throw e;
         }
     },
 
     // Anı Sil
     deleteMoment: async (id) => {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Giriş yapmalısınız!");
-
-        const docRef = db.collection('moments').doc(id);
-        const doc = await docRef.get();
-        if (doc.exists && doc.data().userId !== user.uid) {
-            throw new Error("Bu anıyı silme yetkiniz yok!");
-        }
-        return docRef.delete();
+        return db.collection('moments').doc(id).delete();
     },
 
-    // Anı Güncelle
-    updateMoment: async (id, data) => {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Giriş yapmalısınız!");
-
-        const docRef = db.collection('moments').doc(id);
-        const doc = await docRef.get();
-        if (doc.exists && doc.data().userId !== user.uid) {
-            throw new Error("Bu anıyı güncelleme yetkiniz yok!");
-        }
-
-        return docRef.update({
-            ...data,
-            updatedAt: new Date().toISOString()
-        });
-    },
-
-    // Beğeni Arttır/Azalt
-    toggleLike: async (momentId) => {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Giriş yapmalısınız!");
-        const docRef = db.collection('moments').doc(momentId);
-        const doc = await docRef.get();
-        if (!doc.exists) return;
-
-        const data = doc.data();
-        const likes = data.likes || [];
-        const index = likes.indexOf(user.uid);
-
-        if (index > -1) {
-            likes.splice(index, 1); // Unlike
-        } else {
-            likes.push(user.uid); // Like
-        }
-
-        return docRef.update({ likes });
-    },
-
-    // Görünürlük Ayarla
-    setMomentVisibility: async (momentId, isPublic) => {
-        const user = auth.currentUser;
-        if (!user) throw new Error("Giriş yapmalısınız!");
-
-        const docRef = db.collection('moments').doc(momentId);
-        const doc = await docRef.get();
-        if (doc.exists && doc.data().userId !== user.uid) {
-            throw new Error("Bu yetkiye sahip değilsiniz!");
-        }
-        return docRef.update({ isPublic });
-    },
-
-    // Genel Akış (Feed) - Herkesin Public Anıları
-    getPublicFeed: async () => {
+    // Genel Anıları Getir (Social Feed)
+    async getPublicMoments() {
         try {
             const snapshot = await db.collection('moments')
                 .where('isPublic', '==', true)
@@ -303,7 +276,7 @@ const DBService = {
                 .get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (e) {
-            console.error("Firestore Index Error (Public Feed):", e);
+            console.error("Public Feed error:", e);
             throw e;
         }
     },
@@ -322,13 +295,15 @@ const DBService = {
             createdAt: new Date().toISOString()
         };
 
-        const commentRef = await db.collection('moments').doc(momentId).collection('comments').add(commentData);
+        const docSnapshot = await db.collection('moments').doc(momentId).get();
+        const momentData = docSnapshot.data();
 
-        // Update comment count on moment
+        const commentRef = await db.collection('moments').doc(momentId).collection('comments').add(commentData);
         await db.collection('moments').doc(momentId).update({
             commentsCount: firebase.firestore.FieldValue.increment(1)
         });
 
+        await this.addNotification(momentData.userId, { type: 'comment', momentId: momentId, text: text });
         return { id: commentRef.id, ...commentData };
     },
 
@@ -347,7 +322,8 @@ const DBService = {
         const doc = await commentRef.get();
         if (!doc.exists) return;
 
-        const likes = doc.data().likes || [];
+        const data = doc.data();
+        const likes = data.likes || [];
         const isLiked = likes.includes(user.uid);
 
         if (isLiked) {
@@ -355,9 +331,128 @@ const DBService = {
                 likes: firebase.firestore.FieldValue.arrayRemove(user.uid)
             });
         } else {
-            return commentRef.update({
+            await commentRef.update({
                 likes: firebase.firestore.FieldValue.arrayUnion(user.uid)
             });
+            return this.addNotification(data.userId, { type: 'like', momentId: momentId });
         }
+    },
+
+    // Bildirim Ekle
+    async addNotification(targetUid, data) {
+        const currentUser = auth.currentUser;
+        if (!currentUser || currentUser.uid === targetUid) return;
+
+        return db.collection('notifications').add({
+            targetUid: targetUid,
+            senderUid: currentUser.uid,
+            senderName: currentUser.displayName,
+            senderPhoto: currentUser.photoURL,
+            type: data.type,
+            momentId: data.momentId || null,
+            text: data.text || '',
+            isRead: false,
+            createdAt: new Date().toISOString()
+        });
+    },
+
+    // Bildirimleri Dinle
+    onNotifications(uid, callback) {
+        return db.collection('notifications')
+            .where('targetUid', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .limit(20)
+            .onSnapshot(snapshot => {
+                const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                callback(notifications);
+            });
+    },
+
+    // Bildirimleri Okundu İşaretle
+    async markNotificationsAsRead(uid) {
+        const snapshot = await db.collection('notifications')
+            .where('targetUid', '==', uid)
+            .where('isRead', '==', false)
+            .get();
+
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { isRead: true });
+        });
+        return batch.commit();
+    },
+
+    // Kullanıcı Adı Müsait mi?
+    async checkUsernameAvailability(username) {
+        const doc = await db.collection('usernames').doc(username.toLowerCase()).get();
+        return !doc.exists;
+    },
+
+    // Kullanıcı Adı Değiştir
+    async changeUsername(uid, newUsername) {
+        const user = auth.currentUser;
+        if (!user || user.uid !== uid) throw new Error("Yetkisiz işlem!");
+
+        const lowerNew = newUsername.toLowerCase();
+        const userRef = db.collection('users').doc(uid);
+        const userDoc = await userRef.get();
+        const oldUsername = userDoc.data().username;
+
+        return db.runTransaction(async (transaction) => {
+            const usernameRef = db.collection('usernames').doc(lowerNew);
+            const usernameDoc = await transaction.get(usernameRef);
+
+            if (usernameDoc.exists) throw new Error("Bu kullanıcı adı zaten alınmış!");
+
+            if (oldUsername) {
+                transaction.delete(db.collection('usernames').doc(oldUsername.toLowerCase()));
+            }
+
+            transaction.set(usernameRef, { uid: uid });
+            transaction.update(userRef, { username: newUsername });
+        });
+    },
+
+    // Kullanıcı Ara
+    async searchUsers(query) {
+        if (!query) return [];
+        const snapshot = await db.collection('users')
+            .where('username', '>=', query)
+            .where('username', '<=', query + '\uf8ff')
+            .limit(10)
+            .get();
+
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    // Koleksiyon (Journal) Oluştur
+    async createJournal(title, coverEmoji) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        return db.collection('journals').add({
+            userId: user.uid,
+            title: title,
+            coverEmoji: coverEmoji || '📁',
+            createdAt: new Date().toISOString()
+        });
+    },
+
+    // Kullanıcının Koleksiyonlarını Getir
+    async getJournals(uid) {
+        const snapshot = await db.collection('journals')
+            .where('userId', '==', uid)
+            .orderBy('createdAt', 'desc')
+            .get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    // Koleksiyon İçindeki Anıları Getir
+    async getMomentsByJournal(journalId) {
+        const snapshot = await db.collection('moments')
+            .where('journalId', '==', journalId)
+            .orderBy('createdAt', 'desc')
+            .get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 };

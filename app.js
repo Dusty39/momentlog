@@ -97,6 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadMoments();
             renderTimeline();
             fetchLocation();
+            setupNotifications();
+            loadUserJournals();
         } else {
             console.log("Kullanıcı giriş yapmadı.");
             loginOverlay.classList.add('active');
@@ -342,6 +344,7 @@ async function createMoment(text) {
             song: currentSong,
             theme: dom.themeSelect.value,
             isPublic: isPublicState,
+            journalId: document.getElementById('journalSelect').value || null,
             createdAt: dom.momentDate.value ? new Date(dom.momentDate.value).getTime() : Date.now()
         };
 
@@ -445,37 +448,127 @@ function handlePhotoUpload(e) {
     e.target.value = '';
 }
 
+let selectedVoiceFilter = 'none';
+let audioCtx = null;
+let natureNoiseSource = null;
+
+window.setVoiceFilter = (filter, btn) => {
+    selectedVoiceFilter = filter;
+    document.querySelectorAll('.filter-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+};
+
 async function toggleRecording() {
+    const tray = document.getElementById('voiceFilterTray');
+
     if (!isRecording) {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+
+            // UI Update
+            tray.classList.remove('hidden');
+
+            // Web Audio Processing
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const destination = audioCtx.createMediaStreamDestination();
+
+            // Apply Processors
+            applyVoiceFilters(source, destination);
+
+            mediaRecorder = new MediaRecorder(destination.stream);
             audioChunks = [];
 
             mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = () => {
                     const base64 = reader.result;
-                    currentMedia.push({ type: 'audio', data: base64 });
+                    currentMedia.push({ type: 'audio', data: base64, filter: selectedVoiceFilter });
                     renderPreview();
                 };
+
+                // Cleanup
                 stream.getTracks().forEach(track => track.stop());
+                if (natureNoiseSource) { natureNoiseSource.stop(); natureNoiseSource = null; }
+                if (audioCtx) { audioCtx.close(); audioCtx = null; }
+                tray.classList.add('hidden');
             };
 
             mediaRecorder.start();
             isRecording = true;
             dom.recordBtn.classList.add('recording');
         } catch (err) {
+            console.error(err);
             alert('Mikrofon erişimi sağlanamadı.');
+            tray.classList.add('hidden');
         }
     } else {
         mediaRecorder.stop();
         isRecording = false;
         dom.recordBtn.classList.remove('recording');
+    }
+}
+
+function applyVoiceFilters(source, destination) {
+    if (selectedVoiceFilter === 'none') {
+        source.connect(destination);
+        return;
+    }
+
+    if (selectedVoiceFilter === 'echo') {
+        const delay = audioCtx.createDelay(1.0);
+        delay.delayTime.value = 0.3;
+        const feedback = audioCtx.createGain();
+        feedback.gain.value = 0.4;
+
+        source.connect(delay);
+        delay.connect(feedback);
+        feedback.connect(delay);
+
+        source.connect(destination);
+        delay.connect(destination);
+    } else if (selectedVoiceFilter === 'radio') {
+        const bandpass = audioCtx.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        bandpass.frequency.value = 2000;
+        bandpass.Q.value = 1.0;
+
+        const highpass = audioCtx.createBiquadFilter();
+        highpass.type = 'highpass';
+        highpass.frequency.value = 400;
+
+        source.connect(highpass);
+        highpass.connect(bandpass);
+        bandpass.connect(destination);
+    } else if (selectedVoiceFilter === 'nature') {
+        // Simple wind simulation using white noise + lowpass
+        const bufferSize = 2 * audioCtx.sampleRate;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        natureNoiseSource = audioCtx.createBufferSource();
+        natureNoiseSource.buffer = noiseBuffer;
+        natureNoiseSource.loop = true;
+
+        const lp = audioCtx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 300;
+
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.05;
+
+        natureNoiseSource.connect(lp);
+        lp.connect(gain);
+        gain.connect(destination);
+        natureNoiseSource.start();
+
+        source.connect(destination);
     }
 }
 
@@ -1012,6 +1105,10 @@ async function openProfileView(uid) {
                 </div>
                 <div class="profile-info">
                     <h2>${userProfile.displayName}</h2>
+                    <p class="profile-username">@${userProfile.username || 'isimsiz'}</p>
+                    ${uid === AuthService.currentUser()?.uid ? `
+                        <button class="edit-username-btn" onclick="window.promptNicknameChange()">Kullanıcı Adı Değiştir</button>
+                    ` : ''}
                     <div id="bioContainer" class="bio-container">
                         <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
                         ${uid === AuthService.currentUser()?.uid ? `
@@ -1082,8 +1179,12 @@ async function openProfileView(uid) {
                     </div>
                 </div>
             ` : ''}
-            <h3>Paylaşılan Anılar</h3>
-            <div class="profile-moments-grid">
+            <div class="profile-tabs">
+                <button class="tab-btn active" onclick="window.showMomentsTab('${uid}')">Anılar</button>
+                <button class="tab-btn" onclick="window.showJournalTab('${uid}')">Koleksiyonlar</button>
+            </div>
+
+            <div class="profile-moments-grid" id="profileMomentsGrid">
                 ${userMoments.map(m => {
                         const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                         return `
@@ -1444,11 +1545,11 @@ window.toggleComments = async (momentId) => {
 window.loadComments = async (momentId) => {
     const list = document.getElementById(`comments-list-${momentId}`);
     list.innerHTML = '<div class="loading-sm">Yükleniyor...</div>';
-    
+
     try {
         const comments = await DBService.getComments(momentId);
         const currentUser = AuthService.currentUser();
-        
+
         if (comments.length === 0) {
             list.innerHTML = '<div class="empty-comments">Henüz yorum yok. İlk yorumu sen yap!</div>';
             return;
@@ -1459,9 +1560,9 @@ window.loadComments = async (momentId) => {
             return `
                 <div class="comment-item">
                     <div class="comment-user-info" onclick="openProfileView('${c.userId}')">
-                        ${c.userPhoto?.startsWith('http') || c.userPhoto?.startsWith('data:') ? 
-                            `<img src="${c.userPhoto}" class="comment-avatar">` : 
-                            `<span class="comment-avatar-emoji">${c.userPhoto || '👤'}</span>`}
+                        ${c.userPhoto?.startsWith('http') || c.userPhoto?.startsWith('data:') ?
+                    `<img src="${c.userPhoto}" class="comment-avatar">` :
+                    `<span class="comment-avatar-emoji">${c.userPhoto || '👤'}</span>`}
                         <span class="comment-username">${c.userName}</span>
                     </div>
                     <div class="comment-content">
@@ -1470,7 +1571,7 @@ window.loadComments = async (momentId) => {
                             <button class="comment-like-btn ${isLiked ? 'liked' : ''}" onclick="window.handleCommentLike('${momentId}', '${c.id}')">
                                 ❤️ <span>${c.likes?.length || 0}</span>
                             </button>
-                            <span class="comment-date">${new Date(c.createdAt).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'})}</span>
+                            <span class="comment-date">${new Date(c.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                     </div>
                 </div>
@@ -1517,3 +1618,380 @@ window.updateCharCount = (textarea, momentId) => {
     const remaining = 160 - textarea.value.length;
     document.getElementById(`counter-${momentId}`).innerText = remaining;
 };
+
+// --- Notification Logic ---
+function setupNotifications() {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    DBService.onNotifications(currentUser.uid, (notifications) => {
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+        const badge = document.getElementById('notiBadge');
+        if (unreadCount > 0) {
+            badge.innerText = unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+        window._notifications = notifications;
+    });
+}
+
+window.openNotiView = () => {
+    const view = document.getElementById('notiView');
+    const content = document.getElementById('notiContent');
+    const badge = document.getElementById('notiBadge');
+
+    view.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    renderNotifications(window._notifications || []);
+
+    // Mark as read
+    const currentUser = AuthService.currentUser();
+    DBService.markNotificationsAsRead(currentUser.uid).then(() => {
+        badge.classList.add('hidden');
+    });
+};
+
+function renderNotifications(notis) {
+    const content = document.getElementById('notiContent');
+    if (notis.length === 0) {
+        content.innerHTML = '<div class="empty-state">Henüz bir bildirim yok. 😊</div>';
+        return;
+    }
+
+    content.innerHTML = notis.map(n => {
+        let typeText = '';
+        let typeIcon = '';
+        if (n.type === 'follow') { typeText = 'seni takip etmeye başladı'; typeIcon = '👤'; }
+        if (n.type === 'follow_request') { typeText = 'sana takip isteği gönderdi'; typeIcon = '📩'; }
+        if (n.type === 'like') { typeText = 'anını beğendi'; typeIcon = '❤️'; }
+        if (n.type === 'comment') { typeText = `anına yorum yaptı: "${n.text.substring(0, 20)}..."`; typeIcon = '💬'; }
+
+        return `
+            <div class="noti-item ${n.isRead ? '' : 'unread'}" onclick="window.handleNotiClick('${n.momentId}', '${n.senderUid}')">
+                <div class="noti-avatar">
+                    ${n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:') ?
+                `<img src="${n.senderPhoto}" class="profile-avatar-large">` :
+                `<span>${n.senderPhoto || '👤'}</span>`}
+                </div>
+                <div class="noti-info">
+                    <span class="noti-text"><b>${n.senderName}</b> ${typeText}</span>
+                    <span class="noti-date">${new Date(n.createdAt).toLocaleDateString('tr-TR')} ${new Date(n.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <div class="noti-type-icon">${typeIcon}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.handleNotiClick = (momentId, userUid) => {
+    document.getElementById('notiView').classList.add('hidden');
+    document.body.style.overflow = '';
+
+    if (momentId && momentId !== 'null') {
+        openImmersiveViewById(momentId);
+    } else {
+        openProfileView(userUid);
+    }
+};
+
+// Add listeners
+document.getElementById('notiBtn').onclick = window.openNotiView;
+document.getElementById('closeNoti').onclick = () => {
+    document.getElementById('notiView').classList.add('hidden');
+    document.body.style.overflow = '';
+};
+
+// --- Map View Logic ---
+let map = null;
+let markers = [];
+
+window.initMap = () => {
+    if (map) return;
+
+    map = L.map('mapInstance').setView([39.9334, 32.8597], 6); // Default: Turkey center
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+};
+
+window.renderMarkers = (momentsToRender) => {
+    // Clear old markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    momentsToRender.forEach(m => {
+        if (m.location && m.location.coords) {
+            const lat = m.location.coords.latitude || m.location.coords.lat;
+            const lng = m.location.coords.longitude || m.location.coords.lng;
+
+            if (lat && lng) {
+                const firstImg = m.media?.find(med => med.type === 'image');
+                const icon = L.divIcon({
+                    className: 'custom-moment-marker-wrapper',
+                    html: `
+                        <div class="custom-moment-marker">
+                            ${firstImg ? `<img src="${firstImg.data}">` : '<span>📝</span>'}
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [0, 40]
+                });
+
+                const marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+                marker.on('click', () => openImmersiveView(m));
+                markers.push(marker);
+            }
+        }
+    });
+
+    // Auto-fit bounds if markers exist
+    if (markers.length > 0) {
+        const group = L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+};
+
+window.toggleMapView = () => {
+    const mapView = document.getElementById('mapView');
+    const timeline = document.getElementById('timeline');
+    const inputSection = document.querySelector('.input-section');
+    const searchSection = document.querySelector('.search-container');
+
+    if (mapView.classList.contains('hidden')) {
+        mapView.classList.remove('hidden');
+        timeline.classList.add('hidden');
+        inputSection.classList.add('hidden');
+        searchSection.classList.add('hidden');
+        window.initMap();
+        setTimeout(() => {
+            map.invalidateSize();
+            renderMarkers(moments);
+        }, 300);
+        document.getElementById('mapBtn').classList.add('active');
+    } else {
+        mapView.classList.add('hidden');
+        timeline.classList.remove('hidden');
+        inputSection.classList.remove('hidden');
+        searchSection.classList.remove('hidden');
+        document.getElementById('mapBtn').classList.remove('active');
+    }
+};
+
+document.getElementById('mapBtn').onclick = window.toggleMapView;
+
+// --- Nostalgia (On This Day) Logic ---
+function setupNostalgia() {
+    console.log("Checking for nostalgia moments...");
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+    const currentYear = now.getFullYear();
+
+    const nostalgicMoments = moments.filter(m => {
+        const mDate = new Date(m.createdAt);
+        return mDate.getMonth() === currentMonth &&
+            mDate.getDate() === currentDay &&
+            mDate.getFullYear() < currentYear;
+    });
+
+    const section = document.getElementById('nostalgiaSection');
+    const list = document.getElementById('nostalgiaList');
+
+    if (nostalgicMoments.length > 0) {
+        section.classList.remove('hidden');
+        list.innerHTML = nostalgicMoments.map(m => {
+            const mDate = new Date(m.createdAt);
+            const yearsAgo = currentYear - mDate.getFullYear();
+            const firstImg = m.media?.find(med => med.type === 'image');
+
+            return `
+                <div class="nostalgia-card" onclick="openImmersiveView(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    ${firstImg ? `<img src="${firstImg.data}" class="nostalgia-card-img">` : '<div class="nostalgia-text-placeholder">📝</div>'}
+                    <div class="nostalgia-card-overlay">
+                        <span class="nostalgia-years">${yearsAgo} Yıl Önce Bugün</span>
+                        <p class="nostalgia-preview">${escapeHtml(m.content)}</p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        section.classList.add('hidden');
+    }
+}
+
+// --- Nickname Management ---
+window.promptNicknameChange = async () => {
+    const newNick = prompt("Yeni kullanıcı adınızı girin (Sadece harf ve rakam, min 3 karakter):");
+    if (!newNick) return;
+
+    if (newNick.length < 3 || !/^[a-zA-Z0-9_]+$/.test(newNick)) {
+        alert("Geçersiz kullanıcı adı! Sadece harf, rakam ve alt çizgi kullanabilirsiniz.");
+        return;
+    }
+
+    try {
+        const currentUser = AuthService.currentUser();
+        await DBService.changeUsername(currentUser.uid, newNick);
+        alert("Kullanıcı adınız @" + newNick + " olarak güncellendi!");
+        openProfileView(currentUser.uid);
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+// --- User Search Logic ---
+window.toggleUserSearch = () => {
+    const searchArea = document.getElementById('userSearchArea');
+    searchArea.classList.toggle('hidden');
+};
+
+window.performUserSearch = async (query) => {
+    const resultsContainer = document.getElementById('userSearchResults');
+    if (!query || query.length < 2) {
+        resultsContainer.innerHTML = '';
+        return;
+    }
+
+    resultsContainer.innerHTML = '<div class="loading-sm">Aranıyor...</div>';
+    try {
+        const users = await DBService.searchUsers(query);
+        if (users.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-sm">Kullanıcı bulunamadı.</div>';
+            return;
+        }
+
+        resultsContainer.innerHTML = users.map(u => `
+            <div class="user-search-item" onclick="openProfileView('${u.uid}')">
+                ${u.photoURL?.startsWith('http') ?
+                `<img src="${u.photoURL}" class="avatar-xs">` :
+                `<span class="avatar-xs-emoji">${u.photoURL || '👤'}</span>`}
+                <div class="user-search-info">
+                    <span class="user-search-name">${u.displayName}</span>
+                    <span class="user-search-handle">@${u.username || 'isimsiz'}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) {
+        resultsContainer.innerHTML = '<div class="error-sm">Arama hatası.</div>';
+    }
+};
+
+// --- Journal & Collection Logic ---
+async function loadUserJournals() {
+    const user = AuthService.currentUser();
+    if (!user) return;
+
+    const select = document.getElementById('journalSelect');
+    try {
+        const journals = await DBService.getJournals(user.uid);
+        window._userJournals = journals;
+
+        if (journals.length > 0) {
+            select.innerHTML = '<option value="">📂 Koleksiyon Seç (Opsiyonel)</option>' +
+                journals.map(j => `<option value="${j.id}">${j.coverEmoji} ${j.title}</option>`).join('');
+        } else {
+            select.innerHTML = '<option value="">📂 Koleksiyon Yok</option>';
+        }
+    } catch (e) {
+        console.error("Journal load error:", e);
+    }
+}
+
+window.showJournalTab = async (uid) => {
+    const grid = document.getElementById('profileMomentsGrid');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(b => b.classList.remove('active'));
+    document.querySelector('[onclick*="showJournalTab"]').classList.add('active');
+
+    grid.innerHTML = '<div class="loading-sm">Yükleniyor...</div>';
+
+    try {
+        const journals = await DBService.getJournals(uid);
+        const currentUser = AuthService.currentUser();
+
+        let html = '';
+        if (uid === currentUser?.uid) {
+            html += `
+                <div class="create-journal-btn" onclick="window.createJournalPrompt()">
+                    <span>➕</span>
+                    <span>Yeni Koleksiyon</span>
+                </div>
+            `;
+        }
+
+        if (journals.length === 0 && uid !== currentUser?.uid) {
+            grid.innerHTML = '<div class="empty-state">Henüz bir koleksiyon oluşturulmamış.</div>';
+            return;
+        }
+
+        html += journals.map(j => `
+            <div class="journal-card" onclick="window.viewJournal('${j.id}', '${j.title}')">
+                <div class="journal-cover">${j.coverEmoji}</div>
+                <div class="journal-title">${j.title}</div>
+            </div>
+        `).join('');
+
+        grid.innerHTML = `<div class="journal-grid">${html}</div>`;
+    } catch (e) {
+        grid.innerHTML = '<div class="error-sm">Hata oluştu.</div>';
+    }
+};
+
+window.showMomentsTab = async (uid) => {
+    const grid = document.getElementById('profileMomentsGrid');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(b => b.classList.remove('active'));
+    document.querySelector('[onclick*="showMomentsTab"]').classList.add('active');
+
+    grid.innerHTML = '<div class="loading-sm">Yükleniyor...</div>';
+    const moments = await DBService.getMomentsByUser(uid);
+    renderGrid(moments);
+};
+
+window.createJournalPrompt = async () => {
+    const title = prompt("Koleksiyon başlığı seçin:");
+    if (!title) return;
+    const emoji = prompt("Bir kapak emojisi seçin (Varsayılan 📂):") || '📂';
+
+    try {
+        await DBService.createJournal(title, emoji);
+        alert("Koleksiyon oluşturuldu!");
+        window.showJournalTab(AuthService.currentUser().uid);
+        loadUserJournals();
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+window.viewJournal = async (jid, title) => {
+    // Open a modal or repurpose immersion view to see journal moments
+    // For now, let's just alert or filter the grid
+    const grid = document.getElementById('profileMomentsGrid');
+    grid.innerHTML = `<div class="loading-sm">${title} yükleniyor...</div>`;
+
+    try {
+        const moments = await DBService.getMomentsByJournal(jid);
+        if (moments.length === 0) {
+            grid.innerHTML = '<div class="empty-state">Bu koleksiyonda henüz anı yok.</div>';
+        } else {
+            renderGrid(moments);
+        }
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+function renderGrid(momentsToGrid) {
+    const grid = document.getElementById('profileMomentsGrid');
+    grid.innerHTML = momentsToGrid.map(m => {
+        const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+        return `
+            <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
+                ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
+            </div>
+        `;
+    }).join('');
+}
