@@ -40,6 +40,9 @@
                 </svg>
                 Google ile Devam Et
             </button>
+            <div class="login-footer">
+                <p>Crafted with ✨ by <span>Serhat Aykış</span></p>
+            </div>
         </div>
     </div>
 
@@ -163,22 +166,31 @@
                             <option value="ocean">Ocean</option>
                             <option value="paper">Paper</option>
                             <option value="pinboard">Pinboard</option>
-                        </select>
-                        <input type="date" id="momentDate" class="tool-date-input" title="Anı Tarihi">
-                        <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
-                            <svg id="privateIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <svg id="visibleIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
-                                height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
+                            <label class="tool-btn date-picker-trigger" title="Anı Tarihi">
+                                <input type="date" id="momentDate" class="tool-date-input">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </label>
+                            <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
+                                <svg id="privateIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                <svg id="visibleIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
+                                    height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
                     </div>
                     <div class="input-actions">
                         <span id="locationStatus" class="location-badge hidden"></span>
@@ -219,9 +231,6 @@
                 </div>
             </div>
         </div>
-        <footer class="app-footer">
-            <p>Crafted with ✨ by <span>Serhat Aykış</span></p>
-        </footer>
     </div>
     <!-- Firebase SDKs (Compat version for easier migration) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

@@ -45,16 +45,19 @@ body {
     flex-direction: column;
 }
 
-.app-footer {
-    text-align: center;
-    padding: 40px 20px;
+.login-footer {
+    margin-top: 30px;
     opacity: 0.5;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     font-family: var(--font-heading);
     letter-spacing: 0.5px;
-    margin-top: auto;
-    /* Pushes footer to bottom */
+    text-align: center;
+}
+
+.login-footer span {
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .app-footer span {
@@ -64,10 +67,10 @@ body {
 
 /* Header */
 header {
-    padding: 20px 0 30px;
+    padding: 10px 0 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
 }
 
@@ -109,8 +112,7 @@ header {
 .search-container {
     position: relative;
     width: 100%;
-    margin-top: 24px;
-    /* Added margin for new position */
+    margin-top: 10px;
 }
 
 .search-container input {
@@ -243,30 +245,6 @@ textarea::placeholder {
     border-top: 1px solid var(--border-subtle);
     padding-top: 24px;
     gap: 20px;
-}
-
-.tool-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.tool-date-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 0.75rem;
-    padding: 6px 10px;
-    outline: none;
-    font-family: inherit;
-    cursor: pointer;
-    height: 38px;
-}
-
-.tool-date-input::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    opacity: 0.5;
 }
 
 .tool-btn {
@@ -1720,6 +1698,104 @@ body.app-theme-vintage .primary-btn {
     border: 3px solid var(--accent);
 }
 
+.profile-avatar-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+    border: 3px solid var(--accent);
+    padding: 3px;
+    background: var(--bg-surface);
+    overflow: hidden;
+}
+
+.profile-avatar-wrapper.editable {
+    cursor: pointer;
+}
+
+.profile-avatar-large {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-avatar-emoji {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: #1e1e2e;
+}
+
+.edit-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 0.65rem;
+    padding: 4px 0;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.profile-avatar-wrapper:hover .edit-overlay {
+    opacity: 1;
+}
+
+.avatar-picker-tray {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    padding: 15px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    animation: fadeIn 0.3s ease;
+}
+
+.avatar-picker-tray h4 {
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    opacity: 0.7;
+}
+
+.avatar-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.avatar-option-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.avatar-option-btn:hover {
+    background: var(--accent);
+    transform: scale(1.1);
+}
+
+.photo-upload {
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    width: auto;
+    padding: 0 15px;
+}
+
 .profile-info h2 {
     font-size: 1.8rem;
     margin-bottom: 5px;
@@ -1729,13 +1805,193 @@ body.app-theme-vintage .primary-btn {
     color: var(--text-secondary);
 }
 
-.profile-stats {
+/* Biography Edit Styles */
+.bio-container {
     display: flex;
-    gap: 30px;
-    margin-bottom: 30px;
-    padding: 20px 0;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.edit-bio-inline-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    opacity: 0.7;
+}
+
+.bio-edit-area {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    color: white;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: none;
+    outline: none;
+}
+
+.bio-edit-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.save-bio-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cancel-bio-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Comments Section */
+.comments-section {
     border-top: 1px solid var(--border-subtle);
-    border-bottom: 1px solid var(--border-subtle);
+    margin-top: 15px;
+    padding-top: 15px;
+    animation: slideDown 0.3s ease;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.comment-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.comment-user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.comment-avatar,
+.comment-avatar-emoji {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    font-size: 0.8rem;
+    background: #1e1e2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comment-username {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.comment-content {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 14px;
+    border-radius: 12px;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.comment-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.comment-like-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comment-like-btn.liked {
+    color: #ef4444;
+}
+
+.comment-date {
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.comment-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comment-input-wrapper textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    color: white;
+    padding: 10px;
+    font-size: 0.9rem;
+    min-height: 50px;
+    resize: none;
+}
+
+.comment-input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.char-counter {
+    font-size: 0.75rem;
+    opacity: 0.4;
+}
+
+.comment-input-footer button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.comment-trigger-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
 }
 
 .stat-item {
@@ -1771,6 +2027,105 @@ body.app-theme-vintage .primary-btn {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+/* Social Networking Styles */
+.profile-actions-row {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+}
+
+.follow-btn-main {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 99px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.follow-btn-main.following {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+.own-profile-tools {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+}
+
+.privacy-switch {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.mini-toggle-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.pending-requests {
+    margin: 20px 0;
+    background: rgba(99, 102, 241, 0.05);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px dashed var(--accent);
+}
+
+.requests-list {
+    margin-top: 10px;
+}
+
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.req-uid {
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.req-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.accept-btn,
+.decline-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: none;
+}
+
+.accept-btn {
+    background: #22c55e;
+    color: white;
+}
+
+.decline-btn {
+    background: #ef4444;
+    color: white;
 }
 
 /* Spotify Wrapper */
@@ -1821,6 +2176,25 @@ body.app-theme-vintage .primary-btn {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    background: #1e1e2e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+}
+
+.avatar-img-sm {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .avatar-sm {
@@ -1961,4 +2335,25 @@ body.app-theme-vintage .primary-btn {
 
 .m-action-menu button:active {
     background: rgba(255, 255, 255, 0.05);
+}
+
+.date-picker-trigger {
+    position: relative;
+    cursor: pointer;
+}
+
+.date-picker-trigger .tool-date-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0 !important;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.date-picker-trigger svg {
+    position: relative;
+    z-index: 1;
 }

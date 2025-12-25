@@ -349,7 +349,12 @@ async function createMoment(text) {
             await DBService.updateMoment(window._editingId, momentData);
             window._editingId = null;
         } else {
-            await DBService.addMoment(momentData);
+            // Include current photo in the moment snapshot for feed
+            const userProfile = await DBService.getUserProfile(currentUser.uid);
+            await DBService.addMoment({
+                ...momentData,
+                userPhotoURL: userProfile.photoURL
+            });
         }
 
         // Reset
@@ -999,29 +1004,94 @@ async function openProfileView(uid) {
 
         content.innerHTML = `
             <div class="profile-header">
-                <img src="${userProfile.photoURL || 'default-avatar.png'}" class="profile-avatar-large">
+                <div class="profile-avatar-wrapper ${uid === AuthService.currentUser()?.uid ? 'editable' : ''}" onclick="${uid === AuthService.currentUser()?.uid ? 'window.showAvatarPicker()' : ''}">
+                    ${userProfile.photoURL?.startsWith('http') ?
+                `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
+                `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
+                    ${uid === AuthService.currentUser()?.uid ? '<div class="edit-overlay">📷 Değiştir</div>' : ''}
+                </div>
                 <div class="profile-info">
                     <h2>${userProfile.displayName}</h2>
-                    <p>${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
+                    <div id="bioContainer" class="bio-container">
+                        <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
+                        ${uid === AuthService.currentUser()?.uid ? `
+                            <button id="editBioBtn" class="edit-bio-inline-btn" onclick="window.enableBioEdit()">Düzenle</button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
+
+            ${uid === AuthService.currentUser()?.uid ? `
+                <div id="avatarPicker" class="avatar-picker-tray hidden">
+                    <h4>Profil Fotoğrafı veya Emoji Seç</h4>
+                    <div class="avatar-options">
+                        <label class="avatar-option-btn photo-upload">
+                            <input type="file" id="profilePhotoInput" accept="image/*" hidden onchange="window.handleProfilePhotoUpload(this)">
+                            <span>📷 Yükle</span>
+                        </label>
+                        ${['💎', '🌠', '🌊', '🧊', '🌕'].map(emo => `
+                            <button class="avatar-option-btn" onclick="window.updateAvatar('${emo}')">${emo}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
             <div class="profile-stats">
                 <div class="stat-item">
                     <span class="stat-value">${userMoments.length}</span>
                     <span class="stat-label">Anı</span>
                 </div>
-                <!-- ... other stats ... -->
+                <div class="stat-item">
+                    <span class="stat-value">${userProfile.followers?.length || 0}</span>
+                    <span class="stat-label">Takipçi</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">${userProfile.following?.length || 0}</span>
+                    <span class="stat-label">Takip</span>
+                </div>
             </div>
+
+            <div class="profile-actions-row">
+                ${uid !== AuthService.currentUser()?.uid ? `
+                    <button id="followBtn" class="follow-btn-main ${userProfile.followers?.includes(AuthService.currentUser()?.uid) ? 'following' : ''}">
+                        ${userProfile.followers?.includes(AuthService.currentUser()?.uid) ? 'Takibi Bırak' :
+                    (userProfile.pendingFollowers?.includes(AuthService.currentUser()?.uid) ? 'İstek Gönderildi' : 'Takip Et')}
+                    </button>
+                ` : `
+                    <div class="own-profile-tools">
+                        <label class="privacy-switch">
+                            <span>Profil Gizliliği: ${userProfile.isPrivateProfile ? 'Özel 🔒' : 'Açık 🌐'}</span>
+                            <button onclick="window.toggleProfilePrivacy(${userProfile.isPrivateProfile})" class="mini-toggle-btn">Değiştir</button>
+                        </label>
+                    </div>
+                `}
+            </div>
+
+            ${uid === AuthService.currentUser()?.uid && userProfile.pendingFollowers?.length > 0 ? `
+                <div class="pending-requests">
+                    <h3>Takip İstekleri</h3>
+                    <div class="requests-list">
+                        ${userProfile.pendingFollowers.map(reqUid => `
+                            <div class="request-item">
+                                <span class="req-uid">@${reqUid.substring(0, 8)}...</span>
+                                <div class="req-btns">
+                                    <button class="accept-btn" onclick="window.handleFollowAction('${reqUid}', 'accept')">Kabul Et</button>
+                                    <button class="decline-btn" onclick="window.handleFollowAction('${reqUid}', 'decline')">Reddet</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
             <h3>Paylaşılan Anılar</h3>
             <div class="profile-moments-grid">
                 ${userMoments.map(m => {
-            const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
-            return `
+                        const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+                        return `
                         <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
                             ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
                         </div>
                     `;
-        }).join('')}
+                    }).join('')}
             </div>
         `;
 
@@ -1029,6 +1099,23 @@ async function openProfileView(uid) {
             view.classList.add('hidden');
             document.body.style.overflow = '';
         };
+
+        // Attach follow button listener
+        const followBtn = content.querySelector('#followBtn');
+        if (followBtn) {
+            followBtn.onclick = () => {
+                const isFollowing = followBtn.classList.contains('following');
+                const isPending = followBtn.innerText.includes('İstek');
+
+                if (isFollowing || isPending) {
+                    window.handleFollowAction(uid, 'unfollow');
+                } else {
+                    window.handleFollowAction(uid, 'follow');
+                }
+            };
+        }
+
+        window._currentProfileUid = uid;
 
     } catch (err) {
         console.error("Profil yükleme hatası:", err);
@@ -1121,34 +1208,54 @@ window.requestDelete = deleteMoment;
 
 // --- Social & Feed Features ---
 
-async function renderFeed(filter = "") {
-    dom.timeline.innerHTML = '<div class="feed-container"></div>';
-    const container = dom.timeline.querySelector('.feed-container');
+async function renderFeed() {
+    console.log("Rendering Social Feed...");
+    const feedContainer = dom.timeline;
+    feedContainer.innerHTML = '<div class="loading">Akış yükleniyor...</div>';
 
-    // Create a local copy of moments for filtering
-    const filteredMoments = filter
-        ? moments.filter(m => m.content.toLowerCase().includes(filter.toLowerCase()))
-        : moments;
-
-    if (filteredMoments.length === 0) {
-        container.innerHTML = '<div class="empty-state">Henüz paylaşılan bir anı bulunamadı :(</div>';
-        return;
-    }
-
-    filteredMoments.forEach(m => {
-        const card = document.createElement('div');
-        card.className = 'feed-card';
-
-        const firstImg = m.media?.find(med => med.type === 'image');
-        const hasAudio = m.media?.some(med => med.type === 'audio');
-        const likesCount = (m.likes || []).length;
+    try {
+        const moments = await DBService.getPublicMoments();
         const currentUser = AuthService.currentUser();
-        const isLiked = m.likes?.includes(currentUser?.uid);
+        const userProfile = currentUser ? await DBService.getUserProfile(currentUser.uid) : null;
 
-        card.innerHTML = `
+        // Requirement: "Kullanıcı sadece takip ettiklerinin anılarını görebilecek."
+        // "Arkadaşlar birbirinin anılarını görebilecek diğerleri göremeyecek."
+        const filteredMoments = moments.filter(m => {
+            if (m.userId === currentUser?.uid) return true; // My moments
+
+            // If viewing public feed:
+            // 1. If it's public AND from a user I follow -> YES
+            // 2. If it's public AND from any user (if we allow global discovery)
+            // User requirement says: "kullanıcı sadece takip ettiklerinin anılarını görebilecek"
+            return userProfile?.following?.includes(m.userId);
+        });
+
+        feedContainer.innerHTML = '<div class="feed-container"></div>';
+        const container = feedContainer.querySelector('.feed-container');
+
+        if (filteredMoments.length === 0) {
+            container.innerHTML = '<div class="empty-state">Henüz takip ettiğin kimse paylaşım yapmadı. Yeni arkadaşlar keşfet!</div>';
+            return;
+        }
+
+        filteredMoments.forEach(m => {
+            const card = document.createElement('div');
+            card.className = 'feed-card';
+
+            const firstImg = m.media?.find(med => med.type === 'image');
+            const hasAudio = m.media?.some(med => med.type === 'audio');
+            const likesCount = (m.likes || []).length;
+            const currentUser = AuthService.currentUser();
+            const isLiked = m.likes?.includes(currentUser?.uid);
+
+            card.innerHTML = `
             <div class="card-header">
                 <div class="user-info" onclick="openProfileView('${m.userId}')">
-                    <div class="avatar-sm">👤</div>
+                    <div class="avatar-sm">
+                        ${m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:') ?
+                    `<img src="${m.userPhotoURL}" class="avatar-img-sm">` :
+                    `<span>${m.userPhotoURL || '👤'}</span>`}
+                    </div>
                     <div class="user-meta">
                         <span class="username">${m.userDisplayName || 'Anonim'}</span>
                         <span class="location-sm">${m.location?.text || 'Bilinmeyen Konum'}</span>
@@ -1166,40 +1273,247 @@ async function renderFeed(filter = "") {
                 <div class="action-row">
                     <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.toggleLike('${m.id}')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        <span>${likesCount} beğeni</span>
+                        <span>${likesCount}</span>
+                    </button>
+                    <button class="comment-trigger-btn" onclick="event.stopPropagation(); window.toggleComments('${m.id}')">
+                        💬 <span id="comment-count-${m.id}">${m.commentsCount || 0}</span>
                     </button>
                     ${m.userId === currentUser?.uid ? `
                         <button class="visibility-status-btn" onclick="event.stopPropagation(); window.toggleVisibility('${m.id}', ${!m.isPublic})">
-                            ${m.isPublic ? '🌐 Herkese Açık' : '🔒 Sadece Ben'}
+                            ${m.isPublic ? '🌐' : '🔒'}
                         </button>
                     ` : ''}
                 </div>
-                <div class="content-preview">${escapeHtml(m.content).substring(0, 60)}${m.content.length > 60 ? '...' : ''}</div>
+                <div class="content-preview">${escapeHtml(m.content).substring(0, 100)}${m.content.length > 100 ? '...' : ''}</div>
+                
+                <div id="comments-section-${m.id}" class="comments-section hidden" onclick="event.stopPropagation()">
+                    <div class="comments-list" id="comments-list-${m.id}"></div>
+                    <div class="comment-input-wrapper">
+                        <textarea maxlength="160" placeholder="Bir yorum bırak..." id="comment-input-${m.id}" oninput="window.updateCharCount(this, '${m.id}')"></textarea>
+                        <div class="comment-input-footer">
+                            <span class="char-counter" id="counter-${m.id}">160</span>
+                            <button onclick="window.submitComment('${m.id}')">Gönder</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
-        container.appendChild(card);
-    });
+            container.appendChild(card);
+        });
+    } catch (err) {
+        console.error("Feed loading error:", err);
+        feedContainer.innerHTML = '<div class="error-state">Akış yüklenirken bir hata oluştu.</div>';
+    }
 }
+
+// --- Social Interactions & Helpers ---
+window.toggleProfilePrivacy = async (currentPrivacy) => {
+    try {
+        const currentUser = AuthService.currentUser();
+        await DBService.updateUserProfile(currentUser.uid, {
+            isPrivateProfile: !currentPrivacy
+        });
+        alert(`Profiliniz ${!currentPrivacy ? 'Özel' : 'Açık'} hale getirildi.`);
+        openProfileView(currentUser.uid);
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+window.handleFollowAction = async (targetUid, action) => {
+    try {
+        if (action === 'accept') {
+            await DBService.acceptFollowRequest(targetUid);
+            alert("İstek kabul edildi!");
+        } else if (action === 'decline') {
+            await DBService.declineFollowRequest(targetUid);
+            alert("İstek reddedildi.");
+        } else if (action === 'follow') {
+            await DBService.followUser(targetUid);
+            alert("Takip/İstek gönderildi!");
+        } else if (action === 'unfollow') {
+            await DBService.unfollowUser(targetUid);
+            alert("Takipten çıkıldı.");
+        }
+        openProfileView(window._currentProfileUid || targetUid);
+    } catch (e) {
+        alert("İşlem hatası: " + e.message);
+    }
+};
 
 window.toggleLike = async (id) => {
     try {
         await DBService.toggleLike(id);
-        await loadMoments();
-        renderTimeline();
+        if (currentView === 'explore') renderFeed();
+        else renderTimeline();
     } catch (e) {
-        alert("Giriş yapmalısınız!");
-        console.error(e);
+        alert("Beğeni hatası: " + e.message);
     }
 };
 
 window.toggleVisibility = async (id, isPublic) => {
     try {
         await DBService.setMomentVisibility(id, isPublic);
-        alert(isPublic ? "Artık herkes görebilir!" : "Sadece senin için gizlendi.");
-        // If menu is open, it will close on click outside, but let's refresh
-        await loadMoments();
-        renderTimeline();
+        if (currentView === 'explore') renderFeed();
+        else renderTimeline();
+    } catch (e) {
+        alert("Görünürlük hatası: " + e.message);
+    }
+};
+// --- Avatar & Profile Helpers ---
+window.showAvatarPicker = () => {
+    document.getElementById('avatarPicker')?.classList.toggle('hidden');
+};
+
+window.updateAvatar = async (newAvatar) => {
+    try {
+        const currentUser = AuthService.currentUser();
+        await DBService.updateUserProfile(currentUser.uid, {
+            photoURL: newAvatar
+        });
+        alert("Profil güncellendi!");
+        openProfileView(currentUser.uid);
     } catch (e) {
         alert("Hata: " + e.message);
     }
+};
+
+window.handleProfilePhotoUpload = async (input) => {
+    const file = input.files[0];
+    if (!file) return;
+
+    try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const base64 = e.target.result;
+            const downloadURL = await DBService.uploadFile(base64, 'image');
+            if (downloadURL) {
+                window.updateAvatar(downloadURL);
+            } else {
+                window.updateAvatar(base64); // Fallback to base64 if storage fails
+            }
+        };
+        reader.readAsDataURL(file);
+    } catch (e) {
+        alert("Yükleme hatası: " + e.message);
+    }
+};
+
+// --- Biography Editing ---
+window.enableBioEdit = () => {
+    const bioTextNode = document.getElementById('profileBioText');
+    const bioContainer = document.getElementById('bioContainer');
+    const currentBio = bioTextNode.innerText;
+
+    bioContainer.innerHTML = `
+        <textarea id="bioEditArea" class="bio-edit-area" maxlength="160">${currentBio === 'Henüz bir biyografi eklenmedi.' ? '' : currentBio}</textarea>
+        <div class="bio-edit-actions">
+            <button class="save-bio-btn" onclick="window.saveBio()">Kaydet</button>
+            <button class="cancel-bio-btn" onclick="window.refreshProfile()">Vazgeç</button>
+        </div>
+    `;
+};
+
+window.saveBio = async () => {
+    const newBio = document.getElementById('bioEditArea').value;
+    try {
+        const currentUser = AuthService.currentUser();
+        await DBService.updateUserProfile(currentUser.uid, { bio: newBio });
+        alert("Biyografi güncellendi!");
+        openProfileView(currentUser.uid);
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+window.refreshProfile = () => {
+    openProfileView(window._currentProfileUid);
+};
+
+// --- Commenting Logic ---
+window.toggleComments = async (momentId) => {
+    const commentSection = document.getElementById(`comments-section-${momentId}`);
+    if (commentSection.classList.contains('hidden')) {
+        commentSection.classList.remove('hidden');
+        await window.loadComments(momentId);
+    } else {
+        commentSection.classList.add('hidden');
+    }
+};
+
+window.loadComments = async (momentId) => {
+    const list = document.getElementById(`comments-list-${momentId}`);
+    list.innerHTML = '<div class="loading-sm">Yükleniyor...</div>';
+    
+    try {
+        const comments = await DBService.getComments(momentId);
+        const currentUser = AuthService.currentUser();
+        
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="empty-comments">Henüz yorum yok. İlk yorumu sen yap!</div>';
+            return;
+        }
+
+        list.innerHTML = comments.map(c => {
+            const isLiked = c.likes?.includes(currentUser?.uid);
+            return `
+                <div class="comment-item">
+                    <div class="comment-user-info" onclick="openProfileView('${c.userId}')">
+                        ${c.userPhoto?.startsWith('http') || c.userPhoto?.startsWith('data:') ? 
+                            `<img src="${c.userPhoto}" class="comment-avatar">` : 
+                            `<span class="comment-avatar-emoji">${c.userPhoto || '👤'}</span>`}
+                        <span class="comment-username">${c.userName}</span>
+                    </div>
+                    <div class="comment-content">
+                        <p>${escapeHtml(c.text)}</p>
+                        <div class="comment-meta">
+                            <button class="comment-like-btn ${isLiked ? 'liked' : ''}" onclick="window.handleCommentLike('${momentId}', '${c.id}')">
+                                ❤️ <span>${c.likes?.length || 0}</span>
+                            </button>
+                            <span class="comment-date">${new Date(c.createdAt).toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<div class="error-sm">Hata oluştu.</div>';
+    }
+};
+
+window.handleCommentLike = async (momentId, commentId) => {
+    try {
+        await DBService.toggleCommentLike(momentId, commentId);
+        await window.loadComments(momentId);
+    } catch (e) {
+        alert(e.message);
+    }
+};
+
+window.submitComment = async (momentId) => {
+    const input = document.getElementById(`comment-input-${momentId}`);
+    const text = input.value.trim();
+    if (!text) return;
+    if (text.length > 160) {
+        alert("Yorum 160 karakteri geçemez!");
+        return;
+    }
+
+    try {
+        await DBService.addComment(momentId, text);
+        input.value = '';
+        document.getElementById(`counter-${momentId}`).innerText = '160';
+        await window.loadComments(momentId);
+        const countSpan = document.getElementById(`comment-count-${momentId}`);
+        if (countSpan) {
+            countSpan.innerText = parseInt(countSpan.innerText) + 1;
+        }
+    } catch (e) {
+        alert("Yorum gönderilemedi: " + e.message);
+    }
+};
+
+window.updateCharCount = (textarea, momentId) => {
+    const remaining = 160 - textarea.value.length;
+    document.getElementById(`counter-${momentId}`).innerText = remaining;
 };

@@ -53,11 +53,88 @@ const DBService = {
                 email: user.email,
                 photoURL: user.photoURL,
                 bio: 'Merhaba, ben momentLog kullanıyorum!',
+                isPrivateProfile: false, // Default public
+                followers: [],
+                following: [],
+                pendingFollowers: [], // People who want to follow this user
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             await docRef.set(newUser);
             return newUser;
         }
+    },
+
+    // Kullanıcı Profilini Güncelle
+    async updateUserProfile(uid, data) {
+        return db.collection('users').doc(uid).update(data);
+    },
+
+    // Takip Et / İstek Gönder
+    async followUser(targetUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+        if (currentUser.uid === targetUid) throw new Error("Kendinizi takip edemezsiniz!");
+
+        const targetRef = db.collection('users').doc(targetUid);
+        const targetDoc = await targetRef.get();
+        if (!targetDoc.exists) return;
+
+        const targetData = targetDoc.data();
+
+        if (targetData.isPrivateProfile) {
+            // Send request
+            return targetRef.update({
+                pendingFollowers: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+            });
+        } else {
+            // Direct follow
+            await targetRef.update({
+                followers: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+            });
+            return db.collection('users').doc(currentUser.uid).update({
+                following: firebase.firestore.FieldValue.arrayUnion(targetUid)
+            });
+        }
+    },
+
+    // Takipten Çık
+    async unfollowUser(targetUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        await db.collection('users').doc(targetUid).update({
+            followers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
+            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+        });
+        return db.collection('users').doc(currentUser.uid).update({
+            following: firebase.firestore.FieldValue.arrayRemove(targetUid)
+        });
+    },
+
+    // Takip İsteğini Kabul Et
+    async acceptFollowRequest(requestUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        // Remove from pending, add to followers
+        await db.collection('users').doc(currentUser.uid).update({
+            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(requestUid),
+            followers: firebase.firestore.FieldValue.arrayUnion(requestUid)
+        });
+        // Add to requester's following
+        return db.collection('users').doc(requestUid).update({
+            following: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+        });
+    },
+
+    // Takip İsteğini Reddet
+    async declineFollowRequest(requestUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        return db.collection('users').doc(currentUser.uid).update({
+            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(requestUid)
+        });
     },
 
     // Dosya Yükle (Storage)
@@ -228,6 +305,59 @@ const DBService = {
         } catch (e) {
             console.error("Firestore Index Error (Public Feed):", e);
             throw e;
+        }
+    },
+
+    // Yorum Ekle
+    async addComment(momentId, text) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const commentData = {
+            userId: user.uid,
+            userName: user.displayName,
+            userPhoto: user.photoURL,
+            text: text,
+            likes: [],
+            createdAt: new Date().toISOString()
+        };
+
+        const commentRef = await db.collection('moments').doc(momentId).collection('comments').add(commentData);
+
+        // Update comment count on moment
+        await db.collection('moments').doc(momentId).update({
+            commentsCount: firebase.firestore.FieldValue.increment(1)
+        });
+
+        return { id: commentRef.id, ...commentData };
+    },
+
+    // Yorumları Getir
+    async getComments(momentId) {
+        const snapshot = await db.collection('moments').doc(momentId).collection('comments').orderBy('createdAt', 'asc').get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    // Yorum Beğen / Beğeniyi Kaldır
+    async toggleCommentLike(momentId, commentId) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const commentRef = db.collection('moments').doc(momentId).collection('comments').doc(commentId);
+        const doc = await commentRef.get();
+        if (!doc.exists) return;
+
+        const likes = doc.data().likes || [];
+        const isLiked = likes.includes(user.uid);
+
+        if (isLiked) {
+            return commentRef.update({
+                likes: firebase.firestore.FieldValue.arrayRemove(user.uid)
+            });
+        } else {
+            return commentRef.update({
+                likes: firebase.firestore.FieldValue.arrayUnion(user.uid)
+            });
         }
     }
 };
