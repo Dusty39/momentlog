@@ -113,165 +113,158 @@
 
                 <div class="input-toolbar">
                     <div class="tool-group">
-                        <label class="tool-btn" title="Fotoğraf Ekle">
-                            <input type="file" id="photoInput" accept="image/*" hidden>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                            </svg>
-                        </label>
-                        <button class="tool-btn" id="recordBtn" title="Ses Kaydı">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                <line x1="12" y1="19" x2="12" y2="23"></line>
-                                <line x1="8" y1="23" x2="16" y2="23"></line>
-                            </svg>
-                        </button>
-                        <div id="voiceFilterTray" class="voice-filter-tray hidden">
-                            <span class="tray-label">Filtre:</span>
-                            <button class="filter-opt active" data-filter="none"
-                                onclick="window.setVoiceFilter('none', this)">Normal</button>
-                            <button class="filter-opt" data-filter="echo"
-                                onclick="window.setVoiceFilter('echo', this)">Yankı</button>
-                            <button class="filter-opt" data-filter="radio"
-                                onclick="window.setVoiceFilter('radio', this)">Radyo</button>
-                            <button class="filter-opt" data-filter="nature"
-                                onclick="window.setVoiceFilter('nature', this)">Doğa</button>
+                        <div class="toolbar-rows">
+                            <div class="toolbar-row">
+                                <label class="tool-btn" title="Fotoğraf Ekle">
+                                    <input type="file" id="photoInput" accept="image/*" hidden>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                        <polyline points="21 15 16 10 5 21"></polyline>
+                                    </svg>
+                                </label>
+                                <button class="tool-btn" id="recordBtn" title="Ses Kaydı">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                    </svg>
+                                </button>
+                                <button class="tool-btn" id="dictateBtn" title="Dikte ile Yaz">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M2 10v3"></path>
+                                        <path d="M6 6v11"></path>
+                                        <path d="M10 3v18"></path>
+                                        <path d="M14 8v7"></path>
+                                        <path d="M18 5v13"></path>
+                                        <path d="M22 10v3"></path>
+                                    </svg>
+                                </button>
+                                <button class="tool-btn" id="musicBtn" title="Şarkı Ekle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M9 18V5l12-2v13"></path>
+                                        <circle cx="6" cy="18" r="3"></circle>
+                                        <circle cx="18" cy="16" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="toolbar-row secondary">
+                                <label class="tool-btn date-picker-trigger" title="Tarih">
+                                    <input type="date" id="momentDate" class="tool-date-input">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                </label>
+                                <div class="tool-icon-wrapper" title="Koleksiyon">
+                                    <span>📂</span>
+                                    <select id="journalSelect" class="minimal-select">
+                                        <option value="">Yok</option>
+                                    </select>
+                                </div>
+                                <div class="tool-icon-wrapper" title="Tema">
+                                    <span>🎨</span>
+                                    <select id="themeSelect" class="minimal-select">
+                                        <option value="default">Varsayılan</option>
+                                        <option value="polaroid">Polaroid</option>
+                                        <option value="neon">Neon</option>
+                                        <option value="cyberpunk">Cyberpunk</option>
+                                    </select>
+                                </div>
+                                <div class="tool-icon-wrapper" title="Ruh Hali">
+                                    <span id="moodIcon">😊</span>
+                                    <select id="moodSelect" class="minimal-select"
+                                        onchange="window.updateMoodIcon(this.value)">
+                                        <option value="😊">Mutlu</option>
+                                        <option value="🤩">Heyecanlı</option>
+                                        <option value="😌">Huzurlu</option>
+                                        <option value="🤔">Dalgın</option>
+                                        <option value="😴">Yorgun</option>
+                                        <option value="😢">Üzgün</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                        <button class="tool-btn" id="dictateBtn" title="Dikte ile Yaz">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M2 10v3"></path>
-                                <path d="M6 6v11"></path>
-                                <path d="M10 3v18"></path>
-                                <path d="M14 8v7"></path>
-                                <path d="M18 5v13"></path>
-                                <path d="M22 10v3"></path>
-                            </svg>
-                        </button>
-                        <button class="tool-btn" id="musicBtn" title="Şarkı Ekle">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M9 18V5l12-2v13"></path>
-                                <circle cx="6" cy="18" r="3"></circle>
-                                <circle cx="18" cy="16" r="3"></circle>
-                            </svg>
-                        </button>
-                        <div class="tool-icon-wrapper" title="Koleksiyon">
-                            <span>📂</span>
-                            <select id="journalSelect" class="minimal-select">
-                                <option value="">Yok</option>
-                            </select>
-                        </div>
-
-                        <div class="tool-icon-wrapper" title="Tema">
-                            <span>🎨</span>
-                            <select id="themeSelect" class="minimal-select">
-                                <option value="default">Varsayılan</option>
-                                <option value="polaroid">Polaroid</option>
-                                <option value="neon">Neon</option>
-                                <option value="cyberpunk">Cyberpunk</option>
-                                <option value="vintage">Vintage</option>
-                                <option value="ocean">Ocean</option>
-                                <option value="paper">Paper</option>
-                                <option value="pinboard">Pinboard</option>
-                            </select>
-                        </div>
-
-                        <div class="tool-icon-wrapper" title="Ruh Hali">
-                            <span id="moodIcon">😊</span>
-                            <select id="moodSelect" class="minimal-select" onchange="window.updateMoodIcon(this.value)">
-                                <option value="😊">Mutlu</option>
-                                <option value="🤩">Heyecanlı</option>
-                                <option value="😌">Huzurlu</option>
-                                <option value="🤔">Dalgın</option>
-                                <option value="😴">Yorgun</option>
-                                <option value="😢">Üzgün</option>
-                            </select>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        </label>
-                        <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
-                            <svg id="privateIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                            </svg>
-                            <svg id="visibleIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
-                                height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
                     </div>
-                    <div class="input-actions">
-                        <span id="locationStatus" class="location-badge hidden"></span>
-                        <button id="addMomentBtn" class="primary-btn">
-                            Kaydet
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                        </button>
-                    </div>
+
                 </div>
-                <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="Anılarda veya yerlerde ara...">
-                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
+                    <svg id="privateIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <svg id="visibleIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                         stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
                     </svg>
-                </div>
-                <div id="userSearchArea" class="user-search-area hidden">
-                    <input type="text" placeholder="Kullanıcı adı veya isim ara..."
-                        oninput="window.performUserSearch(this.value)">
-                    <div id="userSearchResults" class="user-search-results"></div>
-                </div>
+                </button>
+            </div>
+            <div class="input-actions">
+                <span id="locationStatus" class="location-badge hidden"></span>
+                <button id="addMomentBtn" class="primary-btn">
+                    Kaydet
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+    </div>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Anılarda veya yerlerde ara...">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    </div>
+    <div id="userSearchArea" class="user-search-area hidden">
+        <input type="text" placeholder="Kullanıcı adı veya isim ara..." oninput="window.performUserSearch(this.value)">
+        <div id="userSearchResults" class="user-search-results"></div>
+    </div>
 
-                <div id="nostalgiaSection" class="nostalgia-container hidden">
-                    <h3>📜 Bugün Ne Oldu?</h3>
-                    <div id="nostalgiaList" class="nostalgia-list"></div>
-                </div>
+    <div id="nostalgiaSection" class="nostalgia-container hidden">
+        <h3>📜 Bugün Ne Oldu?</h3>
+        <div id="nostalgiaList" class="nostalgia-list"></div>
+    </div>
 
-                <div id="timeline" class="timeline-feed">
-                    <!-- Moments will be injected here -->
-                </div>
+    <div id="timeline" class="timeline-feed">
+        <!-- Moments will be injected here -->
+    </div>
 
-                <div id="mapView" class="map-container-view hidden">
-                    <div id="mapInstance"></div>
-                </div>
-        </main>
-        <div id="immersiveView" class="immersive-modal hidden">
-            <!-- Content will be injected via JS -->
-        </div>
-        <div id="profileView" class="immersive-modal hidden">
-            <div class="profile-container">
-                <button class="close-immersive" id="closeProfile">×</button>
-                <div id="profileContent">
-                    <!-- Profile HTML injected here -->
-                </div>
+    <div id="mapView" class="map-container-view hidden">
+        <div id="mapInstance"></div>
+    </div>
+    </main>
+    <div id="immersiveView" class="immersive-modal hidden">
+        <!-- Content will be injected via JS -->
+    </div>
+    <div id="profileView" class="immersive-modal hidden">
+        <div class="profile-container">
+            <button class="close-immersive" id="closeProfile">×</button>
+            <div id="profileContent">
+                <!-- Profile HTML injected here -->
             </div>
         </div>
+    </div>
     </div>
     <!-- Notifications View -->
     <div id="notiView" class="profile-view hidden">

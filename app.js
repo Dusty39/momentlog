@@ -1095,8 +1095,14 @@ async function openProfileView(uid) {
                     <h2>${userProfile.displayName}</h2>
                     <p class="profile-username">@${userProfile.username || 'isimsiz'}</p>
                     <div id="bioContainer" class="bio-container">
-                        <p id="profileBioText">${userProfile.bio || '...'}</p>
+                        <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
                     </div>
+                    ${uid === AuthService.currentUser()?.uid ? `
+                        <div class="profile-edit-tools-row">
+                            <button class="edit-username-btn" onclick="window.promptNicknameChange()">Adı Düzenle</button>
+                            <button class="edit-bio-inline-btn" onclick="window.enableBioEdit()">Bio Düzenle</button>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
 
