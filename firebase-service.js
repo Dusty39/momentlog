@@ -65,12 +65,18 @@ const DBService = {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 
-        const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
-        const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
+        try {
+            const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
+            const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
 
-        // Base64 string to Blob if needed or just use string
-        const snapshot = await storageRef.putString(fileData, 'data_url');
-        return await snapshot.ref.getDownloadURL();
+            // Base64 string to Blob if needed or just use string
+            const snapshot = await storageRef.putString(fileData, 'data_url');
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            return downloadURL;
+        } catch (e) {
+            console.error("Firebase Storage Upload Error:", e);
+            throw e;
+        }
     },
 
     // Anı Ekle

@@ -264,16 +264,23 @@ async function createMoment(text) {
     saveBtn.innerHTML = `<span>${isEdit ? 'Güncelleniyor...' : 'Yükleniyor...'}</span>`;
 
     try {
-        // Media upload (only if new media added or keep as is? 
-        // For simplicity, we assume currentMedia holds the final set of URLs/Base64)
         const finalMedia = [];
+        let uploadCount = 0;
+
         for (const item of currentMedia) {
             if (item.data.startsWith('data:')) {
-                // New upload
-                const downloadURL = await DBService.uploadFile(item.data, item.type);
-                finalMedia.push({ type: item.type, data: downloadURL });
+                uploadCount++;
+                saveBtn.innerHTML = `<span>Yükleniyor (${uploadCount}/${currentMedia.length})...</span>`;
+
+                // Detailed error catching for upload
+                try {
+                    const downloadURL = await DBService.uploadFile(item.data, item.type);
+                    finalMedia.push({ type: item.type, data: downloadURL });
+                } catch (uploadError) {
+                    console.error("Single file upload failed:", uploadError);
+                    throw new Error(`Dosya yüklenemedi: ${item.type}. Lütfen Firebase Storage bağlantınızı kontrol edin.`);
+                }
             } else {
-                // Already a URL
                 finalMedia.push(item);
             }
         }
