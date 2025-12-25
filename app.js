@@ -199,6 +199,25 @@ function setupEventListeners() {
             dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
         }
     });
+
+    // Explore (Global Feed) Toggle
+    dom.exploreBtn?.addEventListener('click', async () => {
+        currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
+
+        // Update UI State
+        if (currentView === 'explore') {
+            dom.exploreBtn.classList.add('active');
+            dom.exploreBtn.title = "Kişisel Anılarım";
+            document.querySelector('h1').textContent = "Keşfet";
+        } else {
+            dom.exploreBtn.classList.remove('active');
+            dom.exploreBtn.title = "Keşfet (Akış)";
+            document.querySelector('h1').textContent = "momentLog";
+        }
+
+        await loadMoments();
+        renderTimeline();
+    });
 }
 
 // --- App Theme System ---

@@ -69,8 +69,11 @@ const DBService = {
             const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
             const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
 
-            // Base64 string to Blob if needed or just use string
-            const snapshot = await storageRef.putString(fileData, 'data_url');
+            // Mobile Optimization: Convert Data URL to Blob before upload
+            const response = await fetch(fileData);
+            const blob = await response.blob();
+
+            const snapshot = await storageRef.put(blob);
             const downloadURL = await snapshot.ref.getDownloadURL();
             return downloadURL;
         } catch (e) {
