@@ -229,7 +229,10 @@ async function loadMoments() {
         }
         moments = data || [];
     } catch (e) {
-        console.error("Critical: Failed to load data from Firebase", e);
+        console.error("Veri yükleme hatası:", e);
+        if (e.message.includes('index')) {
+            alert("Firestore İndeks Hatası: Lütfen Firebase Console üzerinden gerekli indeksleri oluşturun. (Hata detayı konsolda)");
+        }
         moments = [];
     }
 }
@@ -313,7 +316,7 @@ async function createMoment(text) {
         renderTimeline();
     } catch (e) {
         console.error("Hata:", e);
-        alert("İşlem başarısız oldu.");
+        alert("İşlem başarısız oldu: " + e.message);
     } finally {
         saveBtn.disabled = false;
         // Button text is reset in success, but handle error case
@@ -931,8 +934,7 @@ async function openProfileView(uid) {
 
     try {
         const userProfile = await DBService.getUserProfile(uid);
-        // Simplified moments fetch for the profile
-        const userMoments = await DBService.getMyMoments(); // Should ideally be filtered by uid if we view others
+        const userMoments = await DBService.getMomentsByUser(uid);
 
         content.innerHTML = `
             <div class="profile-header">
@@ -947,22 +949,18 @@ async function openProfileView(uid) {
                     <span class="stat-value">${userMoments.length}</span>
                     <span class="stat-label">Anı</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-value">0</span>
-                    <span class="stat-label">Takipçi</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">0</span>
-                    <span class="stat-label">Takip</span>
-                </div>
+                <!-- ... other stats ... -->
             </div>
             <h3>Paylaşılan Anılar</h3>
             <div class="profile-moments-grid">
-                ${userMoments.map(m => `
-                    <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
-                        ${m.media && m.media.length > 0 ? `<img src="${m.media[0]}">` : '<div class="text-placeholder">📝</div>'}
-                    </div>
-                `).join('')}
+                ${userMoments.map(m => {
+            const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+            return `
+                        <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
+                            ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
+                        </div>
+                    `;
+        }).join('')}
             </div>
         `;
 
@@ -973,6 +971,7 @@ async function openProfileView(uid) {
 
     } catch (err) {
         console.error("Profil yükleme hatası:", err);
+        alert("Profil yüklenemedi: " + err.message);
         content.innerHTML = '<div class="error">Profil yüklenemedi.</div>';
     }
 }

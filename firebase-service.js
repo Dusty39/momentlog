@@ -100,12 +100,31 @@ const DBService = {
         const user = auth.currentUser;
         if (!user) return [];
 
-        const snapshot = await db.collection('moments')
-            .where('userId', '==', user.uid)
-            .orderBy('createdAt', 'desc')
-            .get();
+        try {
+            const snapshot = await db.collection('moments')
+                .where('userId', '==', user.uid)
+                .orderBy('createdAt', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error("Firestore Index Error (Personal Feed):", e);
+            throw e; // app.js handles the alert
+        }
+    },
 
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Belirli Bir Kullanıcının Anılarını Getir
+    getMomentsByUser: async (uid) => {
+        try {
+            const snapshot = await db.collection('moments')
+                .where('userId', '==', uid)
+                .where('isPublic', '==', true) // Only public moments for profile view
+                .orderBy('createdAt', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error("Firestore Index Error (Profile View):", e);
+            throw e;
+        }
     },
 
     // Anı Sil
@@ -123,12 +142,16 @@ const DBService = {
 
     // Genel Akış (Feed) - Herkesin Public Anıları
     getPublicFeed: async () => {
-        const snapshot = await db.collection('moments')
-            .where('isPublic', '==', true)
-            .orderBy('createdAt', 'desc')
-            .limit(20)
-            .get();
-
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        try {
+            const snapshot = await db.collection('moments')
+                .where('isPublic', '==', true)
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+            console.error("Firestore Index Error (Public Feed):", e);
+            throw e;
+        }
     }
 };
