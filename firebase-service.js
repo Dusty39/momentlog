@@ -66,6 +66,12 @@ const DBService = {
         if (!user) throw new Error("Giriş yapmalısınız!");
 
         try {
+            // Check if storage is actually initialized/configured
+            if (!firebase.storage || !firebase.storage().ref()) {
+                console.warn("Storage not initialized, skipping upload.");
+                return null;
+            }
+
             const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
             const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
 
@@ -77,8 +83,9 @@ const DBService = {
             const downloadURL = await snapshot.ref.getDownloadURL();
             return downloadURL;
         } catch (e) {
-            console.error("Firebase Storage Upload Error:", e);
-            throw e;
+            console.error("Firebase Storage Error (Falling back to Base64):", e);
+            // Return null to signify fallback
+            return null;
         }
     },
 

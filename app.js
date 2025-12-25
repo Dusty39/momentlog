@@ -294,13 +294,18 @@ async function createMoment(text) {
                 uploadCount++;
                 saveBtn.innerHTML = `<span>Yükleniyor (${uploadCount}/${currentMedia.length})...</span>`;
 
-                // Detailed error catching for upload
                 try {
                     const downloadURL = await DBService.uploadFile(item.data, item.type);
-                    finalMedia.push({ type: item.type, data: downloadURL });
+                    if (downloadURL) {
+                        finalMedia.push({ type: item.type, data: downloadURL });
+                    } else {
+                        // Fallback to Base64
+                        console.log("Using Base64 fallback for item.");
+                        finalMedia.push(item);
+                    }
                 } catch (uploadError) {
-                    console.error("Single file upload failed:", uploadError);
-                    throw new Error(`Dosya yüklenemedi: ${item.type}. Lütfen Firebase Storage bağlantınızı kontrol edin.`);
+                    console.warn("Upload logic error, using fallback:", uploadError);
+                    finalMedia.push(item);
                 }
             } else {
                 finalMedia.push(item);
