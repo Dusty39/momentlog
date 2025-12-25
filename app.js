@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginOverlay.classList.remove('active');
 
             // Profile Button Avatar
-            if (user.photoURL) {
+            if (user.photoURL && dom.profileBtn) {
                 const img = dom.profileBtn.querySelector('img') || document.createElement('img');
                 img.src = user.photoURL;
                 if (!dom.profileBtn.querySelector('img')) dom.profileBtn.appendChild(img);
@@ -140,104 +140,137 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// --- Helper: Safe Event Listener ---
+function safeAddListener(id, event, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(event, callback);
+    } else {
+        console.warn(`SafeListener: Element with ID "${id}" not found.`);
+    }
+}
+
 function setupEventListeners() {
-    dom.addBtn.addEventListener('click', handleAddMoment);
+    safeAddListener('addMomentBtn', 'click', handleAddMoment);
 
-    // Auto-resize
-    dom.input.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
+    // Auto-resize textarea
+    const inputEl = document.getElementById('momentInput');
+    if (inputEl) {
+        inputEl.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
 
-    // Photo handling
-    dom.photoInput.addEventListener('change', handlePhotoUpload);
+    safeAddListener('photoInput', 'change', handlePhotoUpload);
+    safeAddListener('recordBtn', 'click', toggleRecording);
+    safeAddListener('musicBtn', 'click', handleMusicPick);
 
-    // Audio handling
-    dom.recordBtn.addEventListener('click', toggleRecording);
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => renderTimeline(e.target.value));
+    }
 
-    // Music handling
-    dom.musicBtn.addEventListener('click', handleMusicPick);
+    const themeSelect = document.getElementById('themeSelect');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', () => renderTimeline(dom.searchInput?.value || ""));
+    }
 
-    // Search
-    dom.searchInput.addEventListener('input', (e) => {
-        renderTimeline(e.target.value);
-    });
+    // Optional Listeners (Optional in some views)
+    const playAllBtn = document.getElementById('playAllBtn');
+    if (playAllBtn) {
+        playAllBtn.onclick = () => {
+            if (moments.length > 0) {
+                const story = new StoryMode(moments);
+                story.start();
+            } else {
+                alert("Henüz oynatılacak bir anı yok.");
+            }
+        };
+    }
 
-    // Theme change re-render
-    dom.themeSelect.addEventListener('change', () => {
-        renderTimeline(dom.searchInput.value);
-    });
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.onclick = () => {
+            const user = AuthService.currentUser();
+            if (user) openProfileView(user.uid);
+            else alert("Lütfen önce giriş yapın.");
+        };
+    }
 
-    // Play All Story
-    dom.playAllBtn?.addEventListener('click', () => {
-        if (moments.length > 0) {
-            const story = new StoryMode(moments);
-            story.start();
-        } else {
-            alert("Henüz oynatılacak bir anı yok.");
-        }
-    });
+    const visToggle = document.getElementById('visibilityToggle');
+    if (visToggle) {
+        visToggle.onclick = () => {
+            isPublicState = !isPublicState;
+            const visibleIcon = document.getElementById('visibleIcon');
+            const privateIcon = document.getElementById('privateIcon');
+            if (isPublicState) {
+                visibleIcon?.classList.remove('hidden');
+                privateIcon?.classList.add('hidden');
+                visToggle.title = "Görünürlük: Herkese Açık";
+            } else {
+                visibleIcon?.classList.add('hidden');
+                privateIcon?.classList.remove('hidden');
+                visToggle.title = "Görünürlük: Sadece Ben";
+            }
+        };
+    }
 
-    // Profile Button Click
-    dom.profileBtn?.addEventListener('click', () => {
-        const user = AuthService.currentUser();
-        if (user) {
-            openProfileView(user.uid);
-        } else {
-            alert("Lütfen önce giriş yapın.");
-        }
-    });
+    const exploreBtn = document.getElementById('exploreBtn');
+    if (exploreBtn) {
+        exploreBtn.onclick = async () => {
+            currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
+            if (currentView === 'explore') {
+                exploreBtn.classList.add('active');
+                exploreBtn.title = "Kişisel Anılarım";
+                document.querySelector('h1').textContent = "Keşfet";
+            } else {
+                exploreBtn.classList.remove('active');
+                exploreBtn.title = "Keşfet (Akış)";
+                document.querySelector('h1').textContent = "momentLog";
+            }
+            await loadMoments();
+            renderTimeline();
+        };
+    }
 
-    // Visibility Toggle
-    dom.visibilityToggle?.addEventListener('click', () => {
-        isPublicState = !isPublicState;
-        const visibleIcon = document.getElementById('visibleIcon');
-        const privateIcon = document.getElementById('privateIcon');
+    const appThemeBtn = document.getElementById('appThemeBtn');
+    if (appThemeBtn) {
+        appThemeBtn.onclick = () => {
+            const nextIdx = (APP_THEMES.indexOf(currentAppTheme) + 1) % APP_THEMES.length;
+            currentAppTheme = APP_THEMES[nextIdx];
+            localStorage.setItem('appTheme', currentAppTheme);
+            applyAppTheme(currentAppTheme);
+        };
+    }
 
-        if (isPublicState) {
-            visibleIcon.classList.remove('hidden');
-            privateIcon.classList.add('hidden');
-            dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
-        } else {
-            visibleIcon.classList.add('hidden');
-            privateIcon.classList.remove('hidden');
-            dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
-        }
-    });
+    const notiBtn = document.getElementById('notiBtn');
+    if (notiBtn) notiBtn.onclick = window.openNotiView;
 
-    // Explore (Global Feed) Toggle
-    dom.exploreBtn?.addEventListener('click', async () => {
-        currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
+    const closeNoti = document.getElementById('closeNoti');
+    if (closeNoti) {
+        closeNoti.onclick = () => {
+            const notiView = document.getElementById('notiView');
+            if (notiView) notiView.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+    }
 
-        // Update UI State
-        if (currentView === 'explore') {
-            dom.exploreBtn.classList.add('active');
-            dom.exploreBtn.title = "Kişisel Anılarım";
-            document.querySelector('h1').textContent = "Keşfet";
-        } else {
-            dom.exploreBtn.classList.remove('active');
-            dom.exploreBtn.title = "Keşfet (Akış)";
-            document.querySelector('h1').textContent = "momentLog";
-        }
-
-        await loadMoments();
-        renderTimeline();
-    });
-
-    // App Theme Toggle
-    document.getElementById('appThemeBtn')?.addEventListener('click', () => {
-        const nextIdx = (APP_THEMES.indexOf(currentAppTheme) + 1) % APP_THEMES.length;
-        currentAppTheme = APP_THEMES[nextIdx];
-        localStorage.setItem('appTheme', currentAppTheme);
-        applyAppTheme(currentAppTheme);
-    });
-
-    // Notifications
-    document.getElementById('notiBtn').onclick = window.openNotiView;
-    document.getElementById('closeNoti').onclick = () => {
-        document.getElementById('notiView').classList.add('hidden');
-        document.body.style.overflow = '';
-    };
+    const mapBtn = document.getElementById('mapBtn');
+    if (mapBtn) {
+        mapBtn.onclick = () => {
+            const mapView = document.getElementById('mapView');
+            if (mapView) {
+                const isHidden = mapView.classList.contains('hidden');
+                if (isHidden) {
+                    mapView.classList.remove('hidden');
+                    window.initMap();
+                } else {
+                    mapView.classList.add('hidden');
+                }
+            }
+        };
+    }
 }
 
 // --- App Theme System ---
