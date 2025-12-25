@@ -51,7 +51,10 @@
     <div id="app">
         <header>
             <div class="header-top">
-                <h1>momentLog</h1>
+                <div class="header-branding">
+                    <h1>momentLog</h1>
+                    <span id="userNameSpan" class="user-greeting"></span>
+                </div>
                 <div class="header-actions">
                     <button id="notiBtn" class="icon-btn" title="Bildirimler">
                         <div class="noti-badge-wrapper">
@@ -168,8 +171,9 @@
                                 </button>
                             </div>
                             <div class="toolbar-row secondary">
-                                <label class="tool-btn date-picker-trigger" title="Tarih">
-                                    <input type="date" id="momentDate" class="tool-date-input">
+                                <button class="tool-btn" id="dateBtn" title="Tarih Seç">
+                                    <input type="date" id="momentDate" class="tool-date-input"
+                                        style="position:absolute; opacity:0; width:100%; height:100%; cursor:pointer;">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                         stroke-linejoin="round">
@@ -178,34 +182,16 @@
                                         <line x1="8" y1="2" x2="8" y2="6"></line>
                                         <line x1="3" y1="10" x2="21" y2="10"></line>
                                     </svg>
-                                </label>
-                                <div class="tool-icon-wrapper" title="Koleksiyon">
+                                </button>
+                                <button class="tool-btn" id="journalBtn" title="Koleksiyon">
                                     <span>📂</span>
-                                    <select id="journalSelect" class="minimal-select">
-                                        <option value="">Yok</option>
-                                    </select>
-                                </div>
-                                <div class="tool-icon-wrapper" title="Tema">
+                                </button>
+                                <button class="tool-btn" id="themeBtn" title="Tema">
                                     <span>🎨</span>
-                                    <select id="themeSelect" class="minimal-select">
-                                        <option value="default">Varsayılan</option>
-                                        <option value="polaroid">Polaroid</option>
-                                        <option value="neon">Neon</option>
-                                        <option value="cyberpunk">Cyberpunk</option>
-                                    </select>
-                                </div>
-                                <div class="tool-icon-wrapper" title="Ruh Hali">
+                                </button>
+                                <button class="tool-btn" id="moodBtn" title="Ruh Hali">
                                     <span id="moodIcon">😊</span>
-                                    <select id="moodSelect" class="minimal-select"
-                                        onchange="window.updateMoodIcon(this.value)">
-                                        <option value="😊">Mutlu</option>
-                                        <option value="🤩">Heyecanlı</option>
-                                        <option value="😌">Huzurlu</option>
-                                        <option value="🤔">Dalgın</option>
-                                        <option value="😴">Yorgun</option>
-                                        <option value="😢">Üzgün</option>
-                                    </select>
-                                </div>
+                                </button>
                             </div>
                         </div>
                     </div>

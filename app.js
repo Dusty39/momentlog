@@ -48,6 +48,10 @@ function initializeSelectors() {
         visibilityToggle: document.getElementById('visibilityToggle'),
         exploreBtn: document.getElementById('exploreBtn'),
         momentDate: document.getElementById('momentDate'),
+        userNameSpan: document.getElementById('userNameSpan'),
+        journalBtn: document.getElementById('journalBtn'),
+        themeBtn: document.getElementById('themeBtn'),
+        moodBtn: document.getElementById('moodBtn'),
     };
 }
 
@@ -89,6 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 img.src = user.photoURL;
                 if (!dom.profileBtn.querySelector('img')) dom.profileBtn.appendChild(img);
                 dom.profileBtn.classList.add('has-avatar');
+            }
+
+            // User Name Greeting
+            if (dom.userNameSpan) {
+                dom.userNameSpan.textContent = `Merhaba, ${user.displayName || 'Gezgin'}`;
             }
 
             // Kullanıcı profilini getir/oluştur
@@ -271,6 +280,21 @@ function setupEventListeners() {
             }
         };
     }
+
+    // Custom Selectors
+    safeAddListener('journalBtn', 'click', () => {
+        const currentUser = AuthService.currentUser();
+        if (!currentUser) return alert("Lütfen önce giriş yapın.");
+        window.openJournalSelector();
+    });
+
+    safeAddListener('themeBtn', 'click', () => {
+        window.openThemeSelector();
+    });
+
+    safeAddListener('moodBtn', 'click', () => {
+        window.openMoodSelector();
+    });
 }
 
 // --- App Theme System ---
@@ -373,10 +397,10 @@ async function createMoment(text) {
             location: currentLocation,
             media: finalMedia,
             song: currentSong,
-            theme: dom.themeSelect.value,
-            mood: document.getElementById('moodSelect').value,
+            theme: window._selectedTheme || 'default',
+            mood: window._selectedMood || '😊',
             isPublic: isPublicState,
-            journalId: document.getElementById('journalSelect').value || null,
+            journalId: window._selectedJournal || null,
             createdAt: dom.momentDate.value ? new Date(dom.momentDate.value).getTime() : Date.now()
         };
 
@@ -398,6 +422,14 @@ async function createMoment(text) {
         dom.momentDate.valueAsDate = new Date();
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
+        window._selectedJournal = null;
+        window._selectedTheme = 'default';
+        window._selectedMood = '😊';
+        const moodIcon = document.getElementById('moodIcon');
+        if (moodIcon) moodIcon.textContent = '😊';
+        const journalBtn = document.getElementById('journalBtn');
+        if (journalBtn) journalBtn.querySelector('span').textContent = '📂';
+
         dom.input.style.height = 'auto';
         dom.addBtn.innerHTML = `Kaydet <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
@@ -1098,7 +1130,6 @@ async function openProfileView(uid) {
         const userMoments = await DBService.getMomentsByUser(uid);
 
         content.innerHTML = `
-            <div class="profile-header">
             <div class="profile-header-simple">
                 <div class="profile-avatar-wrapper ${uid === AuthService.currentUser()?.uid ? 'editable' : ''}" onclick="${uid === AuthService.currentUser()?.uid ? 'window.showAvatarPicker()' : ''}">
                     ${userProfile.photoURL?.startsWith('http') ?
@@ -1107,7 +1138,7 @@ async function openProfileView(uid) {
                     ${uid === AuthService.currentUser()?.uid ? '<div class="edit-overlay">📷</div>' : ''}
                 </div>
                 <div class="profile-info-minimal">
-                    <h2>${userProfile.displayName}</h2>
+                    <h2>${userProfile.displayName || 'İsimsiz'}</h2>
                     <p class="profile-username">@${userProfile.username || 'isimsiz'}</p>
                     <div id="bioContainer" class="bio-container">
                         <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
@@ -2041,4 +2072,87 @@ window.inviteToJournal = async (journalId) => {
     } catch (e) {
         alert("Davet hatası: " + e.message);
     }
+};
+
+// --- Custom Selector Logic ---
+
+window.openSelector = (title, items, onSelect) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-selector-overlay';
+    overlay.innerHTML = `
+        <div class="selector-sheet">
+            <div class="selector-title">${title}</div>
+            <div class="selector-grid">
+                ${items.map(item => `
+                    <div class="selector-item" onclick="window._handleSelect('${item.value}')">
+                        <span>${item.icon}</span>
+                        <label>${item.label}</label>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    window._handleSelect = (value) => {
+        onSelect(value);
+        overlay.remove();
+        document.body.style.overflow = '';
+    };
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            document.body.style.overflow = '';
+        }
+    };
+};
+
+window.openJournalSelector = () => {
+    const journalSelect = document.getElementById('journalSelect'); // Support legacy or just use DB
+    DBService.getUserJournals(AuthService.currentUser().uid).then(journals => {
+        const items = journals.map(j => ({ value: j.id, label: j.name, icon: '📖' }));
+        items.unshift({ value: '', label: 'Hiçbiri', icon: '❌' });
+
+        window.openSelector('Koleksiyon Seç', items, (val) => {
+            window._selectedJournal = val;
+            const btn = document.getElementById('journalBtn');
+            btn.querySelector('span').textContent = val ? '📖' : '📂';
+        });
+    });
+};
+
+window.openThemeSelector = () => {
+    const items = [
+        { value: 'default', label: 'Varsayılan', icon: '🎨' },
+        { value: 'polaroid', label: 'Polaroid', icon: '📸' },
+        { value: 'neon', label: 'Neon', icon: '🌈' },
+        { value: 'cyberpunk', label: 'Cyberpunk', icon: '🤖' }
+    ];
+    window.openSelector('Tema Seç', items, (val) => {
+        window._selectedTheme = val;
+        // Optionally update button icon
+    });
+};
+
+window.openMoodSelector = () => {
+    const items = [
+        { value: '😊', label: 'Mutlu', icon: '😊' },
+        { value: '🤩', label: 'Heyecanlı', icon: '🤩' },
+        { value: '😌', label: 'Huzurlu', icon: '😌' },
+        { value: '🤔', label: 'Dalgın', icon: '🤔' },
+        { value: '��', label: 'Yorgun', icon: '😴' },
+        { value: '😢', label: 'Üzgün', icon: '😢' }
+    ];
+    window.openSelector('Ruh Hali Seç', items, (val) => {
+        window.updateMoodIcon(val);
+    });
+};
+
+window.updateMoodIcon = (val) => {
+    const moodIcon = document.getElementById('moodIcon');
+    if (moodIcon) moodIcon.textContent = val;
+    window._selectedMood = val;
 };
