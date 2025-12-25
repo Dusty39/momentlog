@@ -24,28 +24,32 @@ let mediaRecorder = null;
 let audioChunks = [];
 
 // --- Selectors ---
-const dom = {
-    input: document.getElementById('momentInput'),
-    addBtn: document.getElementById('addMomentBtn'),
-    timeline: document.getElementById('timeline'),
-    searchInput: document.getElementById('searchInput'),
-    immersiveView: document.getElementById('immersiveView'),
-    playAllBtn: document.getElementById('playAllBtn'),
+let dom = {};
 
-    // Tools
-    photoInput: document.getElementById('photoInput'),
-    recordBtn: document.getElementById('recordBtn'),
-    musicBtn: document.getElementById('musicBtn'),
-    themeSelect: document.getElementById('themeSelect'),
+function initializeSelectors() {
+    dom = {
+        input: document.getElementById('momentInput'),
+        addBtn: document.getElementById('addMomentBtn'),
+        timeline: document.getElementById('timeline'),
+        searchInput: document.getElementById('searchInput'),
+        immersiveView: document.getElementById('immersiveView'),
+        playAllBtn: document.getElementById('playAllBtn'),
 
-    // Status/Preview
-    previewArea: document.getElementById('mediaPreview'),
-    locationStatus: document.getElementById('locationStatus'),
-    profileBtn: document.getElementById('profileBtn'),
-    visibilityToggle: document.getElementById('visibilityToggle'),
-    exploreBtn: document.getElementById('exploreBtn'),
-    momentDate: document.getElementById('momentDate'),
-};
+        // Tools
+        photoInput: document.getElementById('photoInput'),
+        recordBtn: document.getElementById('recordBtn'),
+        musicBtn: document.getElementById('musicBtn'),
+        themeSelect: document.getElementById('themeSelect'),
+
+        // Status/Preview
+        previewArea: document.getElementById('mediaPreview'),
+        locationStatus: document.getElementById('locationStatus'),
+        profileBtn: document.getElementById('profileBtn'),
+        visibilityToggle: document.getElementById('visibilityToggle'),
+        exploreBtn: document.getElementById('exploreBtn'),
+        momentDate: document.getElementById('momentDate'),
+    };
+}
 
 let isPublicState = false;
 let currentView = 'my-moments'; // 'my-moments' or 'explore'
@@ -54,6 +58,7 @@ let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    initializeSelectors();
     console.log("momentLog: DOM Loaded");
 
     // Set default date to today
@@ -226,6 +231,13 @@ function setupEventListeners() {
         localStorage.setItem('appTheme', currentAppTheme);
         applyAppTheme(currentAppTheme);
     });
+
+    // Notifications
+    document.getElementById('notiBtn').onclick = window.openNotiView;
+    document.getElementById('closeNoti').onclick = () => {
+        document.getElementById('notiView').classList.add('hidden');
+        document.body.style.overflow = '';
+    };
 }
 
 // --- App Theme System ---
@@ -1652,13 +1664,6 @@ window.handleNotiClick = (momentId, userUid) => {
     } else {
         openProfileView(userUid);
     }
-};
-
-// Add listeners
-document.getElementById('notiBtn').onclick = window.openNotiView;
-document.getElementById('closeNoti').onclick = () => {
-    document.getElementById('notiView').classList.add('hidden');
-    document.body.style.overflow = '';
 };
 
 // --- Map View Logic ---

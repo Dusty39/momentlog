@@ -240,11 +240,28 @@ textarea::placeholder {
 /* Premium Toolbar */
 .input-toolbar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     border-top: 1px solid var(--border-subtle);
-    padding-top: 24px;
-    gap: 20px;
+    padding-top: 20px;
+    gap: 15px;
+}
+
+.toolbar-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toolbar-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar-row.secondary {
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
 .tool-btn {
@@ -2357,6 +2374,7 @@ body.app-theme-vintage .primary-btn {
     position: relative;
     z-index: 1;
 }
+
 /* Notification Styles */
 .noti-badge-wrapper {
     position: relative;
@@ -2479,477 +2497,8 @@ body.app-theme-vintage .primary-btn {
     overflow-x: auto;
     padding-bottom: 10px;
     scrollbar-width: none;
-}
 
-.nostalgia-list::-webkit-scrollbar {
-    display: none;
-}
-
-.nostalgia-card {
-    min-width: 260px;
-    max-width: 260px;
-    height: 140px;
-    background: var(--surface);
-    border-radius: 18px;
-    overflow: hidden;
-    position: relative;
-    cursor: pointer;
-    border: 1px solid var(--border-subtle);
-    transition: transform 0.3s;
-}
-
-.nostalgia-card:hover {
-    transform: scale(1.02);
-}
-
-.nostalgia-card-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.6;
-}
-
-.nostalgia-card-overlay {
-    position: absolute;
-    inset: 0;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-}
-
-.nostalgia-years {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #f59e0b;
-}
-
-.nostalgia-preview {
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin-top: 4px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.nostalgia-text-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    background: rgba(255, 255, 255, 0.05);
-}
-
-/* User Search Styles */
-.user-search-area {
-    margin-bottom: 20px;
-    animation: fadeIn 0.3s ease;
-}
-
-.user-search-area input {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    padding: 12px 18px;
-    border-radius: 16px;
-    color: white;
-    font-size: 0.95rem;
-    outline: none;
-    transition: all 0.3s;
-}
-
-.user-search-area input:focus {
-    border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.user-search-results {
-    margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.user-search-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.user-search-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px);
-}
-
-.avatar-xs, .avatar-xs-emoji {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #1e1e2e;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-}
-
-.user-search-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-search-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.user-search-handle {
-    font-size: 0.75rem;
-    opacity: 0.6;
-    color: var(--accent);
-}
-
-.edit-username-btn {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    margin-top: 5px;
-    transition: all 0.2s;
-}
-
-.edit-username-btn:hover {
-    background: var(--accent);
-    color: white;
-}
-
-.profile-username {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--accent);
-    margin-bottom: 2px;
-}
-
-/* Voice Filter Tray Styles */
-.voice-filter-tray {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 6px 12px;
-    border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-    animation: slideInLeft 0.3s ease;
-    margin-left: 10px;
-}
-
-.tray-label {
-    font-size: 0.7rem;
-    opacity: 0.5;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-}
-
-.filter-opt {
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text-secondary);
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.filter-opt:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-}
-
-.filter-opt.active {
-    background: var(--accent);
-    color: white;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-@keyframes slideInLeft {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-
-/* Journal Select & Styling */
-.journal-select-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-primary);
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    outline: none;
-    cursor: pointer;
-    max-width: 150px;
-}
-
-.journal-select-input option {
-    background: #18181b;
-    color: white;
-}
-
-/* Profile Journal Styles */
-.profile-tabs {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.tab-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    padding: 10px 0;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    position: relative;
-}
-
-.tab-btn.active {
-    color: var(--accent);
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--accent);
-}
-
-.journal-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-}
-
-.journal-card {
-    background: var(--surface);
-    border: 1px solid var(--border-subtle);
-    border-radius: 18px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.journal-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent);
-}
-
-.journal-cover {
-    font-size: 2.5rem;
-}
-
-.journal-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.create-journal-btn {
-    background: rgba(99, 102, 241, 0.1);
-    border: 1px dashed var(--accent);
-    color: var(--accent);
-    border-radius: 18px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-/* Minimalist Toolbar & Icon Controls */
-.tool-icon-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    transition: all 0.2s;
-}
-
-.tool-icon-wrapper:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-}
-
-.minimal-select {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-}
-
-/* Share Feature (In Moment View) */
-.share-action-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    margin-top: 15px;
-    width: fit-content;
-}
-
-/* Simplified Profile */
-.profile-header-simple {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 20px 0;
-}
-
-.profile-avatar-large {
-    width: 100px;
-    height: 100px;
-}
-
-.profile-username {
-    margin-top: 4px;
-    opacity: 0.7;
-    font-family: var(--font-mono);
-}
-
-/* Collaborative Journal Badges */
-.collab-badge {
-    background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 6px;
-    font-weight: 700;
-    margin-left: 5px;
-}
-
-/* Toolbar Row Refinement */
-.input-tools {
-    flex-direction: column;
-    align-items: stretch !important;
-    gap: 12px !important;
-}
-
-.toolbar-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.toolbar-row {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-}
-
-.toolbar-row.secondary {
-    padding-top: 5px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Fix Profile Overflows and Alignment */
-.profile-view .immersive-content {
-    max-width: 100%;
-    overflow-x: hidden;
-}
-
-.profile-header-simple {
-    padding: 30px 15px;
-    background: linear-gradient(to bottom, rgba(99, 102, 241, 0.1), transparent);
-    border-radius: 0 0 30px 30px;
-}
-
-.profile-avatar-large {
-    width: 110px;
-    height: 110px;
-    border: 4px solid var(--surface);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.profile-info-minimal h2 {
-    margin-top: 15px;
-    font-size: 1.5rem;
-}
-
-.profile-edit-tools-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-.bio-container {
-    max-width: 320px;
-    margin: 10px auto;
-    font-style: italic;
-    line-height: 1.4;
-}
-
-.credit-text {
-    font-size: 0.75rem;
-    opacity: 0.6;
-}
-
-/* Fix potential horizontal scrolls */
-body, html {
-    max-width: 100vw;
-    overflow-x: hidden;
-}
-
-main {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Absolute Mobile Optimization & Layout Integrity */
+/* --- FINAL MOBILE POLISH & INTEGRITY --- */
 
 :root {
     --safe-padding: 16px;
@@ -2959,250 +2508,74 @@ body {
     overflow-x: hidden;
     position: relative;
     width: 100vw;
-    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
 }
 
 #app {
+    width: 100vw;
     max-width: 100%;
+    margin: 0 auto;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
 }
 
-.input-toolbar {
-    padding: 12px var(--safe-padding) !important;
-}
-
-.toolbar-row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scrollbar-width: none; /* Hide scrollbar for cleaner look */
-}
-
-.toolbar-row::-webkit-scrollbar {
-    display: none;
-}
-
-/* Fix Profile Modal for Mobile */
-#profileView .immersive-content {
-    padding: 0 0 40px 0 !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-}
-
-.profile-header-simple {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 40px var(--safe-padding);
-}
-
-.profile-avatar-wrapper {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.profile-avatar-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.profile-info-minimal h2 {
-    font-size: 1.6rem;
-    margin-bottom: 5px;
-}
-
-.profile-username {
-    font-size: 1rem;
-    color: var(--accent);
-    margin-bottom: 15px;
-}
-
-.profile-edit-tools-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    width: 100%;
-    padding: 10px;
-}
-
-.edit-username-btn, .edit-bio-inline-btn {
-    flex: 1;
-    max-width: 150px;
-    padding: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-
-/* Ensure no width overflow in feed */
-.timeline-feed {
-    padding: 10px var(--safe-padding);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.moment-card {
-    width: 100% !important;
-    margin: 0 0 20px 0 !important;
-    box-sizing: border-box;
-}
-
-/* Header fixes */
-.header-top {
-    padding: 15px var(--safe-padding);
-}
-
-/* Prevent horizontal overflow strictly */
-* {
-    box-sizing: border-box;
-}
-
-html, body {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-    position: relative;
-}
-
-#app {
-    width: 100vw;
-    overflow-x: hidden;
-}
-
 .input-section {
-    padding: 15px;
+    padding: 24px var(--safe-padding);
     width: 100%;
+    box-sizing: border-box;
 }
 
 .input-toolbar {
     width: 100%;
     display: flex;
     flex-direction: column;
+    padding-top: 20px;
+    gap: 15px;
+    border-top: 1px solid var(--border-subtle);
 }
 
 .toolbar-rows {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .toolbar-row {
-    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
     flex-wrap: wrap;
     justify-content: flex-start;
 }
 
-/* Modal sizing for mobile */
-.immersive-modal {
-    width: 100vw !important;
+.toolbar-row.secondary {
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
-.immersive-content {
-    width: 100% !important;
-    padding: 20px !important;
-}
-
-/* Force responsive layout for Profile */
-.profile-view {
-    width: 100% !important;
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-}
-
-.profile-avatar-wrapper.editable:hover .edit-overlay {
-    opacity: 1;
-}
-
-.edit-overlay {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background: var(--accent);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+.tool-btn, .tool-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    border: 3px solid var(--bg-surface);
-    opacity: 0.8;
+    transition: all 0.2s;
 }
-
-.bio-edit-area {
-    width: 100%;
-    min-height: 100px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    color: white;
-    padding: 10px;
-    font-family: inherit;
-    margin-bottom: 10px;
-}
-
-.bio-edit-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-}
-
-.save-bio-btn, .cancel-bio-btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.save-bio-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-}
-
-.cancel-bio-btn {
-    background: transparent;
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-}
-
-/* Ensure Feed image doesn't overflow */
-.feed-img {
-    max-width: 100%;
-    border-radius: 16px;
-    margin: 10px 0;
-}
-
-/* Extreme Mobile Polish - Step 1 Recap */
 
 @media (max-width: 600px) {
-    body {
-        padding: 0 !important;
-    }
-    
-    #app {
-        min-height: 100vh;
-        max-width: 100vw;
-    }
-    
-    .input-section {
-        padding: 20px 15px !important;
-        margin-bottom: 20px;
-        border-radius: 0; /* Full width feel on mobile */
-        border-left: none;
-        border-right: none;
+    .header-top {
+        padding: 15px var(--safe-padding);
     }
     
     .header-actions {
         flex-wrap: wrap;
-        padding: 0 10px;
+        justify-content: center;
     }
     
     .icon-btn {
@@ -3210,33 +2583,25 @@ html, body {
         height: 32px;
     }
     
-    .input-toolbar {
-        padding-top: 15px !important;
-    }
-    
-    .toolbar-row {
-        gap: 8px;
-    }
-    
-    .tool-btn {
-        width: 40px;
-        height: 40px;
-    }
-    
     h1 {
         font-size: 1.5rem;
     }
+    
+    .input-section {
+        padding: 20px 15px;
+        border-radius: 0;
+    }
 }
 
-/* Fix for profile header width */
-.profile-header {
-    width: 100%;
+/* Modal and Profile Fixes */
+.immersive-modal, #profileView {
+    width: 100vw !important;
 }
 
-.profile-info-minimal {
-    width: 100%;
+.profile-header-simple {
+    padding: 40px var(--safe-padding);
 }
 
 .bio-edit-area {
-    font-size: 16px; /* Prevent iOS zoom on focus */
+    font-size: 16px; /* Fix iOS Zoom */
 }
