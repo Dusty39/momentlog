@@ -48,9 +48,10 @@ const dom = {
     profileBtn: document.getElementById('profileBtn'),
     visibilityToggle: document.getElementById('visibilityToggle'),
     exploreBtn: document.getElementById('exploreBtn'),
+    momentDate: document.getElementById('momentDate'),
 };
 
-let isPublicState = true;
+let isPublicState = false;
 let currentView = 'my-moments'; // 'my-moments' or 'explore'
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'default';
@@ -58,6 +59,12 @@ let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log("momentLog: DOM Loaded");
+
+    // Set default date to today
+    if (dom.momentDate) {
+        dom.momentDate.valueAsDate = new Date();
+    }
+
     try {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
@@ -334,7 +341,8 @@ async function createMoment(text) {
             media: finalMedia,
             song: currentSong,
             theme: dom.themeSelect.value,
-            isPublic: isPublicState
+            isPublic: isPublicState,
+            createdAt: dom.momentDate.value ? new Date(dom.momentDate.value).getTime() : Date.now()
         };
 
         if (isEdit) {
@@ -347,6 +355,7 @@ async function createMoment(text) {
         // Reset
         currentMedia = [];
         currentSong = null;
+        dom.momentDate.valueAsDate = new Date();
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
         dom.input.style.height = 'auto';
@@ -1078,6 +1087,11 @@ window.editMoment = (id) => {
     currentLocation = moment.location;
     currentSong = moment.song;
     dom.themeSelect.value = moment.theme || 'default';
+
+    // Set date for editing
+    if (moment.createdAt) {
+        dom.momentDate.valueAsDate = new Date(moment.createdAt);
+    }
 
     renderPreview();
     dom.input.focus();

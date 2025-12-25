@@ -116,7 +116,7 @@ const DBService = {
             userPhotoURL: user.photoURL,
             likesCount: 0,
             commentsCount: 0,
-            createdAt: new Date().toISOString()
+            createdAt: moment.createdAt || new Date().toISOString()
         });
     },
 
