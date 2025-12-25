@@ -1128,31 +1128,32 @@ async function openProfileView(uid) {
     try {
         const userProfile = await DBService.getUserProfile(uid);
         const userMoments = await DBService.getMomentsByUser(uid);
+        const isOwnProfile = uid === AuthService.currentUser()?.uid;
 
         content.innerHTML = `
             <div class="profile-header-simple">
-                <div class="profile-avatar-wrapper ${uid === AuthService.currentUser()?.uid ? 'editable' : ''}" onclick="${uid === AuthService.currentUser()?.uid ? 'window.showAvatarPicker()' : ''}">
+                <div class="profile-avatar-wrapper ${isOwnProfile ? 'editable' : ''}" onclick="${isOwnProfile ? 'window.showAvatarPicker()' : ''}">
                     ${userProfile.photoURL?.startsWith('http') ?
                 `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
-                    ${uid === AuthService.currentUser()?.uid ? '<div class="edit-overlay">📷</div>' : ''}
+                    ${isOwnProfile ? '<div class="edit-overlay">📷</div>' : ''}
                 </div>
                 <div class="profile-info-minimal">
-                    <h2>${userProfile.displayName || 'İsimsiz'}</h2>
-                    <p class="profile-username">@${userProfile.username || 'isimsiz'}</p>
+                    <h2 onclick="${isOwnProfile ? 'window.promptDisplayNameChange()' : ''}" style="${isOwnProfile ? 'cursor:pointer; border-bottom:1px dashed var(--accent);' : ''}">
+                        ${userProfile.displayName || 'İsimsiz'}
+                    </h2>
+                    <p class="profile-username" onclick="${isOwnProfile ? 'window.promptNicknameChange()' : ''}" style="${isOwnProfile ? 'cursor:pointer; opacity:0.7;' : ''}">
+                        @${userProfile.username || 'isimsiz'}
+                    </p>
                     <div id="bioContainer" class="bio-container">
-                        <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
+                        <p id="profileBioText" onclick="${isOwnProfile ? 'window.enableBioEdit()' : ''}" style="${isOwnProfile ? 'cursor:pointer;' : ''}">
+                            ${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}
+                        </p>
                     </div>
-                    ${uid === AuthService.currentUser()?.uid ? `
-                        <div class="profile-edit-tools-row">
-                            <button class="edit-username-btn" onclick="window.promptNicknameChange()">Adı Düzenle</button>
-                            <button class="edit-bio-inline-btn" onclick="window.enableBioEdit()">Bio Düzenle</button>
-                        </div>
-                    ` : ''}
                 </div>
             </div>
 
-            ${uid === AuthService.currentUser()?.uid ? `
+            ${isOwnProfile ? `
                 <div id="avatarPicker" class="avatar-picker-tray hidden">
                     <h4>Profil Fotoğrafı veya Emoji Seç</h4>
                     <div class="avatar-options">
@@ -1165,7 +1166,17 @@ async function openProfileView(uid) {
                         `).join('')}
                     </div>
                 </div>
+
+                <div class="profile-noti-section">
+                    <div class="noti-header-mini">
+                        Bildirimler 📩
+                    </div>
+                    <div id="profileNotiContent" class="profile-notis-list">
+                        <!-- Notifications rendered here -->
+                    </div>
+                </div>
             ` : ''}
+
             <div class="profile-stats">
                 <div class="stat-item">
                     <span class="stat-value">${userMoments.length}</span>
@@ -1197,7 +1208,7 @@ async function openProfileView(uid) {
                 `}
             </div>
 
-            ${uid === AuthService.currentUser()?.uid && userProfile.pendingFollowers?.length > 0 ? `
+            ${isOwnProfile && userProfile.pendingFollowers?.length > 0 ? `
                 <div class="pending-requests">
                     <h3>Takip İstekleri</h3>
                     <div class="requests-list">
@@ -1213,6 +1224,7 @@ async function openProfileView(uid) {
                     </div>
                 </div>
             ` : ''}
+
             <div class="profile-tabs">
                 <button class="tab-btn active" onclick="window.showMomentsTab('${uid}')">Anılar</button>
                 <button class="tab-btn" onclick="window.showJournalTab('${uid}')">Koleksiyonlar</button>
@@ -1230,31 +1242,30 @@ async function openProfileView(uid) {
             </div>
         `;
 
+        // Hook for notifications and other post-render logic
+        if (typeof triggerProfileFinalize === 'function') {
+            triggerProfileFinalize(uid, isOwnProfile);
+        }
+
         closeBtn.onclick = () => {
             view.classList.add('hidden');
             document.body.style.overflow = '';
         };
 
-        // Attach follow button listener
         const followBtn = content.querySelector('#followBtn');
         if (followBtn) {
             followBtn.onclick = () => {
                 const isFollowing = followBtn.classList.contains('following');
                 const isPending = followBtn.innerText.includes('İstek');
-
-                if (isFollowing || isPending) {
-                    window.handleFollowAction(uid, 'unfollow');
-                } else {
-                    window.handleFollowAction(uid, 'follow');
-                }
+                if (isFollowing || isPending) window.handleFollowAction(uid, 'unfollow');
+                else window.handleFollowAction(uid, 'follow');
             };
         }
 
         window._currentProfileUid = uid;
 
     } catch (err) {
-        console.error("Profil yükleme hatası:", err);
-        alert("Profil yüklenemedi: " + err.message);
+        console.error("Profil hatası:", err);
         content.innerHTML = '<div class="error">Profil yüklenemedi.</div>';
     }
 }
@@ -1659,12 +1670,12 @@ function setupNotifications() {
 
     DBService.onNotifications(currentUser.uid, (notifications) => {
         const unreadCount = notifications.filter(n => !n.isRead).length;
-        const badge = document.getElementById('notiBadge');
-        if (unreadCount > 0) {
-            badge.innerText = unreadCount;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+        const profileBtn = document.getElementById('profileBtn');
+
+        if (unreadCount > 0 && profileBtn) {
+            profileBtn.classList.add('has-noti');
+        } else if (profileBtn) {
+            profileBtn.classList.remove('has-noti');
         }
         window._notifications = notifications;
     });
@@ -2029,25 +2040,49 @@ window.shareMoment = async (id) => {
     }
 };
 
-// Fixed Nickname Logic (Allowing longer names and alphanumeric)
+// Fixed Nickname Logic (Handle: @username)
 window.promptNicknameChange = async () => {
-    const currentNick = document.querySelector('.profile-username')?.textContent.replace('@', '') || '';
-    const newNick = prompt("Yeni kullanıcı adınızı girin (Sadece harf ve rakam):", currentNick);
+    const profileUsername = document.querySelector('.profile-username');
+    if (!profileUsername) return;
+    const currentNick = profileUsername.textContent.replace('@', '').trim();
+    const newNick = prompt("Yeni kullanıcı adınızı (@username) girin (3-20 karakter, harf/rakam):", currentNick);
+
     if (!newNick || newNick === currentNick) return;
 
-    // Alphanumeric + underscore, 3-20 chars
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(newNick)) {
-        alert("Geçersiz kullanıcı adı! (3-20 karakter, sadece harf, rakam ve alt çizgi)");
+        alert("Geçersiz kullanıcı adı! (Sadece harf, rakam ve alt çizgi)");
         return;
     }
 
     try {
         const currentUser = AuthService.currentUser();
         await DBService.changeUsername(currentUser.uid, newNick);
-        alert("Başarılı! Yeni adın: @" + newNick);
+        alert("Başarılı! Yeni kullanıcı adınız: @" + newNick);
         openProfileView(currentUser.uid);
     } catch (e) {
         alert("Hata: " + e.message);
+    }
+};
+
+window.promptDisplayNameChange = async () => {
+    const user = AuthService.currentUser();
+    if (!user) return;
+
+    const userProfile = await DBService.getUserProfile(user.uid);
+    const newName = prompt("Görünür isminizi değiştirin:", userProfile.displayName || '');
+
+    if (!newName || newName === userProfile.displayName) return;
+    if (newName.length < 2 || newName.length > 30) {
+        alert("İsim 2-30 karakter arasında olmalıdır.");
+        return;
+    }
+
+    try {
+        await DBService.updateUserProfile(user.uid, { displayName: newName });
+        alert("İsim güncellendi!");
+        openProfileView(user.uid);
+    } catch (e) {
+        alert("İsim güncellenirken hata oluştu: " + e.message);
     }
 };
 
@@ -2156,3 +2191,54 @@ window.updateMoodIcon = (val) => {
     if (moodIcon) moodIcon.textContent = val;
     window._selectedMood = val;
 };
+
+// Final Profile Logic Cleanup
+async function finalizeProfileOpen(uid, isOwnProfile) {
+    if (isOwnProfile) {
+        const profileNotiContent = document.getElementById('profileNotiContent');
+        if (profileNotiContent) {
+            renderNotificationsInto(window._notifications || [], profileNotiContent);
+            // Mark as read when viewing own profile
+            DBService.markNotificationsAsRead(uid).then(() => {
+                const profileBtn = document.getElementById('profileBtn');
+                if (profileBtn) profileBtn.classList.remove('has-noti');
+            });
+        }
+    }
+}
+
+function renderNotificationsInto(notis, container) {
+    if (notis.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:20px; text-align:center; opacity:0.6;">Henüz bir bildirim yok. 😊</div>';
+        return;
+    }
+
+    container.innerHTML = notis.map(n => {
+        let typeText = '';
+        let typeIcon = '';
+        if (n.type === 'follow') { typeText = 'seni takip etmeye başladı'; typeIcon = '👤'; }
+        if (n.type === 'follow_request') { typeText = 'sana takip isteği gönderdi'; typeIcon = '📩'; }
+        if (n.type === 'like') { typeText = 'anını beğendi'; typeIcon = '❤️'; }
+        if (n.type === 'comment') { typeText = 'anına yorum yaptı'; typeIcon = '💬'; }
+
+        return `
+            <div class="noti-item ${n.isRead ? '' : 'unread'}" onclick="window.handleNotiClick('${n.momentId}', '${n.senderUid}')" style="display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;">
+                <div class="noti-avatar" style="width:36px; height:36px; border-radius:50%; overflow:hidden; flex-shrink:0;">
+                    ${n.senderPhoto?.startsWith('http') ? `<img src="${n.senderPhoto}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1);">${n.senderPhoto || '👤'}</div>`}
+                </div>
+                <div class="noti-info" style="flex:1; min-width:0;">
+                    <div style="font-size:0.85rem; color:var(--text-primary);"><b>${n.senderName}</b> ${typeText}</div>
+                    <div style="font-size:0.7rem; color:var(--text-secondary); opacity:0.6;">${new Date(n.createdAt).toLocaleDateString('tr-TR')}</div>
+                </div>
+                <div class="noti-type-icon" style="font-size:1.1rem;">${typeIcon}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Final Hook to call logic AFTER the rest of the profile HTML is appended to innerHTML
+function triggerProfileFinalize(uid, isOwnProfile) {
+    if (typeof finalizeProfileOpen === 'function') {
+        finalizeProfileOpen(uid, isOwnProfile);
+    }
+}
