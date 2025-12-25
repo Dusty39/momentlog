@@ -1,7 +1,14 @@
 /**
- * momentLog - Main Logic (Phase 2 Refactor)
- * Features: Collage Support, Auto-Location, Max 5 Photos, Robust Error Handling.
+ * momentLog - Main Logic (Nuclear Fix v1.4)
  */
+
+// --- Global Error Monitor ---
+window.onerror = function (msg, url, line) {
+    alert("Kritik Hata: " + msg + "\nSatır: " + line);
+    return false;
+};
+
+console.log("momentLog: Script loading...");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2'; // Changed key to avoid conflict/reset
@@ -50,9 +57,15 @@ let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial UI Setup
-    setupEventListeners();
-    applyAppTheme(currentAppTheme);
+    console.log("momentLog: DOM Loaded");
+    try {
+        setupEventListeners();
+        applyAppTheme(currentAppTheme);
+        console.log("momentLog: UI Initialized Successfully");
+    } catch (e) {
+        console.error("Initialization Error:", e);
+        alert("Başlatma hatası: " + e.message);
+    }
 
     // Auth Listener
     AuthService.onAuthStateChanged(async (user) => {

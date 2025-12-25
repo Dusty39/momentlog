@@ -84,9 +84,15 @@ const DBService = {
             const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
             const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
 
-            // Mobile Optimization: Convert Data URL to Blob before upload
-            const response = await fetch(fileData);
-            const blob = await response.blob();
+            // Manual Base64 to Blob conversion
+            const dataParts = fileData.split(',');
+            const mime = dataParts[0].match(/:(.*?);/)[1];
+            const binary = atob(dataParts[1]);
+            const array = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                array[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([array], { type: mime });
 
             const snapshot = await storageRef.put(blob);
             const downloadURL = await snapshot.ref.getDownloadURL();
