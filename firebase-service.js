@@ -154,15 +154,66 @@ const DBService = {
 
     // Anı Sil
     deleteMoment: async (id) => {
-        return db.collection('moments').doc(id).delete();
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const docRef = db.collection('moments').doc(id);
+        const doc = await docRef.get();
+        if (doc.exists && doc.data().userId !== user.uid) {
+            throw new Error("Bu anıyı silme yetkiniz yok!");
+        }
+        return docRef.delete();
     },
 
     // Anı Güncelle
     updateMoment: async (id, data) => {
-        return db.collection('moments').doc(id).update({
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const docRef = db.collection('moments').doc(id);
+        const doc = await docRef.get();
+        if (doc.exists && doc.data().userId !== user.uid) {
+            throw new Error("Bu anıyı güncelleme yetkiniz yok!");
+        }
+
+        return docRef.update({
             ...data,
             updatedAt: new Date().toISOString()
         });
+    },
+
+    // Beğeni Arttır/Azalt
+    toggleLike: async (momentId) => {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+        const docRef = db.collection('moments').doc(momentId);
+        const doc = await docRef.get();
+        if (!doc.exists) return;
+
+        const data = doc.data();
+        const likes = data.likes || [];
+        const index = likes.indexOf(user.uid);
+
+        if (index > -1) {
+            likes.splice(index, 1); // Unlike
+        } else {
+            likes.push(user.uid); // Like
+        }
+
+        return docRef.update({ likes });
+    },
+
+    // Görünürlük Ayarla
+    setMomentVisibility: async (momentId, isPublic) => {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const docRef = db.collection('moments').doc(momentId);
+        const doc = await docRef.get();
+        if (doc.exists && doc.data().userId !== user.uid) {
+            throw new Error("Bu yetkiye sahip değilsiniz!");
+        }
+        return docRef.update({ isPublic });
     },
 
     // Genel Akış (Feed) - Herkesin Public Anıları

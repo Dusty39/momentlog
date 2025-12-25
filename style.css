@@ -1753,6 +1753,7 @@ body.app-theme-vintage .primary-btn {
     height: 100%;
     object-fit: cover;
 }
+
 /* Spotify Wrapper */
 .spotify-wrapper {
     margin-top: 10px;
@@ -1765,4 +1766,180 @@ body.app-theme-vintage .primary-btn {
 .compact-spotify-iframe {
     display: block;
     border: none;
+}
+
+/* --- SOCIAL FEED & CARD STYLES --- */
+.feed-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.feed-card {
+    background: var(--surface);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.feed-card:active {
+    transform: scale(0.98);
+}
+
+.card-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-sm {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.location-sm {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.date-sm {
+    font-size: 11px;
+    opacity: 0.4;
+}
+
+.card-body {
+    position: relative;
+    cursor: pointer;
+    min-height: 200px;
+}
+
+.feed-img {
+    width: 100%;
+    display: block;
+    max-height: 450px;
+    object-fit: cover;
+}
+
+.text-feed {
+    padding: 40px 20px;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    font-style: italic;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+}
+
+.audio-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.card-footer {
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.like-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s;
+}
+
+.like-btn.liked {
+    color: #ff4757;
+}
+
+.like-btn span {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.visibility-status-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.content-preview {
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
+.m-action-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: var(--text);
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.m-action-menu button:active {
+    background: rgba(255, 255, 255, 0.05);
 }

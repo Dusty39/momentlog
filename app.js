@@ -660,6 +660,11 @@ function renderPreview() {
 }
 
 function renderTimeline(filter = "") {
+    if (currentView === 'explore') {
+        renderFeed(filter);
+        return;
+    }
+
     dom.timeline.innerHTML = '';
     const filteredMoments = filter
         ? moments.filter(m =>
@@ -727,11 +732,14 @@ function renderTimeline(filter = "") {
                 const dateObj = new Date(moment.createdAt);
                 const dayStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
                 const locText = moment.location ? moment.location.text : "Konum Yok";
+                const currentUser = AuthService.currentUser();
+                const isOwner = moment.userId === currentUser?.uid;
 
                 item.innerHTML = `
                     <span class="m-date">${dayStr}</span>
                     <span class="m-divider">|</span>
                     <span class="m-location" data-moment-id="${moment.id}">${locText}</span>
+                    ${isOwner ? `
                     <div class="m-action-wrapper">
                         <button class="m-action-trigger" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">⋮</button>
                         <div class="m-action-menu" id="menu-${moment.id}">
@@ -739,13 +747,17 @@ function renderTimeline(filter = "") {
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                 Düzenle
                             </button>
+                            <button onclick="event.stopPropagation(); window.toggleVisibility('${moment.id}', ${!moment.isPublic})">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                ${moment.isPublic ? 'Sadece Ben' : 'Herkese Açık'}
+                            </button>
                             <button class="m-btn-delete" onclick="event.stopPropagation(); window.requestDelete('${moment.id}')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 Sil
                             </button>
                             <button class="m-btn-cancel" onclick="event.stopPropagation(); window.toggleMomentMenu('${moment.id}')">Vazgeç</button>
                         </div>
-                    </div>
+                    </div>` : ''}
                 `;
                 list.appendChild(item);
             });
@@ -1092,3 +1104,88 @@ function escapeHtml(text) {
 }
 
 window.requestDelete = deleteMoment;
+
+// --- Social & Feed Features ---
+
+async function renderFeed(filter = "") {
+    dom.timeline.innerHTML = '<div class="feed-container"></div>';
+    const container = dom.timeline.querySelector('.feed-container');
+
+    // Create a local copy of moments for filtering
+    const filteredMoments = filter
+        ? moments.filter(m => m.content.toLowerCase().includes(filter.toLowerCase()))
+        : moments;
+
+    if (filteredMoments.length === 0) {
+        container.innerHTML = '<div class="empty-state">Henüz paylaşılan bir anı bulunamadı :(</div>';
+        return;
+    }
+
+    filteredMoments.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'feed-card';
+
+        const firstImg = m.media?.find(med => med.type === 'image');
+        const hasAudio = m.media?.some(med => med.type === 'audio');
+        const likesCount = (m.likes || []).length;
+        const currentUser = AuthService.currentUser();
+        const isLiked = m.likes?.includes(currentUser?.uid);
+
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="user-info" onclick="openProfileView('${m.userId}')">
+                    <div class="avatar-sm">👤</div>
+                    <div class="user-meta">
+                        <span class="username">${m.userDisplayName || 'Anonim'}</span>
+                        <span class="location-sm">${m.location?.text || 'Bilinmeyen Konum'}</span>
+                    </div>
+                </div>
+                <span class="date-sm">${new Date(m.createdAt).toLocaleDateString('tr-TR')}</span>
+            </div>
+            
+            <div class="card-body" onclick='openImmersiveView(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
+                ${firstImg ? `<img src="${firstImg.data}" class="feed-img">` : `<div class="text-feed">${escapeHtml(m.content).substring(0, 100)}...</div>`}
+                ${hasAudio ? '<div class="audio-indicator">🎤 Sesli Anı</div>' : ''}
+            </div>
+
+            <div class="card-footer">
+                <div class="action-row">
+                    <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation(); window.toggleLike('${m.id}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        <span>${likesCount} beğeni</span>
+                    </button>
+                    ${m.userId === currentUser?.uid ? `
+                        <button class="visibility-status-btn" onclick="event.stopPropagation(); window.toggleVisibility('${m.id}', ${!m.isPublic})">
+                            ${m.isPublic ? '🌐 Herkese Açık' : '🔒 Sadece Ben'}
+                        </button>
+                    ` : ''}
+                </div>
+                <div class="content-preview">${escapeHtml(m.content).substring(0, 60)}${m.content.length > 60 ? '...' : ''}</div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+window.toggleLike = async (id) => {
+    try {
+        await DBService.toggleLike(id);
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        alert("Giriş yapmalısınız!");
+        console.error(e);
+    }
+};
+
+window.toggleVisibility = async (id, isPublic) => {
+    try {
+        await DBService.setMomentVisibility(id, isPublic);
+        alert(isPublic ? "Artık herkes görebilir!" : "Sadece senin için gizlendi.");
+        // If menu is open, it will close on click outside, but let's refresh
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
