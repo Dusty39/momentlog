@@ -5,7 +5,7 @@
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2'; // Changed key to avoid conflict/reset
-const MAX_PHOTOS = 5;
+const MAX_PHOTOS = 10;
 
 let moments = [];
 let currentMedia = [];
@@ -38,20 +38,63 @@ const dom = {
     previewArea: document.getElementById('mediaPreview'),
     locationStatus: document.getElementById('locationStatus'),
     appThemeBtn: document.getElementById('appThemeBtn'),
+    profileBtn: document.getElementById('profileBtn'),
+    visibilityToggle: document.getElementById('visibilityToggle'),
+    exploreBtn: document.getElementById('exploreBtn'),
 };
 
+let isPublicState = true;
+let currentView = 'my-moments'; // 'my-moments' or 'explore'
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    loadMoments();
-    renderTimeline();
+    // Initial UI Setup
     setupEventListeners();
     applyAppTheme(currentAppTheme);
 
-    // Auto-fetch location quietly
-    fetchLocation();
+    // Auth Listener
+    AuthService.onAuthStateChanged(async (user) => {
+        const loginOverlay = document.getElementById('loginOverlay');
+
+        if (user) {
+            console.log("Kullanıcı giriş yaptı:", user.displayName);
+            loginOverlay.classList.remove('active');
+
+            // Profile Button Avatar
+            if (user.photoURL) {
+                const img = dom.profileBtn.querySelector('img') || document.createElement('img');
+                img.src = user.photoURL;
+                if (!dom.profileBtn.querySelector('img')) dom.profileBtn.appendChild(img);
+                dom.profileBtn.classList.add('has-avatar');
+            }
+
+            // Kullanıcı profilini getir/oluştur
+            await DBService.getUserProfile(user.uid);
+
+            // Verileri Yükle
+            await loadMoments();
+            renderTimeline();
+            fetchLocation();
+        } else {
+            console.log("Kullanıcı giriş yapmadı.");
+            loginOverlay.classList.add('active');
+            dom.profileBtn.classList.remove('has-avatar');
+            moments = [];
+            renderTimeline();
+        }
+    });
+
+    // Login Button
+    document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+        try {
+            await AuthService.signInWithGoogle();
+        } catch (err) {
+            console.error("Giriş hatası:", err);
+            alert("Giriş yapılırken bir hata oluştu: " + err.message);
+        }
+    });
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
@@ -129,6 +172,33 @@ function setupEventListeners() {
         applyAppTheme(currentAppTheme);
         localStorage.setItem('appTheme', currentAppTheme);
     });
+
+    // Profile Button Click
+    dom.profileBtn?.addEventListener('click', () => {
+        const user = AuthService.currentUser();
+        if (user) {
+            openProfileView(user.uid);
+        } else {
+            alert("Lütfen önce giriş yapın.");
+        }
+    });
+
+    // Visibility Toggle
+    dom.visibilityToggle?.addEventListener('click', () => {
+        isPublicState = !isPublicState;
+        const visibleIcon = document.getElementById('visibleIcon');
+        const privateIcon = document.getElementById('privateIcon');
+
+        if (isPublicState) {
+            visibleIcon.classList.remove('hidden');
+            privateIcon.classList.add('hidden');
+            dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
+        } else {
+            visibleIcon.classList.add('hidden');
+            privateIcon.classList.remove('hidden');
+            dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
+        }
+    });
 }
 
 // --- App Theme System ---
@@ -147,12 +217,19 @@ function applyAppTheme(theme) {
 
 // --- Data Operations ---
 
-function loadMoments() {
+async function loadMoments() {
     try {
-        const data = localStorage.getItem(STORAGE_KEY);
-        moments = data ? JSON.parse(data) : [];
+        let data;
+        if (currentView === 'explore') {
+            data = await DBService.getPublicFeed();
+            console.log("Kamu akışı yüklendi:", data.length);
+        } else {
+            data = await DBService.getMyMoments();
+            console.log("Kişisel anılar yüklendi:", data.length);
+        }
+        moments = data || [];
     } catch (e) {
-        console.error("Critical: Failed to load data", e);
+        console.error("Critical: Failed to load data from Firebase", e);
         moments = [];
     }
 }
@@ -173,41 +250,58 @@ function saveMoments() {
     }
 }
 
-function createMoment(text) {
+async function createMoment(text) {
     if (window._editingId) {
-        const idx = moments.findIndex(m => m.id === window._editingId);
-        if (idx !== -1) {
-            moments[idx].content = text.trim();
-            moments[idx].media = [...currentMedia];
-            moments[idx].location = currentLocation;
-            moments[idx].song = currentSong;
-            moments[idx].theme = dom.themeSelect.value;
-        }
+        alert("Düzenleme özelliği şimdilik devre dışı.");
         window._editingId = null;
-        dom.addBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Ekle
-        `;
-    } else {
-        const newMoment = {
-            id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
-            content: text.trim(),
-            createdAt: Date.now(),
-            location: currentLocation,
-            media: [...currentMedia],
-            song: currentSong,
-            theme: dom.themeSelect.value
-        };
-        moments.unshift(newMoment);
+        renderTimeline();
+        return;
     }
 
-    if (saveMoments()) {
+    if (!text.trim() && currentMedia.length === 0) {
+        alert("Boş anı kaydedilemez.");
+        return;
+    }
+
+    const saveBtn = dom.addBtn;
+    const originalBtnText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span>Yükleniyor...</span>';
+
+    try {
+        // Media upload to Firebase Storage
+        const uploadedMedia = [];
+        for (const item of currentMedia) {
+            const downloadURL = await DBService.uploadFile(item.data, item.type);
+            uploadedMedia.push({ type: item.type, data: downloadURL });
+        }
+
+        const newMoment = {
+            content: text.trim(),
+            location: currentLocation,
+            media: uploadedMedia, // Now URLs instead of Base64
+            song: currentSong,
+            theme: dom.themeSelect.value,
+            isPublic: isPublicState
+        };
+
+        await DBService.addMoment(newMoment);
+
+        // Reset
         currentMedia = [];
         currentSong = null;
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
         dom.input.style.height = 'auto';
+
+        await loadMoments();
         renderTimeline();
-        renderPreview();
+    } catch (e) {
+        console.error("Kaydetme hatası:", e);
+        alert("Anı kaydedilirken bir hata oluştu. Lütfen Firebase Storage eklentisinin aktif ve kurallarının doğru olduğunu kontrol edin.");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnText;
     }
 }
 
@@ -303,47 +397,53 @@ async function fetchLocation() {
     dom.locationStatus.classList.remove('hidden');
 
     if (!navigator.geolocation) {
-        useMockLocation();
+        dom.locationStatus.textContent = "📍 Konum belirlenemedi.";
         return;
     }
 
-    const timeout = setTimeout(() => {
-        useMockLocation();
-    }, 5000);
-
     navigator.geolocation.getCurrentPosition(
         async (pos) => {
-            clearTimeout(timeout);
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
 
-            // Reverse Geocoding via Nominatim
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-                const data = await response.json();
-                const address = data.address;
+                // Using a more reliable geocoding approach or better error handling
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+                    headers: { 'Accept-Language': 'tr-TR' }
+                });
 
-                // Simple Format: City, Country
-                const city = address.city || address.town || address.village || address.province || address.state || "";
-                const country = address.country || "";
+                if (!response.ok) throw new Error("Geocoding failed");
+
+                const data = await response.json();
+                const addr = data.address || {};
+
+                // Flexible parsing
+                const city = addr.city || addr.town || addr.village || addr.suburb || addr.district || "";
+                const state = addr.province || addr.state || "";
+                const country = addr.country || "";
 
                 let locationText = "";
                 if (city) locationText = city;
-                if (country) locationText += (locationText ? ", " : "") + country;
+                else if (state) locationText = state;
+
+                if (country && locationText) locationText += `, ${country}`;
+                else if (country) locationText = country;
 
                 currentLocation = {
                     lat, lng,
-                    text: locationText || "Bilinmeyen Konum"
+                    text: locationText || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
                 };
             } catch (e) {
+                console.error("Location error:", e);
                 currentLocation = { lat, lng, text: `${lat.toFixed(4)}, ${lng.toFixed(4)}` };
             }
             dom.locationStatus.textContent = `📍 ${currentLocation.text}`;
         },
         (err) => {
-            clearTimeout(timeout);
-            useMockLocation();
-        }
+            console.error("Geolocation error:", err);
+            dom.locationStatus.textContent = "📍 Konum izni verilmedi.";
+        },
+        { timeout: 10000, enableHighAccuracy: true }
     );
 }
 
@@ -616,16 +716,18 @@ function openImmersiveView(moment) {
         backgroundAudio.play().catch(() => console.log("Auto-play blocked"));
     }
 
-    // Spotify - compact text only with invisible autoplay
+    // Spotify - compact play button + info
     let musicInfo = '';
     let spotifyPlayer = '';
     if (moment.song && moment.song.title) {
-        musicInfo = moment.song.title; // "Artist - Song" format
+        musicInfo = moment.song.title;
         if (moment.song.id) {
-            // Invisible iframe for autoplay
-            spotifyPlayer = `<iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" 
-                width="1" height="1" frameborder="0" allowtransparency="true" allow="encrypted-media; autoplay" 
-                style="position:absolute; opacity:0; pointer-events:none;"></iframe>`;
+            // Visible but compact player
+            spotifyPlayer = `<div class="spotify-wrapper">
+                <iframe src="https://open.spotify.com/embed/track/${moment.song.id}" 
+                width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media; autoplay" 
+                class="compact-spotify-iframe"></iframe>
+            </div>`;
         }
     }
 
@@ -706,9 +808,9 @@ function openImmersiveView(moment) {
         const collageItem = document.createElement('div');
         collageItem.className = 'collage-item';
 
-        const rot = (Math.random() * 6 - 3).toFixed(2);
-        const xOff = (Math.random() * 40 - 20).toFixed(0);
-        const yOff = (Math.random() * 30 - 15).toFixed(0);
+        const rot = (Math.random() * 4 - 2).toFixed(2);
+        const xOff = (Math.random() * 10 - 5).toFixed(0);
+        const yOff = (Math.random() * 6 - 3).toFixed(0);
 
         collageItem.style.transform = `rotate(${rot}deg) translate(${xOff}px, ${yOff}px)`;
         collageItem.style.zIndex = idx;
@@ -788,14 +890,77 @@ function openImmersiveView(moment) {
     document.body.style.overflow = 'hidden';
 }
 
-function handleAddMoment() {
+async function openProfileView(uid) {
+    const view = document.getElementById('profileView');
+    const content = document.getElementById('profileContent');
+    const closeBtn = document.getElementById('closeProfile');
+
+    content.innerHTML = '<div class="loading">Yükleniyor...</div>';
+    view.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const userProfile = await DBService.getUserProfile(uid);
+        // Simplified moments fetch for the profile
+        const userMoments = await DBService.getMyMoments(); // Should ideally be filtered by uid if we view others
+
+        content.innerHTML = `
+            <div class="profile-header">
+                <img src="${userProfile.photoURL || 'default-avatar.png'}" class="profile-avatar-large">
+                <div class="profile-info">
+                    <h2>${userProfile.displayName}</h2>
+                    <p>${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
+                </div>
+            </div>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">${userMoments.length}</span>
+                    <span class="stat-label">Anı</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Takipçi</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">0</span>
+                    <span class="stat-label">Takip</span>
+                </div>
+            </div>
+            <h3>Paylaşılan Anılar</h3>
+            <div class="profile-moments-grid">
+                ${userMoments.map(m => `
+                    <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
+                        ${m.media && m.media.length > 0 ? `<img src="${m.media[0]}">` : '<div class="text-placeholder">📝</div>'}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        closeBtn.onclick = () => {
+            view.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+    } catch (err) {
+        console.error("Profil yükleme hatası:", err);
+        content.innerHTML = '<div class="error">Profil yüklenemedi.</div>';
+    }
+}
+
+// Helper to open immersive view by ID (since we are in grid)
+window.openImmersiveViewById = (id) => {
+    const moment = moments.find(m => m.id === id);
+    if (moment) openImmersiveView(moment);
+};
+
+async function handleAddMoment() {
     const text = dom.input.value;
 
     if (!text.trim() && currentMedia.length === 0) {
         dom.input.focus();
         return;
     }
-    createMoment(text);
+    await createMoment(text);
 }
 
 // Start location story
