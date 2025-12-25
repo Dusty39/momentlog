@@ -29,8 +29,6 @@ const dom = {
     addBtn: document.getElementById('addMomentBtn'),
     timeline: document.getElementById('timeline'),
     searchInput: document.getElementById('searchInput'),
-    exportBtn: document.getElementById('exportBtn'),
-    importInput: document.getElementById('importInput'),
     immersiveView: document.getElementById('immersiveView'),
     playAllBtn: document.getElementById('playAllBtn'),
 
@@ -44,7 +42,6 @@ const dom = {
     // Status/Preview
     previewArea: document.getElementById('mediaPreview'),
     locationStatus: document.getElementById('locationStatus'),
-    appThemeBtn: document.getElementById('appThemeBtn'),
     profileBtn: document.getElementById('profileBtn'),
     visibilityToggle: document.getElementById('visibilityToggle'),
     exploreBtn: document.getElementById('exploreBtn'),
@@ -165,12 +162,6 @@ function setupEventListeners() {
         renderTimeline(e.target.value);
     });
 
-    // Export
-    dom.exportBtn.addEventListener('click', exportData);
-
-    // Import
-    dom.importInput.addEventListener('change', importData);
-
     // Theme change re-render
     dom.themeSelect.addEventListener('change', () => {
         renderTimeline(dom.searchInput.value);
@@ -184,15 +175,6 @@ function setupEventListeners() {
         } else {
             alert("Henüz oynatılacak bir anı yok.");
         }
-    });
-
-    // App Theme Switcher
-    dom.appThemeBtn?.addEventListener('click', () => {
-        const currentIndex = APP_THEMES.indexOf(currentAppTheme);
-        const nextIndex = (currentIndex + 1) % APP_THEMES.length;
-        currentAppTheme = APP_THEMES[nextIndex];
-        applyAppTheme(currentAppTheme);
-        localStorage.setItem('appTheme', currentAppTheme);
     });
 
     // Profile Button Click
@@ -961,6 +943,10 @@ function openImmersiveView(moment) {
             <header class="immersive-header">
                 <h2 class="immersive-date">${dateStr}</h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
+                <button class="share-action-btn" onclick="window.shareMoment('${moment.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    Paylaş
+                </button>
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 
