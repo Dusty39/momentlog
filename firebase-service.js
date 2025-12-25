@@ -454,5 +454,35 @@ const DBService = {
             .orderBy('createdAt', 'desc')
             .get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    // Koleksiyona Üye Ekle (Collaborative)
+    async inviteToJournal(journalId, invitedUid) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const journalRef = db.collection('journals').doc(journalId);
+        return db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(journalRef);
+            if (!doc.exists) throw new Error("Koleksiyon bulunamadı.");
+
+            const data = doc.data();
+            if (data.userId !== user.uid && !data.members?.includes(user.uid)) {
+                throw new Error("Yetkisiz işlem!");
+            }
+
+            const members = data.members || [];
+            if (!members.includes(invitedUid)) {
+                members.push(invitedUid);
+                transaction.update(journalRef, { members: members });
+
+                // Add notification
+                await this.addNotification(invitedUid, {
+                    type: 'collab_invite',
+                    text: `\${user.displayName} sizi "\${data.title}" koleksiyonuna davet etti!`,
+                    momentId: journalId
+                });
+            }
+        });
     }
 };

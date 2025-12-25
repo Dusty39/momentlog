@@ -343,6 +343,7 @@ async function createMoment(text) {
             media: finalMedia,
             song: currentSong,
             theme: dom.themeSelect.value,
+            mood: document.getElementById('moodSelect').value,
             isPublic: isPublicState,
             journalId: document.getElementById('journalSelect').value || null,
             createdAt: dom.momentDate.value ? new Date(dom.momentDate.value).getTime() : Date.now()
@@ -1097,23 +1098,18 @@ async function openProfileView(uid) {
 
         content.innerHTML = `
             <div class="profile-header">
+            <div class="profile-header-simple">
                 <div class="profile-avatar-wrapper ${uid === AuthService.currentUser()?.uid ? 'editable' : ''}" onclick="${uid === AuthService.currentUser()?.uid ? 'window.showAvatarPicker()' : ''}">
                     ${userProfile.photoURL?.startsWith('http') ?
                 `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
-                    ${uid === AuthService.currentUser()?.uid ? '<div class="edit-overlay">📷 Değiştir</div>' : ''}
+                    ${uid === AuthService.currentUser()?.uid ? '<div class="edit-overlay">📷</div>' : ''}
                 </div>
-                <div class="profile-info">
+                <div class="profile-info-minimal">
                     <h2>${userProfile.displayName}</h2>
                     <p class="profile-username">@${userProfile.username || 'isimsiz'}</p>
-                    ${uid === AuthService.currentUser()?.uid ? `
-                        <button class="edit-username-btn" onclick="window.promptNicknameChange()">Kullanıcı Adı Değiştir</button>
-                    ` : ''}
                     <div id="bioContainer" class="bio-container">
-                        <p id="profileBioText">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
-                        ${uid === AuthService.currentUser()?.uid ? `
-                            <button id="editBioBtn" class="edit-bio-inline-btn" onclick="window.enableBioEdit()">Düzenle</button>
-                        ` : ''}
+                        <p id="profileBioText">${userProfile.bio || '...'}</p>
                     </div>
                 </div>
             </div>
@@ -1414,7 +1410,6 @@ window.toggleProfilePrivacy = async (currentPrivacy) => {
         await DBService.updateUserProfile(currentUser.uid, {
             isPrivateProfile: !currentPrivacy
         });
-        alert(`Profiliniz ${!currentPrivacy ? 'Özel' : 'Açık'} hale getirildi.`);
         openProfileView(currentUser.uid);
     } catch (e) {
         alert("Hata: " + e.message);
@@ -1995,3 +1990,74 @@ function renderGrid(momentsToGrid) {
         `;
     }).join('');
 }
+
+// --- UX Enhancement & Nickname Fix ---
+
+window.updateMoodIcon = (val) => {
+    document.getElementById('moodIcon').textContent = val;
+};
+
+// Share Feature: Copy link or Share via Web Share API
+window.shareMoment = async (id) => {
+    const shareData = {
+        title: 'MomentLog Anısı',
+        text: 'Bu anıya MomentLog üzerinden göz at!',
+        url: window.location.href + '?m=' + id
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            await navigator.clipboard.writeText(shareData.url);
+            alert("Anı linki kopyalandı!");
+        }
+    } catch (err) {
+        console.error("Paylaşım hatası:", err);
+    }
+};
+
+// Fixed Nickname Logic (Allowing longer names and alphanumeric)
+window.promptNicknameChange = async () => {
+    const currentNick = document.querySelector('.profile-username')?.textContent.replace('@', '') || '';
+    const newNick = prompt("Yeni kullanıcı adınızı girin (Sadece harf ve rakam):", currentNick);
+    if (!newNick || newNick === currentNick) return;
+
+    // Alphanumeric + underscore, 3-20 chars
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(newNick)) {
+        alert("Geçersiz kullanıcı adı! (3-20 karakter, sadece harf, rakam ve alt çizgi)");
+        return;
+    }
+
+    try {
+        const currentUser = AuthService.currentUser();
+        await DBService.changeUsername(currentUser.uid, newNick);
+        alert("Başarılı! Yeni adın: @" + newNick);
+        openProfileView(currentUser.uid);
+    } catch (e) {
+        alert("Hata: " + e.message);
+    }
+};
+
+// Collaboration: Invite user to journal
+window.inviteToJournal = async (journalId) => {
+    const handle = prompt("Davet etmek istediğiniz kullanıcının @adını girin:");
+    if (!handle) return;
+    const cleanHandle = handle.replace('@', '').trim();
+
+    try {
+        // We'd need to find the user by handle first
+        const users = await DBService.searchUsers(cleanHandle);
+        const target = users.find(u => u.username?.toLowerCase() === cleanHandle.toLowerCase());
+
+        if (!target) {
+            alert("Kullanıcı bulunamadı.");
+            return;
+        }
+
+        await DBService.inviteToJournal(journalId, target.uid);
+        alert(target.displayName + " koleksiyona eklendi!");
+    } catch (e) {
+        alert("Davet hatası: " + e.message);
+    }
+};
