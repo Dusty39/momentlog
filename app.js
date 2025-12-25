@@ -35,7 +35,6 @@ const dom = {
     // Tools
     photoInput: document.getElementById('photoInput'),
     recordBtn: document.getElementById('recordBtn'),
-    dictateBtn: document.getElementById('dictateBtn'),
     musicBtn: document.getElementById('musicBtn'),
     themeSelect: document.getElementById('themeSelect'),
 
@@ -151,9 +150,6 @@ function setupEventListeners() {
     // Audio handling
     dom.recordBtn.addEventListener('click', toggleRecording);
 
-    // Dictation handling
-    dom.dictateBtn.addEventListener('click', toggleDictation);
-
     // Music handling
     dom.musicBtn.addEventListener('click', handleMusicPick);
 
@@ -221,6 +217,14 @@ function setupEventListeners() {
 
         await loadMoments();
         renderTimeline();
+    });
+
+    // App Theme Toggle
+    document.getElementById('appThemeBtn')?.addEventListener('click', () => {
+        const nextIdx = (APP_THEMES.indexOf(currentAppTheme) + 1) % APP_THEMES.length;
+        currentAppTheme = APP_THEMES[nextIdx];
+        localStorage.setItem('appTheme', currentAppTheme);
+        applyAppTheme(currentAppTheme);
     });
 }
 
@@ -610,40 +614,6 @@ async function fetchLocation() {
     );
 }
 
-function toggleDictation() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        alert("Tarayıcınız dikte özelliğini desteklemiyor.");
-        return;
-    }
-
-    if (!isDictating) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'tr-TR';
-        recognition.interimResults = true;
-
-        recognition.onstart = () => {
-            isDictating = true;
-            dom.dictateBtn.classList.add('recording');
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-                .map(result => result[0].transcript)
-                .join('');
-            dom.input.value = transcript;
-            dom.input.style.height = (dom.input.scrollHeight) + 'px';
-        };
-
-        recognition.onerror = () => { stopDictation(); };
-        recognition.onend = () => { stopDictation(); };
-
-        recognition.start();
-        window._currentRecognition = recognition;
-    } else {
-        stopDictation();
-    }
-}
 
 function stopDictation() {
     if (window._currentRecognition) window._currentRecognition.stop();
@@ -1809,25 +1779,6 @@ function setupNostalgia() {
     }
 }
 
-// --- Nickname Management ---
-window.promptNicknameChange = async () => {
-    const newNick = prompt("Yeni kullanıcı adınızı girin (Sadece harf ve rakam, min 3 karakter):");
-    if (!newNick) return;
-
-    if (newNick.length < 3 || !/^[a-zA-Z0-9_]+$/.test(newNick)) {
-        alert("Geçersiz kullanıcı adı! Sadece harf, rakam ve alt çizgi kullanabilirsiniz.");
-        return;
-    }
-
-    try {
-        const currentUser = AuthService.currentUser();
-        await DBService.changeUsername(currentUser.uid, newNick);
-        alert("Kullanıcı adınız @" + newNick + " olarak güncellendi!");
-        openProfileView(currentUser.uid);
-    } catch (e) {
-        alert("Hata: " + e.message);
-    }
-};
 
 // --- User Search Logic ---
 window.toggleUserSearch = () => {

@@ -53,6 +53,7 @@ const DBService = {
                 email: user.email,
                 photoURL: user.photoURL,
                 bio: 'Merhaba, ben momentLog kullanıyorum!',
+                username: null,
                 isPrivateProfile: false, // Default public
                 followers: [],
                 following: [],

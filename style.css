@@ -2948,3 +2948,295 @@ main {
     width: 100%;
     box-sizing: border-box;
 }
+
+/* Absolute Mobile Optimization & Layout Integrity */
+
+:root {
+    --safe-padding: 16px;
+}
+
+body {
+    overflow-x: hidden;
+    position: relative;
+    width: 100vw;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+    max-width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.input-toolbar {
+    padding: 12px var(--safe-padding) !important;
+}
+
+.toolbar-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+}
+
+.toolbar-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* Fix Profile Modal for Mobile */
+#profileView .immersive-content {
+    padding: 0 0 40px 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+}
+
+.profile-header-simple {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px var(--safe-padding);
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-info-minimal h2 {
+    font-size: 1.6rem;
+    margin-bottom: 5px;
+}
+
+.profile-username {
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 15px;
+}
+
+.profile-edit-tools-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+}
+
+.edit-username-btn, .edit-bio-inline-btn {
+    flex: 1;
+    max-width: 150px;
+    padding: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Ensure no width overflow in feed */
+.timeline-feed {
+    padding: 10px var(--safe-padding);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.moment-card {
+    width: 100% !important;
+    margin: 0 0 20px 0 !important;
+    box-sizing: border-box;
+}
+
+/* Header fixes */
+.header-top {
+    padding: 15px var(--safe-padding);
+}
+
+/* Prevent horizontal overflow strictly */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    position: relative;
+}
+
+#app {
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+.input-section {
+    padding: 15px;
+    width: 100%;
+}
+
+.input-toolbar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar-rows {
+    width: 100%;
+}
+
+.toolbar-row {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+/* Modal sizing for mobile */
+.immersive-modal {
+    width: 100vw !important;
+}
+
+.immersive-content {
+    width: 100% !important;
+    padding: 20px !important;
+}
+
+/* Force responsive layout for Profile */
+.profile-view {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+}
+
+.profile-avatar-wrapper.editable:hover .edit-overlay {
+    opacity: 1;
+}
+
+.edit-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--accent);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 3px solid var(--bg-surface);
+    opacity: 0.8;
+}
+
+.bio-edit-area {
+    width: 100%;
+    min-height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    color: white;
+    padding: 10px;
+    font-family: inherit;
+    margin-bottom: 10px;
+}
+
+.bio-edit-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.save-bio-btn, .cancel-bio-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.save-bio-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+}
+
+.cancel-bio-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+/* Ensure Feed image doesn't overflow */
+.feed-img {
+    max-width: 100%;
+    border-radius: 16px;
+    margin: 10px 0;
+}
+
+/* Extreme Mobile Polish - Step 1 Recap */
+
+@media (max-width: 600px) {
+    body {
+        padding: 0 !important;
+    }
+    
+    #app {
+        min-height: 100vh;
+        max-width: 100vw;
+    }
+    
+    .input-section {
+        padding: 20px 15px !important;
+        margin-bottom: 20px;
+        border-radius: 0; /* Full width feel on mobile */
+        border-left: none;
+        border-right: none;
+    }
+    
+    .header-actions {
+        flex-wrap: wrap;
+        padding: 0 10px;
+    }
+    
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .input-toolbar {
+        padding-top: 15px !important;
+    }
+    
+    .toolbar-row {
+        gap: 8px;
+    }
+    
+    .tool-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Fix for profile header width */
+.profile-header {
+    width: 100%;
+}
+
+.profile-info-minimal {
+    width: 100%;
+}
+
+.bio-edit-area {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+}
