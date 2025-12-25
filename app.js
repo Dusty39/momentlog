@@ -295,16 +295,19 @@ async function createMoment(text) {
                 saveBtn.innerHTML = `<span>Yükleniyor (${uploadCount}/${currentMedia.length})...</span>`;
 
                 try {
-                    const downloadURL = await DBService.uploadFile(item.data, item.type);
+                    // Maximum 8 seconds timeout for each file
+                    const uploadPromise = DBService.uploadFile(item.data, item.type);
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+
+                    const downloadURL = await Promise.race([uploadPromise, timeoutPromise]);
+
                     if (downloadURL) {
                         finalMedia.push({ type: item.type, data: downloadURL });
                     } else {
-                        // Fallback to Base64
-                        console.log("Using Base64 fallback for item.");
-                        finalMedia.push(item);
+                        finalMedia.push(item); // Fallback to Base64
                     }
                 } catch (uploadError) {
-                    console.warn("Upload logic error, using fallback:", uploadError);
+                    console.warn("Upload fallback triggered (timeout or failure):", uploadError);
                     finalMedia.push(item);
                 }
             } else {

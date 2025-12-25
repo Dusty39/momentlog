@@ -66,9 +66,18 @@ const DBService = {
         if (!user) throw new Error("Giriş yapmalısınız!");
 
         try {
-            // Check if storage is actually initialized/configured
-            if (!firebase.storage || !firebase.storage().ref()) {
-                console.warn("Storage not initialized, skipping upload.");
+            // Check for storage availability with a try-catch for safety
+            let storageEnabled = false;
+            try {
+                if (firebase.storage && firebase.storage().ref()) {
+                    storageEnabled = true;
+                }
+            } catch (initErr) {
+                console.warn("Storage check failed:", initErr);
+            }
+
+            if (!storageEnabled) {
+                console.warn("Storage not available, fallback to Base64.");
                 return null;
             }
 
