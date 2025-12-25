@@ -251,12 +251,7 @@ function saveMoments() {
 }
 
 async function createMoment(text) {
-    if (window._editingId) {
-        alert("Düzenleme özelliği şimdilik devre dışı.");
-        window._editingId = null;
-        renderTimeline();
-        return;
-    }
+    const isEdit = !!window._editingId;
 
     if (!text.trim() && currentMedia.length === 0) {
         alert("Boş anı kaydedilemez.");
@@ -266,26 +261,38 @@ async function createMoment(text) {
     const saveBtn = dom.addBtn;
     const originalBtnText = saveBtn.innerHTML;
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span>Yükleniyor...</span>';
+    saveBtn.innerHTML = `<span>${isEdit ? 'Güncelleniyor...' : 'Yükleniyor...'}</span>`;
 
     try {
-        // Media upload to Firebase Storage
-        const uploadedMedia = [];
+        // Media upload (only if new media added or keep as is? 
+        // For simplicity, we assume currentMedia holds the final set of URLs/Base64)
+        const finalMedia = [];
         for (const item of currentMedia) {
-            const downloadURL = await DBService.uploadFile(item.data, item.type);
-            uploadedMedia.push({ type: item.type, data: downloadURL });
+            if (item.data.startsWith('data:')) {
+                // New upload
+                const downloadURL = await DBService.uploadFile(item.data, item.type);
+                finalMedia.push({ type: item.type, data: downloadURL });
+            } else {
+                // Already a URL
+                finalMedia.push(item);
+            }
         }
 
-        const newMoment = {
+        const momentData = {
             content: text.trim(),
             location: currentLocation,
-            media: uploadedMedia, // Now URLs instead of Base64
+            media: finalMedia,
             song: currentSong,
             theme: dom.themeSelect.value,
             isPublic: isPublicState
         };
 
-        await DBService.addMoment(newMoment);
+        if (isEdit) {
+            await DBService.updateMoment(window._editingId, momentData);
+            window._editingId = null;
+        } else {
+            await DBService.addMoment(momentData);
+        }
 
         // Reset
         currentMedia = [];
@@ -293,24 +300,40 @@ async function createMoment(text) {
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
         dom.input.style.height = 'auto';
+        dom.addBtn.innerHTML = `Kaydet <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
         await loadMoments();
         renderTimeline();
     } catch (e) {
-        console.error("Kaydetme hatası:", e);
-        alert("Anı kaydedilirken bir hata oluştu. Lütfen Firebase Storage eklentisinin aktif ve kurallarının doğru olduğunu kontrol edin.");
+        console.error("Hata:", e);
+        alert("İşlem başarısız oldu.");
     } finally {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = originalBtnText;
+        // Button text is reset in success, but handle error case
+        if (!window._editingId) {
+            dom.addBtn.innerHTML = `Kaydet <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+        }
     }
 }
 
-function deleteMoment(id) {
+async function deleteMoment(id) {
     if (confirm('Bu günlük sayfası silinsin mi?')) {
-        moments = moments.filter(m => m.id !== id);
-        saveMoments();
+        try {
+            await DBService.deleteMoment(id);
+            await loadMoments();
+            renderTimeline();
+        } catch (e) {
+            console.error("Silme hatası:", e);
+            alert("Anı silinemedi.");
+        }
     }
 }
+
+// Global UI helper
+window.requestDelete = (id) => {
+    deleteMoment(id);
+    window.toggleMomentMenu(id);
+};
 
 // --- Media Handlers ---
 

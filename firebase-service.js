@@ -102,6 +102,19 @@ const DBService = {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
 
+    // Anı Sil
+    deleteMoment: async (id) => {
+        return db.collection('moments').doc(id).delete();
+    },
+
+    // Anı Güncelle
+    updateMoment: async (id, data) => {
+        return db.collection('moments').doc(id).update({
+            ...data,
+            updatedAt: new Date().toISOString()
+        });
+    },
+
     // Genel Akış (Feed) - Herkesin Public Anıları
     getPublicFeed: async () => {
         const snapshot = await db.collection('moments')
