@@ -2969,3 +2969,49 @@ html {
     background-clip: text;
     color: transparent;
 }
+
+/* --- Dashboard Footer & Explore Search --- */
+.dashboard-footer {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    font-family: var(--font-heading);
+    transition: opacity 0.3s ease;
+}
+
+.designer-name {
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.explore-search-container {
+    padding: 20px var(--safe-padding);
+    width: 100%;
+    box-sizing: border-box;
+    animation: fadeIn 0.3s ease;
+}
+
+.explore-search-box {
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.explore-search-box:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.hidden-mode {
+    display: none !important;
+}

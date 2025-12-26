@@ -226,18 +226,41 @@ function setupEventListeners() {
     }
 
     const exploreBtn = document.getElementById('exploreBtn');
+    const inputSectionBase = document.querySelector('.input-section');
+    const dashboardFooter = document.getElementById('dashboardFooter');
+    const searchHeaderBtn = document.getElementById('searchBtn'); // Assuming this exists for global search
+
     if (exploreBtn) {
         exploreBtn.onclick = async () => {
             currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
+
             if (currentView === 'explore') {
                 exploreBtn.classList.add('active');
                 exploreBtn.title = "Kişisel Anılarım";
                 document.querySelector('h1').textContent = "Keşfet";
+
+                // Hide input and footer in explore
+                inputSectionBase?.classList.add('hidden-mode');
+                dashboardFooter?.classList.add('hidden-mode');
+                searchHeaderBtn?.classList.add('hidden-mode');
+
+                // Ensure the search bar is injected if not already there
+                injectExploreSearch();
             } else {
                 exploreBtn.classList.remove('active');
                 exploreBtn.title = "Keşfet (Akış)";
                 document.querySelector('h1').textContent = "momentLog";
+
+                // Show input and footer back
+                inputSectionBase?.classList.remove('hidden-mode');
+                dashboardFooter?.classList.remove('hidden-mode');
+                searchHeaderBtn?.classList.remove('hidden-mode');
+
+                // Remove explore search
+                const expSearch = document.getElementById('exploreSearchContainer');
+                if (expSearch) expSearch.remove();
             }
+
             await loadMoments();
             renderTimeline();
         };
@@ -821,8 +844,13 @@ function renderPreview() {
 }
 
 function renderTimeline(filter = "") {
+    // Determine active filter if none provided
+    const globalSearch = document.getElementById('searchInput');
+    const exploreSearch = document.getElementById('exploreSearchInput');
+    const activeFilter = filter || (currentView === 'explore' ? exploreSearch?.value : globalSearch?.value) || "";
+
     if (currentView === 'explore') {
-        renderFeed(filter);
+        renderFeed(activeFilter);
         return;
     }
 
@@ -1378,35 +1406,28 @@ window.requestDelete = deleteMoment;
 
 // --- Social & Feed Features ---
 
-async function renderFeed() {
-    console.log("Rendering Social Feed...");
+async function renderFeed(filter = "") {
+    console.log("Rendering Social Feed, Filter:", filter);
     const feedContainer = dom.timeline;
-    feedContainer.innerHTML = '<div class="loading">Akış yükleniyor...</div>';
 
-    try {
-        const moments = await DBService.getPublicMoments();
-        const currentUser = AuthService.currentUser();
-        const userProfile = currentUser ? await DBService.getUserProfile(currentUser.uid) : null;
+    // We expect 'moments' to already be loaded by loadMoments()
+    const searchLower = filter.toLowerCase();
+    const filtered = moments.filter(m => {
+        const textMatch = m.content.toLowerCase().includes(searchLower);
+        const userMatch = m.userDisplayName?.toLowerCase().includes(searchLower);
+        const locMatch = m.location?.text?.toLowerCase().includes(searchLower);
+        return textMatch || userMatch || locMatch;
+    });
 
-        // Requirement: "Kullanıcı sadece takip ettiklerinin anılarını görebilecek."
-        // "Arkadaşlar birbirinin anılarını görebilecek diğerleri göremeyecek."
-        const filteredMoments = moments.filter(m => {
-            if (m.userId === currentUser?.uid) return true; // My moments
+    feedContainer.innerHTML = '<div class="feed-container"></div>';
+    const container = feedContainer.querySelector('.feed-container');
 
-            // If viewing public feed:
-            // 1. If it's public AND from a user I follow -> YES
-            // 2. If it's public AND from any user (if we allow global discovery)
-            // User requirement says: "kullanıcı sadece takip ettiklerinin anılarını görebilecek"
-            return userProfile?.following?.includes(m.userId);
-        });
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state">${filter ? 'Eşleşen anı bulunamadı.' : 'Henüz paylaşım yok.'}</div>`;
+        return;
+    }
 
-        feedContainer.innerHTML = '<div class="feed-container"></div>';
-        const container = feedContainer.querySelector('.feed-container');
-
-        if (filteredMoments.length === 0) {
-            container.innerHTML = '<div class="empty-state">Henüz takip ettiğin kimse paylaşım yapmadı. Yeni arkadaşlar keşfet!</div>';
-            return;
-        }
+    filtered.forEach(m => {
 
         filteredMoments.forEach(m => {
             const card = document.createElement('div');
@@ -2200,7 +2221,12 @@ window.openThemeSelector = () => {
         { value: 'romantic', label: 'Romantik', icon: '💕' },
         { value: 'sad', label: 'Melankolik', icon: '🌧️' },
         { value: 'energetic', label: 'Enerjik', icon: '⚡' },
-        { value: 'focus', label: 'Odaklı', icon: '🧘' }
+        { value: 'focus', label: 'Odaklı', icon: '🧘' },
+        { value: 'vintage', label: 'Vintage', icon: '🎞️' },
+        { value: 'neon', label: 'Neon Gece', icon: '🌃' },
+        { value: 'oceanic', label: 'Okyanus', icon: '🌊' },
+        { value: 'forest', label: 'Orman', icon: '🌲' },
+        { value: 'minimal', label: 'Minimal', icon: '⚪' }
     ];
     window.openSelector('Anı Teması Seç', items, (val) => {
         window._selectedTheme = val;
@@ -2282,3 +2308,31 @@ function triggerProfileFinalize(uid, isOwnProfile) {
         finalizeProfileOpen(uid, isOwnProfile);
     }
 }
+// --- Explore Mode Enhancements ---
+
+
+function injectExploreSearch() {
+    // Prevent duplicate injection
+    if (document.getElementById('exploreSearchContainer')) return;
+
+    const timeline = document.getElementById('timeline');
+    if (!timeline) return;
+
+    const container = document.createElement('div');
+    container.id = 'exploreSearchContainer';
+    container.className = 'explore-search-container';
+    container.innerHTML = `
+        <input type="text" id="exploreSearchInput" class="explore-search-box" placeholder="Dünya çapındaki anılarda ara...">
+    `;
+
+    // Insert before the timeline content
+    timeline.parentNode.insertBefore(container, timeline);
+
+    const searchInput = document.getElementById('exploreSearchInput');
+    searchInput.addEventListener('input', (e) => {
+        renderTimeline(e.target.value);
+    });
+}
+
+// Initial placeholder or export if needed
+window.injectExploreSearch = injectExploreSearch;
