@@ -409,7 +409,8 @@ async function createMoment(text) {
             window._editingId = null;
         } else {
             // Include current photo in the moment snapshot for feed
-            const userProfile = await DBService.getUserProfile(currentUser.uid);
+            const user = AuthService.currentUser();
+            const userProfile = await DBService.getUserProfile(user.uid);
             await DBService.addMoment({
                 ...momentData,
                 userPhotoURL: userProfile.photoURL
@@ -1977,7 +1978,8 @@ window.createJournalPrompt = async () => {
     try {
         await DBService.createJournal(title, emoji);
         alert("Koleksiyon oluşturuldu!");
-        window.showJournalTab(AuthService.currentUser().uid);
+        const user = AuthService.currentUser();
+        if (user) window.showJournalTab(user.uid);
         loadUserJournals();
     } catch (e) {
         alert("Hata: " + e.message);
@@ -2146,8 +2148,9 @@ window.openSelector = (title, items, onSelect) => {
 };
 
 window.openJournalSelector = () => {
-    const journalSelect = document.getElementById('journalSelect'); // Support legacy or just use DB
-    DBService.getUserJournals(AuthService.currentUser().uid).then(journals => {
+    const user = AuthService.currentUser();
+    if (!user) return alert("Hata: Kullanıcı oturumu bulunamadı.");
+    DBService.getUserJournals(user.uid).then(journals => {
         const items = journals.map(j => ({ value: j.id, label: j.name, icon: '📖' }));
         items.unshift({ value: '', label: 'Hiçbiri', icon: '❌' });
 
