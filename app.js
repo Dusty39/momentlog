@@ -317,7 +317,7 @@ async function loadMoments() {
     try {
         let data;
         if (currentView === 'explore') {
-            data = await DBService.getPublicFeed();
+            data = await DBService.getPublicMoments();
             console.log("Kamu akışı yüklendi:", data.length);
         } else {
             data = await DBService.getMyMoments();
@@ -405,16 +405,22 @@ async function createMoment(text) {
         };
 
         if (isEdit) {
+            console.log("Moment güncelleniyor:", window._editingId);
             await DBService.updateMoment(window._editingId, momentData);
             window._editingId = null;
         } else {
-            // Include current photo in the moment snapshot for feed
             const user = AuthService.currentUser();
+            if (!user) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yapın.");
+
+            console.log("Yeni anı kaydediliyor, kullanıcı:", user.uid);
             const userProfile = await DBService.getUserProfile(user.uid);
+
+            // Critical Payload Check
             await DBService.addMoment({
                 ...momentData,
-                userPhotoURL: userProfile.photoURL
+                userPhotoURL: userProfile?.photoURL || user.photoURL || '👤'
             });
+            console.log("Anı başarıyla kaydedildi.");
         }
 
         // Reset

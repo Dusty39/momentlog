@@ -187,10 +187,10 @@ const DBService = {
         const momentData = {
             ...data,
             userId: user.uid,
-            userDisplayName: user.displayName,
-            userPhotoURL: data.userPhotoURL || user.photoURL,
+            userDisplayName: user.displayName || 'İsimsiz',
+            userPhotoURL: data.userPhotoURL || user.photoURL || '👤',
             likes: [],
-            createdAt: data.createdAt || new Date().toISOString()
+            createdAt: data.createdAt || Date.now()
         };
 
         return db.collection('moments').add(momentData);

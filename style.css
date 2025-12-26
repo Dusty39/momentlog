@@ -2497,6 +2497,7 @@ body.app-theme-vintage .primary-btn {
     overflow-x: auto;
     padding-bottom: 10px;
     scrollbar-width: none;
+}
 
 /* --- FINAL MOBILE POLISH & INTEGRITY --- */
 
@@ -2556,7 +2557,8 @@ body {
     border-top: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
-.tool-btn, .tool-icon-wrapper {
+.tool-btn,
+.tool-icon-wrapper {
     width: 44px;
     height: 44px;
     background: rgba(255, 255, 255, 0.05);
@@ -2572,21 +2574,21 @@ body {
     .header-top {
         padding: 15px var(--safe-padding);
     }
-    
+
     .header-actions {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .icon-btn {
         width: 32px;
         height: 32px;
     }
-    
+
     h1 {
         font-size: 1.5rem;
     }
-    
+
     .input-section {
         padding: 20px 15px;
         border-radius: 0;
@@ -2594,7 +2596,8 @@ body {
 }
 
 /* Modal and Profile Fixes */
-.immersive-modal, #profileView {
+.immersive-modal,
+#profileView {
     width: 100vw !important;
 }
 
@@ -2603,19 +2606,22 @@ body {
 }
 
 .bio-edit-area {
-    font-size: 16px; /* Fix iOS Zoom */
+    font-size: 16px;
+    /* Fix iOS Zoom */
 }
 
 /* --- Perfect Alignment Fix --- */
 .toolbar-row {
     display: flex;
     gap: 12px;
-    align-items: stretch; /* Stretch to same height */
+    align-items: stretch;
+    /* Stretch to same height */
     justify-content: flex-start;
     padding: 4px 0;
 }
 
-.tool-btn, .tool-icon-wrapper {
+.tool-btn,
+.tool-icon-wrapper {
     width: 44px !important;
     height: 44px !important;
     min-width: 44px;
@@ -2636,7 +2642,7 @@ body {
     overflow: hidden;
 }
 
-.toolbar-row.secondary .tool-btn, 
+.toolbar-row.secondary .tool-btn,
 .toolbar-row.secondary .tool-icon-wrapper {
     background: rgba(255, 255, 255, 0.02);
 }
@@ -2673,7 +2679,8 @@ body {
     flex-wrap: wrap;
 }
 
-.tool-btn, .tool-icon-wrapper {
+.tool-btn,
+.tool-icon-wrapper {
     width: 44px !important;
     height: 44px !important;
     min-width: 44px;
@@ -2730,25 +2737,29 @@ body {
 .custom-selector-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(10px);
-    z-index: 2000;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 3000;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding: 20px;
-    animation: fadeIn 0.3s ease;
+    padding: 0;
+    animation: fadeIn 0.2s ease;
 }
 
 .selector-sheet {
     background: var(--bg-surface);
     width: 100%;
-    max-width: 450px;
-    border-radius: 24px 24px 0 0;
-    padding: 24px;
+    max-width: 500px;
+    border-radius: 32px 32px 0 0;
+    padding: 30px 20px;
     border: 1px solid var(--border-subtle);
     border-bottom: none;
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    overflow-y: auto;
+    max-height: 85vh;
 }
 
 .selector-title {
@@ -2761,12 +2772,13 @@ body {
 
 .selector-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 15px;
+    width: 100%;
 }
 
 .selector-item {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle);
     padding: 20px 10px;
     border-radius: 16px;
@@ -2779,7 +2791,7 @@ body {
 }
 
 .selector-item:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-color: var(--accent);
     transform: translateY(-4px);
 }
@@ -2827,7 +2839,8 @@ body {
 
 /* Fix for crooked items */
 .toolbar-row {
-    justify-content: center; /* Center them for better aesthetic */
+    justify-content: center;
+    /* Center them for better aesthetic */
 }
 
 /* --- FINAL POLISH V3 --- */
@@ -2866,7 +2879,9 @@ body {
 }
 
 /* Ensure no horizontal overflow ever */
-#app, body, html {
+#app,
+body,
+html {
     overflow-x: hidden !important;
 }
 
@@ -2922,14 +2937,23 @@ body {
 }
 
 .profile-btn.has-noti {
-    border: 3px solid #f87171 !important; /* Redish border for unread */
+    border: 3px solid #f87171 !important;
+    /* Redish border for unread */
     animation: pulseBorder 2s infinite;
 }
 
 @keyframes pulseBorder {
-    0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(248, 113, 113, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(248, 113, 113, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+    }
 }
 
 .profile-username {
