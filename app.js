@@ -1454,7 +1454,7 @@ async function renderFeed(filter = "") {
                 <span class="date-sm">${new Date(m.createdAt).toLocaleDateString('tr-TR')}</span>
             </div>
             
-            <div class="card-body" onclick='openImmersiveView(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
+            <div class="card-body" onclick="openImmersiveViewById('${m.id}')">
                 ${firstImg ? `<img src="${firstImg.data}" class="feed-img">` : `<div class="text-feed">${escapeHtml(m.content).substring(0, 100)}...</div>`}
                 ${hasAudio ? '<div class="audio-indicator">🎤 Sesli Anı</div>' : ''}
             </div>
