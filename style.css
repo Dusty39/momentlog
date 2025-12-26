@@ -1297,7 +1297,7 @@ textarea::placeholder {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 600px) {
+@media screen and (max-width: 600px) {
     .story-content {
         padding: 10px;
     }
@@ -2570,7 +2570,7 @@ body {
     transition: all 0.2s;
 }
 
-@media (max-width: 600px) {
+@media screen and (max-width: 600px) {
     .header-top {
         padding: 15px var(--safe-padding);
     }

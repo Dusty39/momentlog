@@ -372,24 +372,29 @@ async function createMoment(text) {
                 saveBtn.innerHTML = `<span>Yükleniyor (${uploadCount}/${currentMedia.length})...</span>`;
 
                 try {
-                    // Maximum 8 seconds timeout for each file
                     const uploadPromise = DBService.uploadFile(item.data, item.type);
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
-
                     const downloadURL = await Promise.race([uploadPromise, timeoutPromise]);
 
                     if (downloadURL) {
                         finalMedia.push({ type: item.type, data: downloadURL });
                     } else {
-                        finalMedia.push(item); // Fallback to Base64
+                        finalMedia.push(item);
                     }
                 } catch (uploadError) {
-                    console.warn("Upload fallback triggered (timeout or failure):", uploadError);
+                    console.warn("Upload fallback:", uploadError);
                     finalMedia.push(item);
                 }
             } else {
                 finalMedia.push(item);
             }
+        }
+
+        const rawDate = dom.momentDate.value;
+        let finalCreatedAt = Date.now();
+        if (rawDate) {
+            const parsedDate = new Date(rawDate).getTime();
+            if (!isNaN(parsedDate)) finalCreatedAt = parsedDate;
         }
 
         const momentData = {
@@ -401,21 +406,26 @@ async function createMoment(text) {
             mood: window._selectedMood || '😊',
             isPublic: isPublicState,
             journalId: window._selectedJournal || null,
-            createdAt: dom.momentDate.value ? new Date(dom.momentDate.value).getTime() : Date.now()
+            createdAt: finalCreatedAt
         };
 
         if (isEdit) {
-            console.log("Moment güncelleniyor:", window._editingId);
+            console.log("Moment silinip güncelleniyor (ID):", window._editingId);
             await DBService.updateMoment(window._editingId, momentData);
             window._editingId = null;
         } else {
             const user = AuthService.currentUser();
-            if (!user) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yapın.");
+            if (!user) throw new Error("Oturum bulunamadı, lütfen tekrar giriş yapın (Auth Error).");
 
-            console.log("Yeni anı kaydediliyor, kullanıcı:", user.uid);
-            const userProfile = await DBService.getUserProfile(user.uid);
+            console.log("Profil bilgileri alınıyor...");
+            let userProfile = null;
+            try {
+                userProfile = await DBService.getUserProfile(user.uid);
+            } catch (err) {
+                console.warn("Profil alınamadı, anonim devam ediliyor:", err);
+            }
 
-            // Critical Payload Check
+            console.log("Firestore kaydı başlıyor...");
             await DBService.addMoment({
                 ...momentData,
                 userPhotoURL: userProfile?.photoURL || user.photoURL || '👤'
@@ -423,7 +433,7 @@ async function createMoment(text) {
             console.log("Anı başarıyla kaydedildi.");
         }
 
-        // Reset
+        // Reset flow
         currentMedia = [];
         currentSong = null;
         dom.momentDate.valueAsDate = new Date();
@@ -432,10 +442,14 @@ async function createMoment(text) {
         window._selectedJournal = null;
         window._selectedTheme = 'default';
         window._selectedMood = '😊';
+
+        // UI Reset
         const moodIcon = document.getElementById('moodIcon');
         if (moodIcon) moodIcon.textContent = '😊';
         const journalBtn = document.getElementById('journalBtn');
         if (journalBtn) journalBtn.querySelector('span').textContent = '📂';
+        const themeBtn = document.getElementById('themeBtn');
+        if (themeBtn) themeBtn.querySelector('span').textContent = '🎨';
 
         dom.input.style.height = 'auto';
         dom.addBtn.innerHTML = `Kaydet <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
@@ -443,8 +457,11 @@ async function createMoment(text) {
         await loadMoments();
         renderTimeline();
     } catch (e) {
-        console.error("Hata:", e);
-        alert("İşlem başarısız oldu: " + e.message);
+        console.error("Anı Ekleme Hatası (Detaylı):", e);
+        // Provide more context in the alert
+        let errorMsg = e.message;
+        if (e.code === 'permission-denied') errorMsg = "Erişim reddedildi! Lütfen Firestore kurallarını güncellediğinizden emin olun.";
+        alert("İşlem başarısız oldu: " + errorMsg);
     } finally {
         saveBtn.disabled = false;
         // Button text is reset in success, but handle error case
@@ -2120,14 +2137,28 @@ window.inviteToJournal = async (journalId) => {
 // --- Custom Selector Logic ---
 
 window.openSelector = (title, items, onSelect) => {
+    // Remove any existing overlay first to prevent stacking
+    const existing = document.querySelector('.custom-selector-overlay');
+    if (existing) existing.remove();
+
     const overlay = document.createElement('div');
     overlay.className = 'custom-selector-overlay';
+
+    // Use unique ID for the handler to identify this specific instance
+    const selectorId = 'sel_' + Date.now();
+    window[selectorId] = (value) => {
+        onSelect(value);
+        overlay.remove();
+        document.body.style.overflow = '';
+        delete window[selectorId];
+    };
+
     overlay.innerHTML = `
         <div class="selector-sheet">
             <div class="selector-title">${title}</div>
             <div class="selector-grid">
                 ${items.map(item => `
-                    <div class="selector-item" onclick="window._handleSelect('${item.value}')">
+                    <div class="selector-item" onclick="window['${selectorId}']('${item.value}')">
                         <span>${item.icon}</span>
                         <label>${item.label}</label>
                     </div>
@@ -2139,16 +2170,11 @@ window.openSelector = (title, items, onSelect) => {
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
 
-    window._handleSelect = (value) => {
-        onSelect(value);
-        overlay.remove();
-        document.body.style.overflow = '';
-    };
-
     overlay.onclick = (e) => {
         if (e.target === overlay) {
             overlay.remove();
             document.body.style.overflow = '';
+            delete window[selectorId];
         }
     };
 };
@@ -2171,30 +2197,35 @@ window.openJournalSelector = () => {
 window.openThemeSelector = () => {
     const items = [
         { value: 'default', label: 'Varsayılan', icon: '🎨' },
-        { value: 'polaroid', label: 'Polaroid', icon: '📸' },
-        { value: 'neon', label: 'Neon', icon: '🌈' },
-        { value: 'cyberpunk', label: 'Cyberpunk', icon: '🤖' }
+        { value: 'romantic', label: 'Romantik', icon: '💕' },
+        { value: 'sad', label: 'Melankolik', icon: '🌧️' },
+        { value: 'energetic', label: 'Enerjik', icon: '⚡' },
+        { value: 'focus', label: 'Odaklı', icon: '🧘' }
     ];
-    window.openSelector('Tema Seç', items, (val) => {
+    window.openSelector('Anı Teması Seç', items, (val) => {
         window._selectedTheme = val;
-        // Optionally update button icon
+        const btn = document.getElementById('themeBtn');
+        if (btn) btn.querySelector('span').textContent = '🎨'; // Just a visual reset or specific icon
     });
 };
 
 window.openMoodSelector = () => {
     const items = [
         { value: '😊', label: 'Mutlu', icon: '😊' },
-        { value: '🤩', label: 'Heyecanlı', icon: '🤩' },
-        { value: '😌', label: 'Huzurlu', icon: '😌' },
-        { value: '🤔', label: 'Dalgın', icon: '🤔' },
-        { value: '��', label: 'Yorgun', icon: '😴' },
-        { value: '😢', label: 'Üzgün', icon: '😢' }
+        { value: '😔', label: 'Üzgün', icon: '😔' },
+        { value: '🔥', label: 'Heyecanlı', icon: '🔥' },
+        { value: '😴', label: 'Yorgun', icon: '😴' },
+        { value: '🧘', label: 'Huzurlu', icon: '🧘' }
     ];
-    window.openSelector('Ruh Hali Seç', items, (val) => {
-        window.updateMoodIcon(val);
+    window.openSelector('Ruh Halini Seç', items, (val) => {
+        window._selectedMood = val;
+        const moodIcon = document.getElementById('moodIcon');
+        if (moodIcon) moodIcon.textContent = val;
     });
 };
 
+// The original window.updateMoodIcon is now redundant if openMoodSelector handles it directly.
+// Keeping it for now as the instruction didn't explicitly remove it, but its usage might change.
 window.updateMoodIcon = (val) => {
     const moodIcon = document.getElementById('moodIcon');
     if (moodIcon) moodIcon.textContent = val;
