@@ -2973,10 +2973,10 @@ html {
 /* --- Dashboard Footer & Explore Search --- */
 .dashboard-footer {
     text-align: center;
-    padding: 20px 0;
-    font-size: 0.85rem;
+    padding: 30px 0 10px;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    opacity: 0.6;
+    opacity: 0.5;
     font-family: var(--font-heading);
     transition: opacity 0.3s ease;
 }

@@ -1409,27 +1409,26 @@ window.requestDelete = deleteMoment;
 async function renderFeed(filter = "") {
     console.log("Rendering Social Feed, Filter:", filter);
     const feedContainer = dom.timeline;
+    try {
 
-    // We expect 'moments' to already be loaded by loadMoments()
-    const searchLower = filter.toLowerCase();
-    const filtered = moments.filter(m => {
-        const textMatch = m.content.toLowerCase().includes(searchLower);
-        const userMatch = m.userDisplayName?.toLowerCase().includes(searchLower);
-        const locMatch = m.location?.text?.toLowerCase().includes(searchLower);
-        return textMatch || userMatch || locMatch;
-    });
+        // We expect 'moments' to already be loaded by loadMoments()
+        const searchLower = filter.toLowerCase();
+        const filtered = moments.filter(m => {
+            const textMatch = m.content.toLowerCase().includes(searchLower);
+            const userMatch = m.userDisplayName?.toLowerCase().includes(searchLower);
+            const locMatch = m.location?.text?.toLowerCase().includes(searchLower);
+            return textMatch || userMatch || locMatch;
+        });
 
-    feedContainer.innerHTML = '<div class="feed-container"></div>';
-    const container = feedContainer.querySelector('.feed-container');
+        feedContainer.innerHTML = '<div class="feed-container"></div>';
+        const container = feedContainer.querySelector('.feed-container');
 
-    if (filtered.length === 0) {
-        container.innerHTML = `<div class="empty-state">${filter ? 'Eşleşen anı bulunamadı.' : 'Henüz paylaşım yok.'}</div>`;
-        return;
-    }
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-state">${filter ? 'Eşleşen anı bulunamadı.' : 'Henüz paylaşım yok.'}</div>`;
+            return;
+        }
 
-    filtered.forEach(m => {
-
-        filteredMoments.forEach(m => {
+        filtered.forEach(m => {
             const card = document.createElement('div');
             card.className = 'feed-card';
 

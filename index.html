@@ -69,15 +69,6 @@
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
                     </button>
-                    <button id="userSearchBtn" class="icon-btn" title="Kullanıcı Ara"
-                        onclick="window.toggleUserSearch()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <polyline points="23 21 20 18 23 15"></polyline>
-                        </svg>
-                    </button>
                     <button id="exploreBtn" class="icon-btn" title="Keşfet (Akış)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,9 +173,6 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="dashboardFooter" class="dashboard-footer">
-                            Created with ❤️ by <span class="designer-name">Serhat Aykış</span>
-                        </div>
                     </div>
                     <div class="input-actions">
                         <span id="locationStatus" class="location-badge hidden"></span>
@@ -223,9 +211,15 @@
                     <!-- Moments will be injected here -->
                 </div>
 
-                <div id="mapView" class="map-container-view hidden">
-                    <div id="mapInstance"></div>
+                <div id="dashboardFooter" class="dashboard-footer">
+                    Created with ✨ by <span class="designer-name">Serhat Aykış</span>
                 </div>
+
+            </div>
+
+            <div id="mapView" class="map-container-view hidden">
+                <div id="mapInstance"></div>
+            </div>
         </main>
         <div id="immersiveView" class="immersive-modal hidden">
             <!-- Content will be injected via JS -->
