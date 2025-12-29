@@ -127,9 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         applyAppTheme(currentAppTheme);
 
         // Initial render based on saved view
-        if (currentView === 'explore') {
+        // Initial render based on saved view
+        if (window.setView && currentView) {
+            window.setView(currentView);
+        } else if (currentView === 'explore') {
+            // Fallback
             const exploreBtn = document.getElementById('exploreBtn');
-            if (exploreBtn) exploreBtn.click(); // Trigger explore logic
+            if (exploreBtn) exploreBtn.click();
         }
 
         console.log("momentLog: UI Initialized Successfully");
@@ -290,57 +294,39 @@ function setupEventListeners() {
     const dashboardFooter = document.getElementById('dashboardFooter');
     const searchHeaderBtn = document.getElementById('searchBtn');
 
-    // Home Button Logic
+    // View Switching Logic
+    window.setView = async (viewName) => {
+        if (currentView === viewName) return;
+
+        currentView = viewName;
+        localStorage.setItem('momentLog_lastView', currentView);
+
+        if (currentView === 'explore') {
+            exploreBtn?.classList.add('active');
+            homeBtn?.classList.remove('active');
+            document.querySelector('h1').textContent = "Keşfet";
+
+            inputSectionBase?.classList.add('hidden-mode');
+            dashboardFooter?.classList.add('hidden-mode');
+        } else {
+            exploreBtn?.classList.remove('active');
+            homeBtn?.classList.add('active');
+            document.querySelector('h1').textContent = "momentLog";
+
+            inputSectionBase?.classList.remove('hidden-mode');
+            dashboardFooter?.classList.remove('hidden-mode');
+        }
+
+        await loadMoments();
+        renderTimeline();
+    };
+
     if (homeBtn) {
-        homeBtn.onclick = () => {
-            if (currentView === 'explore') {
-                // Switch back to My Moments
-                exploreBtn.click();
-            } else {
-                // Already at home, maybe scroll to top or refresh
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        };
+        homeBtn.onclick = () => window.setView('my-moments');
     }
 
     if (exploreBtn) {
-        exploreBtn.onclick = async () => {
-            currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
-            localStorage.setItem('momentLog_lastView', currentView); // Save View
-
-            if (currentView === 'explore') {
-                exploreBtn.classList.add('active');
-                exploreBtn.title = "Kişisel Anılarım";
-                document.querySelector('h1').textContent = "Keşfet";
-
-                if (homeBtn) homeBtn.classList.remove('active'); // Home inactive
-
-                // Hide input and footer in explore
-                inputSectionBase?.classList.add('hidden-mode');
-                dashboardFooter?.classList.add('hidden-mode');
-                // searchHeaderBtn?.classList.add('hidden-mode'); // Keep unified search
-
-                // NO injectExploreSearch() - Unified Search!
-            } else {
-                exploreBtn.classList.remove('active');
-                exploreBtn.title = "Keşfet (Akış)";
-                document.querySelector('h1').textContent = "momentLog";
-
-                if (homeBtn) homeBtn.classList.add('active'); // Home active
-
-                // Show input and footer back
-                inputSectionBase?.classList.remove('hidden-mode');
-                dashboardFooter?.classList.remove('hidden-mode');
-                searchHeaderBtn?.classList.remove('hidden-mode');
-
-                // Remove explore search
-                const expSearch = document.getElementById('exploreSearchContainer');
-                if (expSearch) expSearch.remove();
-            }
-
-            await loadMoments();
-            renderTimeline();
-        };
+        exploreBtn.onclick = () => window.setView('explore');
     }
 
     const appThemeBtn = document.getElementById('appThemeBtn');
@@ -1625,7 +1611,7 @@ window.toggleVisibility = async (id, isPublic) => {
         if (currentView === 'explore') renderFeed();
         else renderTimeline();
     } catch (e) {
-        alert("Görünürlük hatası: " + e.message);
+        showModal('Hata', "Görünürlük hatası: " + e.message);
     }
 };
 // --- Avatar & Profile Helpers ---
@@ -1639,10 +1625,10 @@ window.updateAvatar = async (newAvatar) => {
         await DBService.updateUserProfile(currentUser.uid, {
             photoURL: newAvatar
         });
-        alert("Profil güncellendi!");
+        showModal('Başarılı', "Profil güncellendi!");
         openProfileView(currentUser.uid);
     } catch (e) {
-        alert("Hata: " + e.message);
+        showModal('Hata', "Hata: " + e.message);
     }
 };
 
@@ -1663,7 +1649,7 @@ window.handleProfilePhotoUpload = async (input) => {
         };
         reader.readAsDataURL(file);
     } catch (e) {
-        alert("Yükleme hatası: " + e.message);
+        showModal('Hata', "Yükleme hatası: " + e.message);
     }
 };
 
@@ -1754,7 +1740,7 @@ window.handleCommentLike = async (momentId, commentId) => {
         await DBService.toggleCommentLike(momentId, commentId);
         await window.loadComments(momentId);
     } catch (e) {
-        alert(e.message);
+        showModal('Hata', e.message);
     }
 };
 
@@ -1763,7 +1749,7 @@ window.submitComment = async (momentId) => {
     const text = input.value.trim();
     if (!text) return;
     if (text.length > 160) {
-        alert("Yorum 160 karakteri geçemez!");
+        showModal('Uyarı', "Yorum 160 karakteri geçemez!");
         return;
     }
 
@@ -1777,7 +1763,7 @@ window.submitComment = async (momentId) => {
             countSpan.innerText = parseInt(countSpan.innerText) + 1;
         }
     } catch (e) {
-        alert("Yorum gönderilemedi: " + e.message);
+        showModal('Hata', "Yorum gönderilemedi: " + e.message);
     }
 };
 
