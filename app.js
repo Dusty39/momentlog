@@ -100,6 +100,7 @@ function initializeSelectors() {
 
 let isPublicState = false;
 let currentView = 'my-moments'; // 'my-moments' or 'explore'
+let isRealLocationActive = false; // New state for Gold Tick
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'default';
 
@@ -435,6 +436,49 @@ function saveMoments() {
     }
 }
 
+// --- Real Location Logic ---
+window.handleRealLocation = () => {
+    if (!navigator.geolocation) {
+        showModal('Hata', "Tarayıcınız konum servisini desteklemiyor.");
+        return;
+    }
+
+    const locBtn = document.getElementById('addLocationBtn');
+    locBtn.innerHTML = '⏳';
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const { latitude, longitude } = position.coords;
+            isRealLocationActive = true;
+
+            // Reverse Geocoding (Basic approximation or API if available)
+            // For now specific coords, can use reverse geocoding API here
+            currentLocation = {
+                text: `${latitude.toFixed(2)}, ${longitude.toFixed(2)} (GPS)`,
+                lat: latitude,
+                lng: longitude
+            };
+
+            dom.locationStatus.textContent = "✅ Gerçek Konum Alındı";
+            dom.locationStatus.classList.remove('hidden');
+            locBtn.classList.add('active-location');
+            locBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            `;
+        },
+        (err) => {
+            console.error(err);
+            showModal('Konum Hatası', "Konum alınamadı. Lütfen izinleri kontrol edin.");
+            locBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            `;
+            isRealLocationActive = false;
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+};
+
+// --- Create Moment ---
 async function createMoment(text) {
     const isEdit = !!window._editingId;
 
@@ -486,6 +530,7 @@ async function createMoment(text) {
         const momentData = {
             content: text.trim(),
             location: currentLocation,
+            isRealLocation: isRealLocationActive, // Save Gold Tick status
             media: finalMedia,
             song: currentSong,
             theme: window._selectedTheme || 'default',
@@ -522,9 +567,22 @@ async function createMoment(text) {
         // Reset flow
         currentMedia = [];
         currentSong = null;
+        isRealLocationActive = false;
+        currentLocation = null;
         dom.momentDate.valueAsDate = new Date();
         dom.previewArea.innerHTML = '';
         dom.input.value = '';
+        dom.locationStatus.textContent = '';
+        dom.locationStatus.classList.add('hidden');
+
+        const locBtn = document.getElementById('addLocationBtn');
+        if (locBtn) {
+            locBtn.classList.remove('active-location');
+            locBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            `;
+        }
+
         window._selectedJournal = null;
         window._selectedTheme = 'default';
         window._selectedMood = '😊';
@@ -1105,7 +1163,10 @@ function openImmersiveView(moment) {
         </div>
         <div class="immersive-content">
             <header class="immersive-header">
-                <h2 class="immersive-date">${dateStr}</h2>
+                <h2 class="immersive-date">
+                    ${dateStr} 
+                    ${moment.isRealLocation ? '<span class="verified-tick-large" title="Gerçek Konum">✅</span>' : ''}
+                </h2>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
                 <button class="share-action-btn" onclick="window.shareMoment('${moment.id}')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
@@ -1161,7 +1222,8 @@ function openImmersiveView(moment) {
         if (item.type === 'text') {
             collageItem.innerHTML = `<div class="scattered-text">${escapeHtml(item.content)}</div>`;
         } else {
-            const hasPin = dom.themeSelect.value === 'pinboard' ? '<div class="pin"></div>' : '';
+            const currentTheme = dom.themeSelect ? dom.themeSelect.value : 'default';
+            const hasPin = currentTheme === 'pinboard' ? '<div class="pin"></div>' : '';
             collageItem.innerHTML = `
                 <div class="img-container polaroid-frame">
                     ${hasPin}
@@ -1512,7 +1574,10 @@ async function renderFeed(filter = "") {
                     `<span>${m.userPhotoURL || '👤'}</span>`}
                     </div>
                     <div class="user-meta">
-                        <span class="username">${m.userDisplayName || 'Anonim'}</span>
+                        <span class="username">
+                            ${m.userDisplayName || 'Anonim'}
+                            ${m.isRealLocation ? '<span class="verified-tick" title="Gerçek Konum">✅</span>' : ''}
+                        </span>
                         <span class="location-sm">${m.location?.text || 'Bilinmeyen Konum'}</span>
                     </div>
                 </div>

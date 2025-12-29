@@ -3015,6 +3015,7 @@ html {
 .hidden-mode {
     display: none !important;
 }
+
 /* --- Custom Modal --- */
 .custom-modal {
     position: fixed;
@@ -3094,6 +3095,42 @@ html {
 }
 
 @keyframes scaleIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Real Location Features */
+.verified-tick {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 4px;
+    font-size: 0.9em;
+    filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+    cursor: help;
+}
+
+.verified-tick-large {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+    font-size: 1.2em;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+}
+
+.tool-btn.active-location {
+    color: #ffd700 !important;
+    /* Gold */
+    border-color: #ffd700 !important;
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.tool-btn.active-location svg {
+    stroke: #ffd700;
 }
