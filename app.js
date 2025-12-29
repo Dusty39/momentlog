@@ -527,10 +527,24 @@ async function createMoment(text) {
             if (!isNaN(parsedDate)) finalCreatedAt = parsedDate;
         }
 
+        // Determine Location: GPS > Manual Input > Default
+        const manualLocInput = document.getElementById('manualLocationInput');
+        let finalLocation = currentLocation; // Start with GPS if exists
+
+        if (manualLocInput && manualLocInput.value.trim() !== '') {
+            // Overwrite or create location object with manual text
+            // If GPS was active, keep coords but update text
+            if (finalLocation) {
+                finalLocation.text = manualLocInput.value.trim();
+            } else {
+                finalLocation = { text: manualLocInput.value.trim() };
+            }
+        }
+
         const momentData = {
             content: text.trim(),
-            location: currentLocation,
-            isRealLocation: isRealLocationActive, // Save Gold Tick status
+            location: finalLocation,
+            isRealLocation: isRealLocationActive, // Remains true only if GPS was used
             media: finalMedia,
             song: currentSong,
             theme: window._selectedTheme || 'default',
@@ -582,6 +596,9 @@ async function createMoment(text) {
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg>
             `;
         }
+
+        const locInput = document.getElementById('manualLocationInput');
+        if (locInput) locInput.value = '';
 
         window._selectedJournal = null;
         window._selectedTheme = 'default';
@@ -1147,9 +1164,12 @@ function openImmersiveView(moment) {
         </button>
     `).join('');
 
+    const isOwner = AuthService.currentUser()?.uid === moment.userId;
+    const themeSwitcherStyle = isOwner ? '' : 'style="display:none"';
+
     view.innerHTML = `
         <button class="close-immersive" id="closeImmersive">×</button>
-        <button class="theme-switcher-btn" id="themeSwitcherBtn" title="Tema Değiştir">
+        <button class="theme-switcher-btn" id="themeSwitcherBtn" title="Tema Değiştir" ${themeSwitcherStyle}>
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="13.5" cy="6.5" r=".5"></circle>
                 <circle cx="17.5" cy="10.5" r=".5"></circle>
