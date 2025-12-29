@@ -1100,7 +1100,7 @@ function openImmersiveView(moment) {
     const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
     // Use current app theme as base (Safety check)
-    const activeTheme = dom.themeSelect ? dom.themeSelect.value : 'default';
+    const activeTheme = (dom.themeSelect && dom.themeSelect.value) ? dom.themeSelect.value : 'default';
     view.className = `immersive-modal theme-${activeTheme}`;
 
     const images = moment.media.filter(m => m.type === 'image');
@@ -1222,7 +1222,7 @@ function openImmersiveView(moment) {
         if (item.type === 'text') {
             collageItem.innerHTML = `<div class="scattered-text">${escapeHtml(item.content)}</div>`;
         } else {
-            const currentTheme = dom.themeSelect ? dom.themeSelect.value : 'default';
+            const currentTheme = (dom.themeSelect && dom.themeSelect.value) ? dom.themeSelect.value : 'default';
             const hasPin = currentTheme === 'pinboard' ? '<div class="pin"></div>' : '';
             collageItem.innerHTML = `
                 <div class="img-container polaroid-frame">
@@ -1498,7 +1498,9 @@ window.editMoment = (id) => {
     currentMedia = [...moment.media];
     currentLocation = moment.location;
     currentSong = moment.song;
-    dom.themeSelect.value = moment.theme || 'default';
+    if (dom.themeSelect) {
+        dom.themeSelect.value = moment.theme || 'default';
+    }
 
     // Set date for editing
     if (moment.createdAt) {

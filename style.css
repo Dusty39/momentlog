@@ -3134,3 +3134,29 @@ html {
 .tool-btn.active-location svg {
     stroke: #ffd700;
 }
+
+/* Share Button Fix */
+.share-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.share-action-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.share-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
