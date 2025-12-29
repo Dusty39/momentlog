@@ -23,6 +23,49 @@ let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
 
+// --- Custom Modal Helper ---
+function showModal(title, message, isConfirm = false) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('customModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMsg = document.getElementById('modalMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+
+        if (!modal) {
+            // Fallback if modal HTML is missing
+            if (isConfirm) resolve(confirm(message));
+            else { alert(message); resolve(true); }
+            return;
+        }
+
+        modalTitle.textContent = title;
+        modalMsg.textContent = message;
+
+        modal.classList.remove('hidden');
+        cancelBtn.style.display = isConfirm ? 'block' : 'none';
+
+        const handleConfirm = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            modal.classList.add('hidden');
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+    });
+}
+
 // --- Selectors ---
 let dom = {};
 
@@ -70,13 +113,29 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.momentDate.valueAsDate = new Date();
     }
 
+    // View Persistence
+    const savedView = localStorage.getItem('momentLog_lastView');
+    if (savedView) {
+        currentView = savedView;
+        if (currentView === 'explore') {
+            document.body.classList.add('explore-active');
+        }
+    }
+
     try {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
+
+        // Initial render based on saved view
+        if (currentView === 'explore') {
+            const exploreBtn = document.getElementById('exploreBtn');
+            if (exploreBtn) exploreBtn.click(); // Trigger explore logic
+        }
+
         console.log("momentLog: UI Initialized Successfully");
     } catch (e) {
         console.error("Initialization Error:", e);
-        alert("Başlatma hatası: " + e.message);
+        showModal("Başlatma Hatası", e.message);
     }
 
     // Auth Listener
@@ -193,7 +252,7 @@ function setupEventListeners() {
                 const story = new StoryMode(moments);
                 story.start();
             } else {
-                alert("Henüz oynatılacak bir anı yok.");
+                showModal('Bilgi', "Henüz oynatılacak bir anı yok.");
             }
         };
     }
@@ -203,7 +262,7 @@ function setupEventListeners() {
         profileBtn.onclick = () => {
             const user = AuthService.currentUser();
             if (user) openProfileView(user.uid);
-            else alert("Lütfen önce giriş yapın.");
+            else showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
         };
     }
 
@@ -226,30 +285,48 @@ function setupEventListeners() {
     }
 
     const exploreBtn = document.getElementById('exploreBtn');
+    const homeBtn = document.getElementById('homeBtn'); // New Home Button
     const inputSectionBase = document.querySelector('.input-section');
     const dashboardFooter = document.getElementById('dashboardFooter');
-    const searchHeaderBtn = document.getElementById('searchBtn'); // Assuming this exists for global search
+    const searchHeaderBtn = document.getElementById('searchBtn');
+
+    // Home Button Logic
+    if (homeBtn) {
+        homeBtn.onclick = () => {
+            if (currentView === 'explore') {
+                // Switch back to My Moments
+                exploreBtn.click();
+            } else {
+                // Already at home, maybe scroll to top or refresh
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+    }
 
     if (exploreBtn) {
         exploreBtn.onclick = async () => {
             currentView = currentView === 'my-moments' ? 'explore' : 'my-moments';
+            localStorage.setItem('momentLog_lastView', currentView); // Save View
 
             if (currentView === 'explore') {
                 exploreBtn.classList.add('active');
                 exploreBtn.title = "Kişisel Anılarım";
                 document.querySelector('h1').textContent = "Keşfet";
 
+                if (homeBtn) homeBtn.classList.remove('active'); // Home inactive
+
                 // Hide input and footer in explore
                 inputSectionBase?.classList.add('hidden-mode');
                 dashboardFooter?.classList.add('hidden-mode');
-                searchHeaderBtn?.classList.add('hidden-mode');
+                // searchHeaderBtn?.classList.add('hidden-mode'); // Keep unified search
 
-                // Ensure the search bar is injected if not already there
-                injectExploreSearch();
+                // NO injectExploreSearch() - Unified Search!
             } else {
                 exploreBtn.classList.remove('active');
                 exploreBtn.title = "Keşfet (Akış)";
                 document.querySelector('h1').textContent = "momentLog";
+
+                if (homeBtn) homeBtn.classList.add('active'); // Home active
 
                 // Show input and footer back
                 inputSectionBase?.classList.remove('hidden-mode');
@@ -307,7 +384,7 @@ function setupEventListeners() {
     // Custom Selectors
     safeAddListener('journalBtn', 'click', () => {
         const currentUser = AuthService.currentUser();
-        if (!currentUser) return alert("Lütfen önce giriş yapın.");
+        if (!currentUser) return showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
         window.openJournalSelector();
     });
 
@@ -363,9 +440,9 @@ function saveMoments() {
         return true;
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
-            alert('Hafıza doldu! Lütfen bazı eski kayıtları silin veya daha az fotoğraf ekleyin.');
+            showModal('Hafıza Doldu', 'Lütfen bazı eski kayıtları silin veya daha az fotoğraf ekleyin.');
         } else {
-            alert('Kaydetme başarısız: ' + e.message);
+            showModal('Hata', 'Kaydetme başarısız: ' + e.message);
         }
         console.error(e);
         return false;
@@ -376,7 +453,7 @@ async function createMoment(text) {
     const isEdit = !!window._editingId;
 
     if (!text.trim() && currentMedia.length === 0) {
-        alert("Boş anı kaydedilemez.");
+        showModal('Uyarı', "Boş anı kaydedilemez.");
         return;
     }
 
@@ -484,7 +561,7 @@ async function createMoment(text) {
         // Provide more context in the alert
         let errorMsg = e.message;
         if (e.code === 'permission-denied') errorMsg = "Erişim reddedildi! Lütfen Firestore kurallarını güncellediğinizden emin olun.";
-        alert("İşlem başarısız oldu: " + errorMsg);
+        showModal('İşlem Başarısız', errorMsg);
     } finally {
         saveBtn.disabled = false;
         // Button text is reset in success, but handle error case
@@ -495,14 +572,15 @@ async function createMoment(text) {
 }
 
 async function deleteMoment(id) {
-    if (confirm('Bu günlük sayfası silinsin mi?')) {
+    const confirmed = await showModal('Silinsin mi?', 'Bu günlük sayfasını silmek istediğinize emin misiniz?', true);
+    if (confirmed) {
         try {
             await DBService.deleteMoment(id);
             await loadMoments();
             renderTimeline();
         } catch (e) {
             console.error("Silme hatası:", e);
-            alert("Anı silinemedi.");
+            showModal('Hata', "Anı silinemedi.");
         }
     }
 }
@@ -779,21 +857,22 @@ function importData(e) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
         try {
             const importedMoments = JSON.parse(event.target.result);
             if (!Array.isArray(importedMoments)) throw new Error("Format geçersiz.");
 
-            if (confirm(`${importedMoments.length} anı içe aktarılsın mı? Mevcut anılarınızla birleştirilecek.`)) {
+            const confirmed = await showModal('İçe Aktar', `${importedMoments.length} anı içe aktarılsın mı? Mevcut anılarınızla birleştirilecek.`, true);
+            if (confirmed) {
                 // Merge by ID to avoid duplicates
                 const existingIds = new Set(moments.map(m => m.id));
                 const newOnly = importedMoments.filter(m => !existingIds.has(m.id));
                 moments = [...newOnly, ...moments];
                 saveMoments();
-                alert("İçe aktarma başarılı!");
+                showModal('Başarılı', "İçe aktarma başarılı!");
             }
         } catch (err) {
-            alert("Dosya okunamadı veya format hatalı.");
+            showModal('Hata', "Dosya okunamadı veya format hatalı.");
         }
     };
     reader.readAsText(file);
