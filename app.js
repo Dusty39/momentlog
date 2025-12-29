@@ -129,11 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initial render based on saved view
         // Initial render based on saved view
         if (window.setView && currentView) {
-            window.setView(currentView);
-        } else if (currentView === 'explore') {
+            // Force re-render on init even if state matches
+            window.setView(currentView, true);
+        } else {
             // Fallback
-            const exploreBtn = document.getElementById('exploreBtn');
-            if (exploreBtn) exploreBtn.click();
+            renderTimeline();
         }
 
         console.log("momentLog: UI Initialized Successfully");
@@ -295,8 +295,8 @@ function setupEventListeners() {
     const searchHeaderBtn = document.getElementById('searchBtn');
 
     // View Switching Logic
-    window.setView = async (viewName) => {
-        if (currentView === viewName) return;
+    window.setView = async (viewName, force = false) => {
+        if (!force && currentView === viewName) return;
 
         currentView = viewName;
         localStorage.setItem('momentLog_lastView', currentView);
@@ -1041,8 +1041,8 @@ function openImmersiveView(moment) {
     const dateObj = new Date(moment.createdAt);
     const dateStr = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Use current app theme as base
-    const activeTheme = dom.themeSelect.value;
+    // Use current app theme as base (Safety check)
+    const activeTheme = dom.themeSelect ? dom.themeSelect.value : 'default';
     view.className = `immersive-modal theme-${activeTheme}`;
 
     const images = moment.media.filter(m => m.type === 'image');
@@ -1598,16 +1598,20 @@ window.handleFollowAction = async (targetUid, action) => {
 window.toggleLike = async (id) => {
     try {
         await DBService.toggleLike(id);
+        // Refresh data to reflect changes
+        await loadMoments();
         if (currentView === 'explore') renderFeed();
         else renderTimeline();
     } catch (e) {
-        alert("Beğeni hatası: " + e.message);
+        showModal('Hata', "Beğeni hatası: " + e.message);
     }
 };
 
 window.toggleVisibility = async (id, isPublic) => {
     try {
         await DBService.setMomentVisibility(id, isPublic);
+        // Refresh data
+        await loadMoments();
         if (currentView === 'explore') renderFeed();
         else renderTimeline();
     } catch (e) {
