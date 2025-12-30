@@ -1714,13 +1714,51 @@ window.handleFollowAction = async (targetUid, action) => {
 };
 
 window.toggleLike = async (id) => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) {
+        showModal('Giriş Gerekli', 'Beğenmek için giriş yapmalısınız.');
+        return;
+    }
+
+    // Optimistic UI update
+    const likeBtn = document.querySelector(`[onclick*="toggleLike('${id}')"]`);
+    const likeCountSpan = likeBtn?.querySelector('span');
+    const wasLiked = likeBtn?.classList.contains('liked');
+
+    if (likeBtn) {
+        likeBtn.classList.toggle('liked');
+        const svg = likeBtn.querySelector('svg');
+        if (svg) svg.setAttribute('fill', wasLiked ? 'none' : 'currentColor');
+        if (likeCountSpan) {
+            const currentCount = parseInt(likeCountSpan.textContent) || 0;
+            likeCountSpan.textContent = wasLiked ? Math.max(0, currentCount - 1) : currentCount + 1;
+        }
+    }
+
     try {
         await DBService.toggleLike(id);
-        // Refresh data to reflect changes
-        await loadMoments();
-        if (currentView === 'explore') renderFeed();
-        else renderTimeline();
+        // Silent refresh - don't reload entire feed, just update local data
+        const momentIndex = moments.findIndex(m => m.id === id);
+        if (momentIndex !== -1) {
+            const likes = moments[momentIndex].likes || [];
+            if (wasLiked) {
+                moments[momentIndex].likes = likes.filter(uid => uid !== currentUser.uid);
+            } else {
+                moments[momentIndex].likes = [...likes, currentUser.uid];
+            }
+        }
     } catch (e) {
+        // Revert optimistic update on error
+        if (likeBtn) {
+            likeBtn.classList.toggle('liked');
+            const svg = likeBtn.querySelector('svg');
+            if (svg) svg.setAttribute('fill', wasLiked ? 'currentColor' : 'none');
+            if (likeCountSpan) {
+                const currentCount = parseInt(likeCountSpan.textContent) || 0;
+                likeCountSpan.textContent = wasLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+            }
+        }
+        console.error('Like error:', e);
         showModal('Hata', "Beğeni hatası: " + e.message);
     }
 };
@@ -1836,8 +1874,9 @@ window.loadComments = async (momentId) => {
 
         list.innerHTML = comments.map(c => {
             const isLiked = c.likes?.includes(currentUser?.uid);
+            const canDelete = currentUser?.uid === c.userId; // Comment author can delete
             return `
-                <div class="comment-item">
+                <div class="comment-item" id="comment-${c.id}">
                     <div class="comment-user-info" onclick="openProfileView('${c.userId}')">
                         ${c.userPhoto?.startsWith('http') || c.userPhoto?.startsWith('data:') ?
                     `<img src="${c.userPhoto}" class="comment-avatar">` :
@@ -1851,6 +1890,7 @@ window.loadComments = async (momentId) => {
                                 ❤️ <span>${c.likes?.length || 0}</span>
                             </button>
                             <span class="comment-date">${new Date(c.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                            ${canDelete ? `<button class="comment-delete-btn" onclick="window.deleteComment('${momentId}', '${c.id}')" title="Yorumu Sil">🗑️</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -1868,6 +1908,28 @@ window.handleCommentLike = async (momentId, commentId) => {
         await window.loadComments(momentId);
     } catch (e) {
         showModal('Hata', e.message);
+    }
+};
+
+window.deleteComment = async (momentId, commentId) => {
+    // Optimistic UI - hide comment immediately
+    const commentEl = document.getElementById(`comment-${commentId}`);
+    if (commentEl) commentEl.style.opacity = '0.5';
+
+    try {
+        await DBService.deleteComment(momentId, commentId);
+        // Remove from DOM
+        if (commentEl) commentEl.remove();
+        // Update count
+        const countSpan = document.getElementById(`comment-count-${momentId}`);
+        if (countSpan) {
+            countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
+        }
+    } catch (e) {
+        // Revert on error
+        if (commentEl) commentEl.style.opacity = '1';
+        console.error('Delete comment error:', e);
+        showModal('Hata', 'Yorum silinemedi: ' + e.message);
     }
 };
 

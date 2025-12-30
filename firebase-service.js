@@ -315,6 +315,17 @@ const DBService = {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
 
+    // Yorum Sil
+    async deleteComment(momentId, commentId) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        await db.collection('moments').doc(momentId).collection('comments').doc(commentId).delete();
+        await db.collection('moments').doc(momentId).update({
+            commentsCount: firebase.firestore.FieldValue.increment(-1)
+        });
+    },
+
     // Yorum Beğen / Beğeniyi Kaldır
     async toggleCommentLike(momentId, commentId) {
         const user = auth.currentUser;

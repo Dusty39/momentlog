@@ -3281,3 +3281,21 @@ html {
     width: 18px;
     height: 18px;
 }
+
+/* --- Comment Delete Button --- */
+.comment-delete-btn {
+    background: transparent;
+    border: none;
+    font-size: 0.75rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.comment-delete-btn:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.15);
+}
