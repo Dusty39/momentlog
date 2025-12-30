@@ -1200,12 +1200,13 @@ function openImmersiveView(moment) {
         </div>
         <div class="immersive-content">
             <header class="immersive-header">
+                <span class="immersive-username">${moment.userDisplayName || 'Anonim'}</span>
                 <h2 class="immersive-date">
                     ${dateStr} 
                     ${moment.isRealLocation ? '<span class="gold-verified-badge" title="Doğrulanmış Konum">✓</span>' : ''}
                 </h2>
                 ${moment.isRealLocation && moment.location ? `<p class="immersive-real-location">📍 ${moment.location.text}</p>` : ''}
-                ${!moment.isRealLocation && moment.location ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
+                ${moment.notes ? `<div class="immersive-location-tag">${moment.notes}</div>` : ''}
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 

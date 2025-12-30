@@ -3308,3 +3308,54 @@ html {
     font-weight: 400;
     opacity: 0.9;
 }
+
+/* --- Immersive Username --- */
+.immersive-username {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    margin-bottom: 4px;
+    display: block;
+}
+
+/* --- Redesigned Gold Verified Badge (Brush Stroke) --- */
+.gold-verified-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #1a1a1a;
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 25%, #FFB300 50%, #FFA000 75%, #FFD700 100%);
+    border-radius: 4px;
+    transform: rotate(-2deg) skewX(-2deg);
+    box-shadow: 
+        3px 3px 0 rgba(0,0,0,0.15),
+        inset 0 2px 4px rgba(255,255,255,0.3),
+        inset 0 -2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.gold-verified-badge::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(255,215,0,0.1) 2px,
+        rgba(255,215,0,0.1) 4px
+    );
+    border-radius: 6px;
+    z-index: -1;
+}
