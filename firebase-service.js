@@ -297,11 +297,16 @@ const DBService = {
             }));
 
             // Enrich moments with user data
-            return moments.map(m => ({
-                ...m,
-                userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
-                userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
-            }));
+            console.log('User profiles fetched:', userProfiles);
+            return moments.map(m => {
+                const profile = userProfiles[m.userId];
+                console.log('Moment userId:', m.userId, 'Profile username:', profile?.username, 'Profile displayName:', profile?.displayName);
+                return {
+                    ...m,
+                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                };
+            });
         } catch (e) {
             console.error("Public Feed error:", e);
             throw e;

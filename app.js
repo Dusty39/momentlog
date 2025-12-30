@@ -544,24 +544,18 @@ async function createMoment(text) {
             if (!isNaN(parsedDate)) finalCreatedAt = parsedDate;
         }
 
-        // Determine Location: GPS > Manual Input > Default
+        // Separate Manual Location from GPS Location
         const manualLocInput = document.getElementById('manualLocationInput');
-        let finalLocation = currentLocation; // Start with GPS if exists
+        const manualLocationText = manualLocInput?.value.trim() || null;
 
-        if (manualLocInput && manualLocInput.value.trim() !== '') {
-            // Overwrite or create location object with manual text
-            // If GPS was active, keep coords but update text
-            if (finalLocation) {
-                finalLocation.text = manualLocInput.value.trim();
-            } else {
-                finalLocation = { text: manualLocInput.value.trim() };
-            }
-        }
+        // GPS location stays as-is (only populated if isRealLocationActive)
+        const gpsLocation = isRealLocationActive ? currentLocation : null;
 
         const momentData = {
             content: text.trim(),
-            location: finalLocation,
-            isRealLocation: isRealLocationActive, // Remains true only if GPS was used
+            location: gpsLocation, // GPS only - for verified locations
+            manualLocation: manualLocationText, // User-entered "Neredesin?" text
+            isRealLocation: isRealLocationActive,
             media: finalMedia,
             song: currentSong,
             theme: window._selectedTheme || 'default',
@@ -1206,8 +1200,8 @@ function openImmersiveView(moment) {
                     ${dateStr} 
                     ${moment.isRealLocation ? '<span class="gold-verified-badge" title="Doğrulanmış Konum">✓</span>' : ''}
                 </h2>
-                ${moment.isRealLocation && moment.location ? `<p class="immersive-real-location">📍 ${moment.location.text}</p>` : ''}
-                ${!moment.isRealLocation && moment.location?.text ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
+                ${moment.isRealLocation && moment.location?.text ? `<p class="immersive-real-location">📍 ${moment.location.text}</p>` : ''}
+                ${moment.manualLocation ? `<div class="immersive-location-tag">${moment.manualLocation}</div>` : ''}
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 
@@ -1627,7 +1621,7 @@ async function renderFeed(filter = "") {
                             ${m.userDisplayName || 'Anonim'}
                             ${m.isRealLocation ? '<span class="gold-tick-sm" title="Doğrulanmış Konum">✓</span>' : ''}
                         </span>
-                        <span class="location-sm">${m.location?.text || 'Bilinmeyen Konum'}</span>
+                        <span class="location-sm">${m.manualLocation || m.location?.text || ''}</span>
                     </div>
                 </div>
                 <span class="date-sm">${new Date(m.createdAt).toLocaleDateString('tr-TR')}</span>
