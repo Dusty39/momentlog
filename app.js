@@ -590,7 +590,7 @@ async function createMoment(text) {
             console.log("Firestore kaydı başlıyor...");
             await DBService.addMoment({
                 ...momentData,
-                userDisplayName: userProfile?.displayName || userProfile?.nickname || user.displayName || 'Anonim',
+                userDisplayName: userProfile?.username || userProfile?.displayName || user.displayName || 'Anonim',
                 userPhotoURL: userProfile?.photoURL || user.photoURL || '👤'
             });
             console.log("Anı başarıyla kaydedildi.");
@@ -1207,7 +1207,7 @@ function openImmersiveView(moment) {
                     ${moment.isRealLocation ? '<span class="gold-verified-badge" title="Doğrulanmış Konum">✓</span>' : ''}
                 </h2>
                 ${moment.isRealLocation && moment.location ? `<p class="immersive-real-location">📍 ${moment.location.text}</p>` : ''}
-                ${moment.notes ? `<div class="immersive-location-tag">${moment.notes}</div>` : ''}
+                ${!moment.isRealLocation && moment.location?.text ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 
