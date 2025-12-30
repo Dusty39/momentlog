@@ -1204,7 +1204,8 @@ function openImmersiveView(moment) {
                     ${dateStr} 
                     ${moment.isRealLocation ? '<span class="gold-verified-badge" title="Doğrulanmış Konum">✓</span>' : ''}
                 </h2>
-                ${moment.location ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
+                ${moment.isRealLocation && moment.location ? `<p class="immersive-real-location">📍 ${moment.location.text}</p>` : ''}
+                ${!moment.isRealLocation && moment.location ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 

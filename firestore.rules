@@ -71,8 +71,17 @@ service cloud.firestore {
       // Public profile data readable by all authenticated users
       allow read: if isAuthenticated();
       
-      // Only owner can write their own profile
-      allow write: if isOwner(userId);
+      // Only owner can create their own profile
+      allow create: if isOwner(userId);
+      
+      // Owner can update their own profile, others can update follow arrays
+      allow update: if isOwner(userId) 
+                    || (isAuthenticated() 
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['followers', 'following', 'pendingFollowers']));
+      
+      // Only owner can delete
+      allow delete: if isOwner(userId);
       
       // =============================================
       // FOLLOWERS SUB-COLLECTION
