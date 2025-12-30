@@ -276,7 +276,32 @@ const DBService = {
                 .orderBy('createdAt', 'desc')
                 .limit(20)
                 .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Enrich moments with fresh user profile data
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Get unique user IDs
+            const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
+
+            // Fetch all user profiles in parallel
+            const userProfiles = {};
+            await Promise.all(userIds.map(async (uid) => {
+                try {
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    if (userDoc.exists) {
+                        userProfiles[uid] = userDoc.data();
+                    }
+                } catch (e) {
+                    console.warn('Could not fetch user profile:', uid);
+                }
+            }));
+
+            // Enrich moments with user data
+            return moments.map(m => ({
+                ...m,
+                userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
+                userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
+            }));
         } catch (e) {
             console.error("Public Feed error:", e);
             throw e;
