@@ -590,6 +590,7 @@ async function createMoment(text) {
             console.log("Firestore kaydı başlıyor...");
             await DBService.addMoment({
                 ...momentData,
+                userDisplayName: userProfile?.displayName || userProfile?.nickname || user.displayName || 'Anonim',
                 userPhotoURL: userProfile?.photoURL || user.photoURL || '👤'
             });
             console.log("Anı başarıyla kaydedildi.");
