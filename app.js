@@ -1691,27 +1691,54 @@ window.toggleProfilePrivacy = async (currentPrivacy) => {
 };
 
 window.handleFollowAction = async (targetUid, action) => {
-    try {
-        if (!AuthService.currentUser()) {
-            showModal('Giriş Gerekli', "Bu işlemi yapmak için giriş yapmalısınız.");
-            return;
+    if (!AuthService.currentUser()) {
+        showModal('Giriş Gerekli', "Bu işlemi yapmak için giriş yapmalısınız.");
+        return;
+    }
+
+    // Optimistic UI - update button immediately
+    const followBtn = document.getElementById('followBtn');
+    const originalText = followBtn?.innerText;
+    const originalClass = followBtn?.className;
+
+    if (followBtn) {
+        if (action === 'follow') {
+            followBtn.innerText = 'Takip Ediliyor';
+            followBtn.classList.add('following');
+        } else if (action === 'unfollow') {
+            followBtn.innerText = 'Takip Et';
+            followBtn.classList.remove('following');
         }
+        followBtn.disabled = true;
+    }
+
+    try {
         if (action === 'accept') {
             await DBService.acceptFollowRequest(targetUid);
-            alert("İstek kabul edildi!");
         } else if (action === 'decline') {
             await DBService.declineFollowRequest(targetUid);
-            alert("İstek reddedildi.");
         } else if (action === 'follow') {
             await DBService.followUser(targetUid);
-            alert("Takip/İstek gönderildi!");
         } else if (action === 'unfollow') {
             await DBService.unfollowUser(targetUid);
-            alert("Takipten çıkıldı.");
         }
-        openProfileView(window._currentProfileUid || targetUid);
+
+        // Silent success - no alert, just re-enable button
+        if (followBtn) followBtn.disabled = false;
+
+        // For accept/decline, refresh the view to update pending list
+        if (action === 'accept' || action === 'decline') {
+            openProfileView(window._currentProfileUid || targetUid);
+        }
     } catch (e) {
-        alert("İşlem hatası: " + e.message);
+        // Revert optimistic update on error
+        if (followBtn) {
+            followBtn.innerText = originalText;
+            followBtn.className = originalClass;
+            followBtn.disabled = false;
+        }
+        console.error('Follow action error:', e);
+        showModal('Hata', "İşlem başarısız: " + e.message);
     }
 };
 
