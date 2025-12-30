@@ -1207,7 +1207,7 @@ function openImmersiveView(moment) {
                         <textarea class="notes-input" 
                                   id="momentNotes" 
                                   maxlength="80"
-                                  placeholder="Yer İsmi...">${moment.notes || ''}</textarea>
+                                  placeholder="Yer İsmi...">${moment.manualLocation || moment.notes || ''}</textarea>
                     </div>
                     ${musicInfo ? `
                         <div class="music-indicator">
