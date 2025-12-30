@@ -1253,12 +1253,19 @@ function openImmersiveView(moment) {
         collage.appendChild(collageItem);
     });
 
-    // Save notes on change
+    // Save notes on change (Only for owner)
     const notesInput = view.querySelector('#momentNotes');
-    notesInput.onblur = () => {
-        moment.notes = notesInput.value;
-        saveMoments();
-    };
+    if (isOwner) {
+        notesInput.onblur = () => {
+            moment.notes = notesInput.value;
+            saveMoments();
+        };
+    } else {
+        notesInput.readOnly = true;
+        notesInput.title = "Sadece anı sahibi not ekleyebilir";
+        notesInput.style.opacity = "0.7";
+        notesInput.style.cursor = "default";
+    }
 
     // Theme switcher logic
     const themeSwitcherBtn = view.querySelector('#themeSwitcherBtn');
@@ -1663,6 +1670,10 @@ window.toggleProfilePrivacy = async (currentPrivacy) => {
 
 window.handleFollowAction = async (targetUid, action) => {
     try {
+        if (!AuthService.currentUser()) {
+            showModal('Giriş Gerekli', "Bu işlemi yapmak için giriş yapmalısınız.");
+            return;
+        }
         if (action === 'accept') {
             await DBService.acceptFollowRequest(targetUid);
             alert("İstek kabul edildi!");
@@ -1839,6 +1850,12 @@ window.submitComment = async (momentId) => {
     const input = document.getElementById(`comment-input-${momentId}`);
     const text = input.value.trim();
     if (!text) return;
+
+    if (!AuthService.currentUser()) {
+        showModal('Giriş Gerekli', "Yorum yapmak için lütfen giriş yapın.");
+        return;
+    }
+
     if (text.length > 160) {
         showModal('Uyarı', "Yorum 160 karakteri geçemez!");
         return;
