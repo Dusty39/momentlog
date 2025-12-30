@@ -249,6 +249,23 @@ function setupEventListeners() {
         themeSelect.addEventListener('change', () => renderTimeline(dom.searchInput?.value || ""));
     }
 
+    // Disable GPS verification if date is changed
+    const momentDateInput = document.getElementById('momentDate');
+    if (momentDateInput) {
+        momentDateInput.addEventListener('change', () => {
+            if (isRealLocationActive) {
+                isRealLocationActive = false;
+                currentLocation = null;
+                const locBtn = document.getElementById('addLocationBtn');
+                if (locBtn) {
+                    locBtn.classList.remove('active-location');
+                    locBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
+                }
+                showModal('Konum Sıfırlandı', 'Tarih değiştirildiği için konum doğrulaması iptal edildi.');
+            }
+        });
+    }
+
     // Optional Listeners (Optional in some views)
     const playAllBtn = document.getElementById('playAllBtn');
     if (playAllBtn) {
@@ -1185,13 +1202,9 @@ function openImmersiveView(moment) {
             <header class="immersive-header">
                 <h2 class="immersive-date">
                     ${dateStr} 
-                    ${moment.isRealLocation ? '<span class="verified-tick-large" title="Gerçek Konum">✅</span>' : ''}
+                    ${moment.isRealLocation ? '<span class="gold-verified-badge" title="Doğrulanmış Konum">✓</span>' : ''}
                 </h2>
-                ${moment.location ? `<span class="immersive-location">📍 ${moment.location.text}</span>` : ''}
-                <button class="share-action-btn" onclick="window.shareMoment('${moment.id}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                    Paylaş
-                </button>
+                ${moment.location ? `<div class="immersive-location-tag">${moment.location.text}</div>` : ''}
                 <div class="notes-music-row">
                     <div class="moment-notes">
                         <textarea class="notes-input" 
@@ -1289,8 +1302,10 @@ function openImmersiveView(moment) {
     view.querySelectorAll('.theme-option').forEach(btn => {
         btn.onclick = () => {
             const newTheme = btn.getAttribute('data-theme');
-            dom.themeSelect.value = newTheme;
-            dom.themeSelect.dispatchEvent(new Event('change'));
+            if (dom.themeSelect) {
+                dom.themeSelect.value = newTheme;
+                dom.themeSelect.dispatchEvent(new Event('change'));
+            }
             view.className = `immersive-modal theme-${newTheme}`;
 
             // Update active state
@@ -1607,7 +1622,7 @@ async function renderFeed(filter = "") {
                     <div class="user-meta">
                         <span class="username">
                             ${m.userDisplayName || 'Anonim'}
-                            ${m.isRealLocation ? '<span class="verified-tick" title="Gerçek Konum">✅</span>' : ''}
+                            ${m.isRealLocation ? '<span class="gold-tick-sm" title="Doğrulanmış Konum">✓</span>' : ''}
                         </span>
                         <span class="location-sm">${m.location?.text || 'Bilinmeyen Konum'}</span>
                     </div>
@@ -1634,6 +1649,9 @@ async function renderFeed(filter = "") {
                             ${m.isPublic ? '🌐' : '🔒'}
                         </button>
                     ` : ''}
+                    <button class="share-btn-sm" onclick="event.stopPropagation(); window.shareMoment('${m.id}')" title="Paylaş">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </button>
                 </div>
                 <div class="content-preview">${escapeHtml(m.content).substring(0, 100)}${m.content.length > 100 ? '...' : ''}</div>
                 
