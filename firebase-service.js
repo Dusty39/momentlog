@@ -211,7 +211,8 @@ const DBService = {
         if (!doc.exists) return;
 
         const data = doc.data();
-        const isLiked = data.likes.includes(user.uid);
+        const likes = data.likes || [];
+        const isLiked = likes.includes(user.uid);
 
         if (isLiked) {
             return momentRef.update({

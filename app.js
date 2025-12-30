@@ -1253,16 +1253,18 @@ function openImmersiveView(moment) {
         collage.appendChild(collageItem);
     });
 
-    // Save notes on change (Only for owner)
+    // Save notes on change (Only for owner AND not public)
     const notesInput = view.querySelector('#momentNotes');
-    if (isOwner) {
+    const canEditNotes = isOwner && !moment.isPublic;
+
+    if (canEditNotes) {
         notesInput.onblur = () => {
             moment.notes = notesInput.value;
             saveMoments();
         };
     } else {
         notesInput.readOnly = true;
-        notesInput.title = "Sadece anı sahibi not ekleyebilir";
+        notesInput.title = isOwner ? "Paylaşılan anının konumu değiştirilemez" : "Sadece anı sahibi not ekleyebilir";
         notesInput.style.opacity = "0.7";
         notesInput.style.cursor = "default";
     }
@@ -1707,12 +1709,16 @@ window.toggleLike = async (id) => {
 
 window.toggleVisibility = async (id, isPublic) => {
     try {
+        console.log('toggleVisibility called:', { id, isPublic, currentView });
         await DBService.setMomentVisibility(id, isPublic);
+        console.log('Visibility updated in DB, reloading moments...');
         // Refresh data
         await loadMoments();
+        console.log('Moments reloaded:', moments.length, 'items');
         if (currentView === 'explore') renderFeed();
         else renderTimeline();
     } catch (e) {
+        console.error('Visibility error:', e);
         showModal('Hata', "Görünürlük hatası: " + e.message);
     }
 };
@@ -1833,7 +1839,8 @@ window.loadComments = async (momentId) => {
             `;
         }).join('');
     } catch (e) {
-        list.innerHTML = '<div class="error-sm">Hata oluştu.</div>';
+        console.error('Comment load error:', e);
+        list.innerHTML = '<div class="error-sm">Yorumlar yüklenemedi.</div>';
     }
 };
 
