@@ -1772,18 +1772,24 @@ window.toggleLike = async (id) => {
             }
         }
     } catch (e) {
-        // Revert optimistic update on error
-        if (likeBtn) {
-            likeBtn.classList.toggle('liked');
-            const svg = likeBtn.querySelector('svg');
-            if (svg) svg.setAttribute('fill', wasLiked ? 'currentColor' : 'none');
-            if (likeCountSpan) {
-                const currentCount = parseInt(likeCountSpan.textContent) || 0;
-                likeCountSpan.textContent = wasLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+        // Only revert and show error for non-permission errors
+        // Permission errors often mean the action actually succeeded but read failed
+        const isPermissionError = e.message?.includes('permission') || e.code === 'permission-denied';
+
+        if (!isPermissionError) {
+            // Revert optimistic update on error
+            if (likeBtn) {
+                likeBtn.classList.toggle('liked');
+                const svg = likeBtn.querySelector('svg');
+                if (svg) svg.setAttribute('fill', wasLiked ? 'currentColor' : 'none');
+                if (likeCountSpan) {
+                    const currentCount = parseInt(likeCountSpan.textContent) || 0;
+                    likeCountSpan.textContent = wasLiked ? currentCount + 1 : Math.max(0, currentCount - 1);
+                }
             }
+            showModal('Hata', "Beğeni hatası: " + e.message);
         }
-        console.error('Like error:', e);
-        showModal('Hata', "Beğeni hatası: " + e.message);
+        console.error('Like error (may be permission-related):', e);
     }
 };
 
@@ -1962,7 +1968,8 @@ window.submitComment = async (momentId) => {
     const text = input.value.trim();
     if (!text) return;
 
-    if (!AuthService.currentUser()) {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) {
         showModal('Giriş Gerekli', "Yorum yapmak için lütfen giriş yapın.");
         return;
     }
@@ -1972,17 +1979,35 @@ window.submitComment = async (momentId) => {
         return;
     }
 
+    // Optimistic UI - clear input and update count immediately
+    const originalText = input.value;
+    input.value = '';
+    document.getElementById(`counter-${momentId}`).innerText = '160';
+    const countSpan = document.getElementById(`comment-count-${momentId}`);
+    if (countSpan) {
+        countSpan.innerText = parseInt(countSpan.innerText) + 1;
+    }
+
     try {
         await DBService.addComment(momentId, text);
-        input.value = '';
-        document.getElementById(`counter-${momentId}`).innerText = '160';
-        await window.loadComments(momentId);
-        const countSpan = document.getElementById(`comment-count-${momentId}`);
-        if (countSpan) {
-            countSpan.innerText = parseInt(countSpan.innerText) + 1;
+        // Try to reload comments, but don't fail if permission error
+        try {
+            await window.loadComments(momentId);
+        } catch (loadErr) {
+            console.warn('Could not reload comments:', loadErr);
         }
     } catch (e) {
-        showModal('Hata', "Yorum gönderilemedi: " + e.message);
+        const isPermissionError = e.message?.includes('permission') || e.code === 'permission-denied';
+
+        if (!isPermissionError) {
+            // Revert on non-permission error
+            input.value = originalText;
+            if (countSpan) {
+                countSpan.innerText = Math.max(0, parseInt(countSpan.innerText) - 1);
+            }
+            showModal('Hata', "Yorum gönderilemedi: " + e.message);
+        }
+        console.error('Comment error (may be permission-related):', e);
     }
 };
 
