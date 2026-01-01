@@ -2209,3 +2209,31 @@ body.app-theme-vintage {
 .upload-progress.hidden {
     display: none !important;
 }
+
+/* ====================================================
+   MOMENT OWNER CONTROLS
+   ==================================================== */
+
+.card-owner-menu {
+    display: flex;
+    gap: 6px;
+}
+
+.owner-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.owner-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.1);
+}

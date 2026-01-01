@@ -344,14 +344,30 @@ async function saveMoment() {
         saveBtn.innerHTML = '<span>Kaydediliyor...</span>';
     }
 
-    // Filter media to only serializable data (no File objects)
-    const cleanMedia = currentMedia.filter(m => m && typeof m.data === 'string').map(m => ({
-        type: m.type || 'image',
-        data: m.data
-    }));
-
     try {
         const userProfile = await DBService.getUserProfile(currentUser.uid);
+
+        // Upload media to Firebase Storage and get URLs
+        const uploadedMedia = [];
+        const mediaToUpload = currentMedia.filter(m => m && typeof m.data === 'string');
+
+        if (mediaToUpload.length > 0) {
+            showUploadProgress(0, mediaToUpload.length);
+
+            for (let i = 0; i < mediaToUpload.length; i++) {
+                const m = mediaToUpload[i];
+                try {
+                    const url = await DBService.uploadMedia(m.data, m.type || 'image');
+                    if (url) {
+                        uploadedMedia.push({ type: m.type || 'image', url: url });
+                    }
+                } catch (uploadErr) {
+                    console.error('Media upload error:', uploadErr);
+                }
+                showUploadProgress(i + 1, mediaToUpload.length);
+            }
+            hideUploadProgress();
+        }
 
         // Ensure location is a simple string
         const locationString = typeof currentLocation === 'string' ? currentLocation :
@@ -359,7 +375,7 @@ async function saveMoment() {
 
         const momentData = {
             text: String(text || ''),
-            media: cleanMedia, // Use cleaned media array
+            media: uploadedMedia, // Use URLs from Firebase Storage
             location: locationString,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
@@ -425,8 +441,10 @@ function renderTimeline(searchQuery = '') {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
         const firstImg = m.media?.find(med => med.type === 'image');
+        const imgSrc = firstImg?.url || firstImg?.data || '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
+        const isOwner = currentUser?.uid === m.userId;
 
         return `
             <div class="moment-card" data-id="${m.id}">
@@ -441,9 +459,14 @@ function renderTimeline(searchQuery = '') {
                             <span class="date">${formattedDate}</span>
                         </div>
                     </div>
+                    ${isOwner ? `
+                        <div class="card-owner-menu">
+                            <button class="owner-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
+                        </div>
+                    ` : ''}
                 </div>
                 
-                ${firstImg ? `<div class="card-media" onclick="openImmersiveViewById('${m.id}')"><img src="${firstImg.data}" alt=""></div>` : ''}
+                ${imgSrc ? `<div class="card-media" onclick="openImmersiveViewById('${m.id}')"><img src="${imgSrc}" alt=""></div>` : ''}
                 
                 ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}
                 
@@ -534,6 +557,22 @@ function renderMediaPreview() {
 window.removeMedia = (index) => {
     currentMedia.splice(index, 1);
     renderMediaPreview();
+};
+
+// Delete moment confirmation
+window.deleteMomentConfirm = async (momentId) => {
+    const confirmed = await showModal('Silmek istediğinize emin misiniz?', 'Bu anı kalıcı olarak silinecek ve geri alınamaz.', true);
+    if (confirmed) {
+        try {
+            await DBService.deleteMoment(momentId);
+            await loadMoments();
+            renderTimeline();
+            showModal('Silindi', 'Anı başarıyla silindi.');
+        } catch (e) {
+            console.error('Delete error:', e);
+            showModal('Hata', 'Anı silinemedi: ' + e.message);
+        }
+    }
 };
 
 // --- Location ---
