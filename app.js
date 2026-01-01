@@ -327,13 +327,19 @@ async function saveMoment() {
         saveBtn.innerHTML = '<span>Kaydediliyor...</span>';
     }
 
+    // Filter media to only serializable data (no File objects)
+    const cleanMedia = currentMedia.filter(m => m && typeof m.data === 'string').map(m => ({
+        type: m.type || 'image',
+        data: m.data
+    }));
+
     try {
         const userProfile = await DBService.getUserProfile(currentUser.uid);
 
         const momentData = {
             text: text || '',
-            media: currentMedia,
-            location: currentLocation,
+            media: cleanMedia,
+            location: currentLocation || null,
             theme: currentMomentTheme,
             mood: currentMood,
             userId: currentUser.uid,
