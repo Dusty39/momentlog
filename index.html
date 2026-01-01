@@ -8,11 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap&subset=latin,latin-ext"
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="style.css?v=1.2">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -20,87 +18,37 @@
 </head>
 
 <body>
-    <!-- Login Overlay -->
-    <div id="loginOverlay" class="login-overlay">
-        <div class="login-card">
-            <h1>momentLog</h1>
-            <p>Anılarını sakla, paylaş ve keşfet.</p>
-            <button id="googleLoginBtn" class="google-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
-                    <path fill="#FFC107"
-                        d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z">
-                    </path>
-                    <path fill="#FF3D00"
-                        d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z">
-                    </path>
-                    <path fill="#4CAF50"
-                        d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z">
-                    </path>
-                    <path fill="#1976D2"
-                        d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z">
-                    </path>
-                </svg>
-                Google ile Devam Et
-            </button>
-            <div class="login-footer">
-                <p>Crafted with ✨ by <span>Serhat Aykış</span></p>
-            </div>
-        </div>
-    </div>
-
     <div id="app">
         <header>
             <div class="header-top">
-                <div class="header-branding">
-                    <h1>momentLog</h1>
-                </div>
+                <h1>momentLog</h1>
                 <div class="header-actions">
-                    <!-- Akış (Following Feed) -->
-                    <button id="homeBtn" class="icon-btn active" title="Akış">
+                    <button id="exportBtn" class="icon-btn" title="Verileri Dışa Aktar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
                     </button>
-
-                    <!-- Keşfet (World Feed) -->
-                    <button id="exploreBtn" class="icon-btn" title="Keşfet">
+                    <label class="icon-btn" title="Verileri İçe Aktar">
+                        <input type="file" id="importInput" accept=".json" hidden>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
-                    </button>
-
-                    <!-- Anı Ekle -->
-                    <button id="headerAddBtn" class="icon-btn add-moment-btn" title="Anı Yaz">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                    </button>
-
-                    <!-- Bildirimler -->
-                    <button id="notificationsBtn" class="icon-btn notification-btn" title="Bildirimler">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                        </svg>
-                        <span class="notification-badge hidden" id="notifBadge">0</span>
-                    </button>
-
-                    <!-- Profil -->
-                    <button class="profile-btn" id="profileBtn" title="Profilim">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </button>
+                    </label>
                 </div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Anılarda veya yerlerde ara...">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
             </div>
         </header>
         <main>
@@ -110,87 +58,50 @@
 
                 <div class="input-toolbar">
                     <div class="tool-group">
-                        <div class="toolbar-rows">
-                            <div class="toolbar-row">
-                                <label class="tool-btn" title="Fotoğraf Ekle">
-                                    <input type="file" id="photoInput" accept="image/*" hidden>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                        <polyline points="21 15 16 10 5 21"></polyline>
-                                    </svg>
-                                </label>
-                                <button class="tool-btn" id="recordBtn" title="Ses Kaydı">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                                    </svg>
-                                </button>
-                                <button class="tool-btn" id="musicBtn" title="Şarkı Ekle">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path d="M9 18V5l12-2v13"></path>
-                                        <circle cx="6" cy="18" r="3"></circle>
-                                        <circle cx="18" cy="16" r="3"></circle>
-                                    </svg>
-                                </button>
-                                <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
-                                    <svg id="privateIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                    </svg>
-                                    <svg id="visibleIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="20"
-                                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="toolbar-row secondary">
-                                <button class="tool-btn" id="dateBtn" title="Tarih Seç">
-                                    <input type="date" id="momentDate" class="tool-date-input"
-                                        style="position:absolute; opacity:0; width:100%; height:100%; cursor:pointer;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                                    </svg>
-                                </button>
-                                <button class="tool-btn" id="journalBtn" title="Koleksiyon">
-                                    <span>📂</span>
-                                </button>
-                                <button class="tool-btn" id="themeBtn" title="Tema">
-                                    <span>🎨</span>
-                                </button>
-                                <button class="tool-btn" id="moodBtn" title="Ruh Hali">
-                                    <span id="moodIcon">😊</span>
-                                </button>
-                                <button class="tool-btn" id="addLocationBtn" title="Gerçek Konum Ekle"
-                                    onclick="window.handleRealLocation()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
-                                        <path
-                                            d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z">
-                                        </path>
-                                        <circle cx="12" cy="10" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                        <label class="tool-btn" title="Fotoğraf Ekle">
+                            <input type="file" id="photoInput" accept="image/*" hidden>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </label>
+                        <button class="tool-btn" id="recordBtn" title="Ses Kaydı">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+                        <button class="tool-btn" id="dictateBtn" title="Dikte ile Yaz">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="22"></line>
+                            </svg>
+                        </button>
+                        <button class="tool-btn" id="musicBtn" title="Şarkı Ekle">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M9 18V5l12-2v13"></path>
+                                <circle cx="6" cy="18" r="3"></circle>
+                                <circle cx="18" cy="16" r="3"></circle>
+                            </svg>
+                        </button>
+
+                        <select id="themeSelect" class="theme-select" title="Tema Seç">
+                            <option value="default">Varsayılan</option>
+                            <option value="polaroid">Polaroid</option>
+                            <option value="neon">Neon</option>
+                        </select>
                     </div>
                     <div class="input-actions">
                         <span id="locationStatus" class="location-badge hidden"></span>
@@ -204,96 +115,25 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="location-manual-row">
-                        <input type="text" id="manualLocationInput" class="manual-loc-input"
-                            placeholder="Neredesin? 📍">
-                    </div>
                 </div>
-            </div> <!-- CLOSE input-section here -->
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Anılarda veya yerlerde ara...">
-                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-            </div>
-            <div id="userSearchArea" class="user-search-area hidden">
-                <input type="text" placeholder="Kullanıcı adı veya isim ara..."
-                    oninput="window.performUserSearch(this.value)">
-                <div id="userSearchResults" class="user-search-results"></div>
-            </div>
-
-            <div id="nostalgiaSection" class="nostalgia-container hidden">
-                <h3>📜 Bugün Ne Oldu?</h3>
-                <div id="nostalgiaList" class="nostalgia-list"></div>
             </div>
 
             <div id="timeline" class="timeline-feed">
                 <!-- Moments will be injected here -->
             </div>
-
-            <div id="dashboardFooter" class="dashboard-footer">
-                Created with ✨ by <span class="designer-name">Serhat Aykış</span>
-            </div>
-
-
-            <div id="mapView" class="map-container-view hidden">
-                <div id="mapInstance"></div>
-            </div>
         </main>
         <div id="immersiveView" class="immersive-modal hidden">
             <!-- Content will be injected via JS -->
         </div>
-        <div id="profileView" class="immersive-modal hidden">
-            <div class="profile-container">
-                <button class="close-immersive" id="closeProfile">×</button>
-                <div id="profileContent">
-                    <!-- Profile HTML injected here -->
-                </div>
-            </div>
-        </div>
     </div>
-    <!-- Notifications View -->
-    <div id="notiView" class="profile-view hidden">
-        <div class="profile-card">
-            <div class="profile-header-top">
-                <h2>Bildirimler</h2>
-                <button id="closeNoti" class="close-btn">&times;</button>
-            </div>
-            <div id="notiContent" class="noti-list-content">
-                <div class="loading">Yükleniyor...</div>
-            </div>
-        </div>
+    <div id="footer-version"
+        style="text-align: center; padding: 20px; opacity: 0.3; font-size: 0.7rem; color: var(--text-secondary);">
+        momentLog v1.3 | <button onclick="location.reload(true)"
+            style="background:none; border:none; color:inherit; text-decoration:underline; font-size:inherit; cursor:pointer;">Zorla
+            Yenile</button>
     </div>
-
-    </div>
-
-    <!-- Custom Alert/Confirm Modal -->
-    <div id="customModal" class="custom-modal hidden">
-        <div class="modal-content">
-            <h3 id="modalTitle">Uyarı</h3>
-            <p id="modalMessage">Mesaj</p>
-            <div class="modal-actions">
-                <button id="modalCancelBtn" class="secondary-btn">Vazgeç</button>
-                <button id="modalConfirmBtn" class="primary-btn">Tamam</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase SDKs (Compat version for easier migration) -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-    <!-- Config & Logic -->
-    <script src="firebase-config.js"></script>
-    <script src="firebase-service.js"></script>
-    <script src="story-mode.js"></script>
-    <script src="app.js"></script>
+    <script src="story-mode.js?v=1.2"></script>
+    <script src="app.js?v=1.2"></script>
 </body>
 
 </html>
