@@ -3800,3 +3800,96 @@ html {
 .add-moment-btn {
     background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%) !important;
 }
+
+/* --- Inline Theme Icons --- */
+.theme-icons-inline {
+    display: flex;
+    gap: 8px;
+}
+
+.theme-icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-icon-btn:hover {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--accent);
+}
+
+.theme-icon-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+/* --- Fix Stats Alignment --- */
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin: 12px 0;
+    align-items: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 60px;
+}
+
+/* --- Fixed Profile Layout --- */
+#profileContent {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+}
+
+.profile-header-fixed {
+    flex-shrink: 0;
+}
+
+.profile-scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- Own Profile Tools --- */
+.own-profile-tools {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.profile-tool-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.profile-tool-btn:hover {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--accent);
+}
