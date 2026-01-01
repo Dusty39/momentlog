@@ -459,11 +459,6 @@ function renderTimeline(searchQuery = '') {
                             <span class="date">${formattedDate}</span>
                         </div>
                     </div>
-                    ${isOwner ? `
-                        <div class="card-owner-menu">
-                            <button class="owner-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
-                        </div>
-                    ` : ''}
                 </div>
                 
                 ${imgSrc ? `<div class="card-media" onclick="openImmersiveViewById('${m.id}')"><img src="${imgSrc}" alt=""></div>` : ''}
@@ -475,9 +470,20 @@ function renderTimeline(searchQuery = '') {
                         <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
                         <span class="like-count">${m.likes?.length || 0}</span>
                     </button>
-                    <button class="action-btn" onclick="openImmersiveViewById('${m.id}')">
+                    <button class="action-btn" onclick="window.toggleComments('${m.id}')">
                         💬 ${m.commentsCount || 0}
                     </button>
+                    <div class="action-spacer"></div>
+                    ${isOwner ? `<button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>` : ''}
+                </div>
+                
+                <!-- Inline Comments Section -->
+                <div class="inline-comments hidden" id="comments-${m.id}">
+                    <div class="comments-list" id="commentsList-${m.id}"></div>
+                    <div class="comment-input-row">
+                        <input type="text" placeholder="Yorum yaz..." id="commentInput-${m.id}" onkeypress="if(event.key==='Enter') window.addComment('${m.id}')">
+                        <button onclick="window.addComment('${m.id}')">Gönder</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -572,6 +578,81 @@ window.deleteMomentConfirm = async (momentId) => {
             console.error('Delete error:', e);
             showModal('Hata', 'Anı silinemedi: ' + e.message);
         }
+    }
+};
+
+// --- Inline Comments ---
+window.toggleComments = async (momentId) => {
+    const section = document.getElementById(`comments-${momentId}`);
+    if (!section) return;
+
+    const isHidden = section.classList.contains('hidden');
+    section.classList.toggle('hidden');
+
+    if (isHidden) {
+        await loadInlineComments(momentId);
+    }
+};
+
+async function loadInlineComments(momentId) {
+    const list = document.getElementById(`commentsList-${momentId}`);
+    if (!list) return;
+
+    list.innerHTML = '<div class="loading">Yükleniyor...</div>';
+
+    try {
+        const comments = await DBService.getComments(momentId);
+        const currentUser = AuthService.currentUser();
+
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="no-comments">Henüz yorum yok</div>';
+            return;
+        }
+
+        list.innerHTML = comments.map(c => {
+            const isOwner = currentUser?.uid === c.userId;
+            const date = new Date(c.createdAt).toLocaleDateString('tr-TR');
+            return `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author">${c.userDisplayName || 'Anonim'}</span>
+                        <span class="comment-date">${date}</span>
+                        ${isOwner ? `<button class="comment-delete" onclick="window.deleteComment('${momentId}', '${c.id}')">×</button>` : ''}
+                    </div>
+                    <div class="comment-text">${c.text}</div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<div class="error">Yorumlar yüklenemedi</div>';
+    }
+}
+
+window.addComment = async (momentId) => {
+    const input = document.getElementById(`commentInput-${momentId}`);
+    if (!input || !input.value.trim()) return;
+
+    const text = input.value.trim();
+    input.value = '';
+
+    try {
+        await DBService.addComment(momentId, { text });
+        await loadInlineComments(momentId);
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        showModal('Hata', 'Yorum eklenemedi: ' + e.message);
+    }
+};
+
+window.deleteComment = async (momentId, commentId) => {
+    try {
+        await DBService.deleteComment(momentId, commentId);
+        await loadInlineComments(momentId);
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        showModal('Hata', 'Yorum silinemedi: ' + e.message);
     }
 };
 
