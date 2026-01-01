@@ -430,6 +430,37 @@ function applyAppTheme(theme) {
     // 'default' has no class (uses :root variables)
 }
 
+window.openAppThemePicker = () => {
+    const themes = [
+        { id: 'default', name: 'Koyu', icon: '🌙' },
+        { id: 'light', name: 'Açık', icon: '☀️' },
+        { id: 'vintage', name: 'Vintage', icon: '📜' }
+    ];
+
+    const modal = document.createElement('div');
+    modal.className = 'follow-list-modal';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+    modal.innerHTML = `
+        <div class="follow-list-content" style="max-width: 300px;">
+            <div class="follow-list-header">
+                <h3>🎨 Tema Seç</h3>
+                <button onclick="this.closest('.follow-list-modal').remove()" style="font-size: 1.2rem;">×</button>
+            </div>
+            <div class="follow-list-body" style="padding: 16px;">
+                ${themes.map(t => `
+                    <button class="profile-tool-btn" style="width: 100%; margin-bottom: 8px; justify-content: center; ${currentAppTheme === t.id ? 'background: var(--accent); color: white;' : ''}" 
+                            onclick="currentAppTheme = '${t.id}'; localStorage.setItem('appTheme', '${t.id}'); applyAppTheme('${t.id}'); this.closest('.follow-list-modal').remove();">
+                        ${t.icon} ${t.name}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+};
+
 // --- Data Operations ---
 
 async function loadMoments() {
@@ -1390,7 +1421,6 @@ async function openProfileView(uid) {
                         </p>
                     </div>
                 </div>
-            </div>
 
             ${isOwnProfile ? `
                 <div id="avatarPicker" class="avatar-picker-tray hidden">
@@ -1403,15 +1433,6 @@ async function openProfileView(uid) {
                         ${['💎', '🌠', '🌊', '🧊', '🌕'].map(emo => `
                             <button class="avatar-option-btn" onclick="window.updateAvatar('${emo}')">${emo}</button>
                         `).join('')}
-                    </div>
-                </div>
-
-                <div class="profile-noti-section">
-                    <div class="noti-header-mini">
-                        Bildirimler 📩
-                    </div>
-                    <div id="profileNotiContent" class="profile-notis-list">
-                        <!-- Notifications rendered here -->
                     </div>
                 </div>
             ` : ''}
@@ -1439,10 +1460,12 @@ async function openProfileView(uid) {
                     </button>
                 ` : `
                     <div class="own-profile-tools">
-                        <label class="privacy-switch">
-                            <span>Profil Gizliliği: ${userProfile.isPrivateProfile ? 'Özel 🔒' : 'Açık 🌐'}</span>
-                            <button onclick="window.toggleProfilePrivacy(${userProfile.isPrivateProfile})" class="mini-toggle-btn">Değiştir</button>
-                        </label>
+                        <button onclick="window.toggleProfilePrivacy(${userProfile.isPrivateProfile})" class="profile-tool-btn">
+                            ${userProfile.isPrivateProfile ? '🔒 Özel' : '🌐 Açık'}
+                        </button>
+                        <button onclick="window.openAppThemePicker()" class="profile-tool-btn">
+                            🎨 Tema
+                        </button>
                     </div>
                 `}
             </div>

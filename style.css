@@ -3608,3 +3608,79 @@ html {
     text-align: center;
     color: var(--text-secondary);
 }
+
+/* --- Profile Tool Buttons (Privacy & Theme) --- */
+.own-profile-tools {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.profile-tool-btn {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-tool-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    transform: scale(1.02);
+}
+
+/* --- Profile Tabs (Anılar/Koleksiyonlar) --- */
+.profile-tabs {
+    display: flex;
+    gap: 0;
+    margin: 12px 0;
+    background: rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.tab-btn:not(.active):hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--text);
+}
+
+/* --- Reduce Profile Spacing --- */
+.profile-header {
+    gap: 12px;
+    padding: 16px;
+}
+
+.profile-stats {
+    margin: 8px 0;
+    gap: 16px;
+}
+
+.profile-actions-row {
+    margin: 8px 0;
+}
