@@ -2347,13 +2347,14 @@ window.toggleMapView = () => {
             map.invalidateSize();
             renderMarkers(moments);
         }, 300);
-        document.getElementById('mapBtn').classList.add('active');
+        document.getElementById('mapBtn')?.classList.add('active');
     } else {
         mapView.classList.add('hidden');
         timeline.classList.remove('hidden');
         inputSection.classList.remove('hidden');
         searchSection.classList.remove('hidden');
-        document.getElementById('mapBtn').classList.remove('active');
+        const mapBtnInner = document.getElementById('mapBtn');
+        if (mapBtnInner) mapBtnInner.classList.remove('active');
     }
 };
 
