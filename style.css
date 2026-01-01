@@ -1552,3 +1552,69 @@ h1 {
     height: 100%;
     object-fit: cover;
 }
+
+/* ====================================================
+   MOBILE RESPONSIVE FIX
+   ==================================================== */
+
+@media screen and (max-width: 768px) {
+    body {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    #app {
+        max-width: 100%;
+        padding-bottom: 60px;
+    }
+    
+    header {
+        padding: 12px 0 16px;
+        gap: 12px;
+    }
+    
+    h1 {
+        font-size: 1.4rem;
+    }
+    
+    .header-actions {
+        gap: 6px;
+    }
+    
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .moment-card {
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .input-section {
+        padding: 12px;
+    }
+    
+    textarea {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    body {
+        padding: 4px;
+    }
+    
+    .header-actions {
+        gap: 4px;
+    }
+    
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+    
+    h1 {
+        font-size: 1.2rem;
+    }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v19-complete';
+const CACHE_NAME = 'momentlog-v20-mobile';
 const ASSETS = [
     './',
     './index.html',
