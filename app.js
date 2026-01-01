@@ -13,7 +13,7 @@ console.log("momentLog: Script loading v19...");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 5;
 
 let moments = [];
 let currentMedia = [];
@@ -24,6 +24,25 @@ let currentMood = '😊';
 let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
+const MAX_AUDIO_SECONDS = 30;
+
+// --- Theme Selector Functions ---
+window.openThemeSelector = () => {
+    const picker = document.getElementById('themePicker');
+    if (picker) picker.classList.remove('hidden');
+};
+
+window.selectTheme = (theme) => {
+    currentMomentTheme = theme;
+    document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+    document.getElementById('themePicker')?.classList.add('hidden');
+    // Update theme button to show selected
+    const themeBtn = document.getElementById('themeBtn');
+    if (themeBtn) themeBtn.title = `Tema: ${theme}`;
+};
+
 
 // --- Custom Modal Helper ---
 function showModal(title, message, isConfirm = false) {

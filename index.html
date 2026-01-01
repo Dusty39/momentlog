@@ -125,6 +125,10 @@
                         <input type="date" id="momentDate" max=""
                             style="position:absolute;visibility:hidden;width:0;height:0;">
 
+                        <!-- Tema -->
+                        <button id="themeBtn" class="tool-btn" title="Anı Teması"
+                            onclick="window.openThemeSelector()">🎨</button>
+
                         <!-- Görünürlük -->
                         <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
                             <span id="privateIcon">🔒</span>
@@ -185,6 +189,31 @@
                 <button id="modalCancelBtn" class="modal-btn secondary">İptal</button>
                 <button id="modalConfirmBtn" class="modal-btn primary">Tamam</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Theme Picker Modal -->
+    <div id="themePicker" class="theme-picker-modal hidden">
+        <div class="theme-picker-content">
+            <h3>Anı Teması Seç</h3>
+            <div class="theme-grid">
+                <button class="theme-option active" data-theme="minimal" onclick="window.selectTheme('minimal')">📝
+                    Minimal</button>
+                <button class="theme-option" data-theme="vintage" onclick="window.selectTheme('vintage')">📜
+                    Vintage</button>
+                <button class="theme-option" data-theme="polaroid" onclick="window.selectTheme('polaroid')">📷
+                    Polaroid</button>
+                <button class="theme-option" data-theme="album" onclick="window.selectTheme('album')">📔 Albüm</button>
+                <button class="theme-option" data-theme="diary" onclick="window.selectTheme('diary')">📖 Günlük</button>
+                <button class="theme-option" data-theme="travel" onclick="window.selectTheme('travel')">✈️
+                    Seyahat</button>
+                <button class="theme-option" data-theme="love" onclick="window.selectTheme('love')">❤️ Aşk</button>
+                <button class="theme-option" data-theme="nature" onclick="window.selectTheme('nature')">🌿 Doğa</button>
+                <button class="theme-option" data-theme="party" onclick="window.selectTheme('party')">🎉 Parti</button>
+                <button class="theme-option" data-theme="art" onclick="window.selectTheme('art')">🎨 Sanat</button>
+            </div>
+            <button class="theme-close-btn"
+                onclick="document.getElementById('themePicker').classList.add('hidden')">Kapat</button>
         </div>
     </div>
 
