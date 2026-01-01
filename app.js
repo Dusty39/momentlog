@@ -98,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("momentLog: DOM Loaded v19");
 
     if (dom.momentDate) {
-        dom.momentDate.valueAsDate = new Date();
+        const today = new Date().toISOString().split('T')[0];
+        dom.momentDate.max = today;
+        dom.momentDate.value = today;
     }
 
     const savedView = localStorage.getItem('momentLog_lastView');

@@ -583,5 +583,10 @@ const DBService = {
                 });
             }
         });
+    },
+
+    // Alias for createMoment (backwards compatibility)
+    createMoment: async function (data) {
+        return this.addMoment(data);
     }
 };
