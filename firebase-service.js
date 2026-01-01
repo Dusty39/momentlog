@@ -268,6 +268,62 @@ const DBService = {
         return db.collection('moments').doc(id).delete();
     },
 
+    // Takip Edilenlerin Anılarını Getir (Following Feed)
+    async getFollowingMoments() {
+        try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) return [];
+
+            // Get user's following list
+            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            const following = userDoc.data()?.following || [];
+
+            if (following.length === 0) {
+                return []; // No one followed yet
+            }
+
+            // Firestore 'in' query supports max 10 items, so chunk if needed
+            const chunks = [];
+            for (let i = 0; i < following.length; i += 10) {
+                chunks.push(following.slice(i, i + 10));
+            }
+
+            let allMoments = [];
+            for (const chunk of chunks) {
+                const snapshot = await db.collection('moments')
+                    .where('userId', 'in', chunk)
+                    .where('isPublic', '==', true)
+                    .orderBy('createdAt', 'desc')
+                    .limit(20)
+                    .get();
+                allMoments = [...allMoments, ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+            }
+
+            // Sort by createdAt and limit
+            allMoments.sort((a, b) => b.createdAt - a.createdAt);
+            const moments = allMoments.slice(0, 20);
+
+            // Enrich with user profiles
+            const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
+            const userProfiles = {};
+            await Promise.all(userIds.map(async (uid) => {
+                try {
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    if (userDoc.exists) userProfiles[uid] = userDoc.data();
+                } catch (e) { console.warn('Could not fetch user:', uid); }
+            }));
+
+            return moments.map(m => ({
+                ...m,
+                userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
+                userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
+            }));
+        } catch (e) {
+            console.error("Following Feed error:", e);
+            return [];
+        }
+    },
+
     // Genel Anıları Getir (Social Feed)
     async getPublicMoments() {
         try {

@@ -307,7 +307,9 @@ function setupEventListeners() {
     }
 
     const exploreBtn = document.getElementById('exploreBtn');
-    const homeBtn = document.getElementById('homeBtn'); // New Home Button
+    const homeBtn = document.getElementById('homeBtn');
+    const addMomentBtn = document.getElementById('addMomentBtn');
+    const notificationsBtn = document.getElementById('notificationsBtn');
     const inputSectionBase = document.querySelector('.input-section');
     const dashboardFooter = document.getElementById('dashboardFooter');
     const searchHeaderBtn = document.getElementById('searchBtn');
@@ -323,16 +325,21 @@ function setupEventListeners() {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             document.querySelector('h1').textContent = "Keşfet";
-
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
-        } else {
+        } else if (currentView === 'write') {
             exploreBtn?.classList.remove('active');
-            homeBtn?.classList.add('active');
-            document.querySelector('h1').textContent = "momentLog";
-
+            homeBtn?.classList.remove('active');
+            document.querySelector('h1').textContent = "Anı Yaz";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
+        } else {
+            // my-moments = following feed
+            exploreBtn?.classList.remove('active');
+            homeBtn?.classList.add('active');
+            document.querySelector('h1').textContent = "Akış";
+            inputSectionBase?.classList.add('hidden-mode');
+            dashboardFooter?.classList.add('hidden-mode');
         }
 
         await loadMoments();
@@ -345,6 +352,14 @@ function setupEventListeners() {
 
     if (exploreBtn) {
         exploreBtn.onclick = () => window.setView('explore');
+    }
+
+    if (addMomentBtn) {
+        addMomentBtn.onclick = () => window.setView('write');
+    }
+
+    if (notificationsBtn) {
+        notificationsBtn.onclick = () => toggleNotificationPanel();
     }
 
     const appThemeBtn = document.getElementById('appThemeBtn');
@@ -422,10 +437,14 @@ async function loadMoments() {
         let data;
         if (currentView === 'explore') {
             data = await DBService.getPublicMoments();
-            console.log("Kamu akışı yüklendi:", data.length);
-        } else {
-            data = await DBService.getMyMoments();
+            console.log("Dünya akışı yüklendi:", data.length);
+        } else if (currentView === 'write') {
+            data = await DBService.getMyMoments(); // Personal moments for editing
             console.log("Kişisel anılar yüklendi:", data.length);
+        } else {
+            // my-moments = following feed
+            data = await DBService.getFollowingMoments();
+            console.log("Takip akışı yüklendi:", data.length);
         }
         moments = data || [];
     } catch (e) {
@@ -2021,18 +2040,129 @@ function setupNotifications() {
     const currentUser = AuthService.currentUser();
     if (!currentUser) return;
 
+    // Create notification panel if not exists
+    if (!document.getElementById('notificationPanel')) {
+        const panel = document.createElement('div');
+        panel.id = 'notificationPanel';
+        panel.className = 'notification-panel';
+        panel.innerHTML = `
+            <div class="notification-header">
+                <h3>Bildirimler</h3>
+                <button onclick="markAllNotificationsRead()" style="font-size: 0.8rem; opacity: 0.7;">Tümünü oku</button>
+            </div>
+            <div class="notification-list" id="notificationList"></div>
+        `;
+        document.body.appendChild(panel);
+    }
+
     DBService.onNotifications(currentUser.uid, (notifications) => {
         const unreadCount = notifications.filter(n => !n.isRead).length;
-        const profileBtn = document.getElementById('profileBtn');
+        const badge = document.getElementById('notifBadge');
+        const notificationsBtn = document.getElementById('notificationsBtn');
 
-        if (unreadCount > 0 && profileBtn) {
-            profileBtn.classList.add('has-noti');
-        } else if (profileBtn) {
-            profileBtn.classList.remove('has-noti');
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
+
+        if (notificationsBtn) {
+            notificationsBtn.classList.toggle('has-noti', unreadCount > 0);
+        }
+
         window._notifications = notifications;
+        renderNotifications(notifications);
     });
 }
+
+function renderNotifications(notifications) {
+    const list = document.getElementById('notificationList');
+    if (!list) return;
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<div class="notification-empty">Henüz bildirim yok</div>';
+        return;
+    }
+
+    list.innerHTML = notifications.map(n => {
+        const typeText = {
+            'like': 'gönderini beğendi',
+            'comment': 'yorum yaptı',
+            'follow': 'seni takip etti',
+            'follow_request': 'takip isteği gönderdi'
+        };
+        const avatar = n.senderPhoto?.startsWith('http') ? `<img src="${n.senderPhoto}">` : '👤';
+        const unreadClass = n.isRead ? '' : 'unread';
+        const timeAgo = getTimeAgo(n.createdAt);
+
+        return `
+            <div class="notification-item ${unreadClass}" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}')">
+                <div class="notif-avatar">${avatar}</div>
+                <div class="notif-content">
+                    <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
+                    <div class="notif-time">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTimeAgo(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+
+    if (diff < 60) return 'az önce';
+    if (diff < 3600) return `${Math.floor(diff / 60)} dk önce`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} saat önce`;
+    return `${Math.floor(diff / 86400)} gün önce`;
+}
+
+function toggleNotificationPanel() {
+    const panel = document.getElementById('notificationPanel');
+    if (panel) {
+        panel.classList.toggle('active');
+
+        // Close when clicking outside
+        if (panel.classList.contains('active')) {
+            setTimeout(() => {
+                document.addEventListener('click', closeNotifOnOutsideClick);
+            }, 100);
+        }
+    }
+}
+
+function closeNotifOnOutsideClick(e) {
+    const panel = document.getElementById('notificationPanel');
+    const btn = document.getElementById('notificationsBtn');
+    if (panel && !panel.contains(e.target) && !btn?.contains(e.target)) {
+        panel.classList.remove('active');
+        document.removeEventListener('click', closeNotifOnOutsideClick);
+    }
+}
+
+window.handleNotificationClick = async (notifId, momentId, senderUid) => {
+    const panel = document.getElementById('notificationPanel');
+    panel?.classList.remove('active');
+
+    if (momentId) {
+        // Open moment
+        window.openImmersiveViewById(momentId);
+    } else if (senderUid) {
+        // Open profile
+        openProfileView(senderUid);
+    }
+};
+
+window.markAllNotificationsRead = async () => {
+    const currentUser = AuthService.currentUser();
+    if (currentUser) {
+        await DBService.markNotificationsAsRead(currentUser.uid);
+    }
+};
 
 window.openNotiView = () => {
     const view = document.getElementById('notiView');
