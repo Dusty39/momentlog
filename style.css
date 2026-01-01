@@ -1,5 +1,5 @@
 :root {
-    /* Colors - Midnight Premium */
+    /* Colors - Midnight Premium with Gold Accent */
     --bg-main: #09090b;
     /* Zinc 950 */
     --bg-surface: #18181b;
@@ -7,9 +7,9 @@
     --text-primary: #fafafa;
     --text-secondary: #a1a1aa;
 
-    --accent: #6366f1;
-    /* Indigo 500 */
-    --accent-glow: rgba(99, 102, 241, 0.3);
+    --accent: #f59e0b;
+    /* Amber 500 - Gold */
+    --accent-glow: rgba(245, 158, 11, 0.3);
 
     --border-subtle: rgba(255, 255, 255, 0.08);
 
@@ -738,6 +738,7 @@ textarea::placeholder {
 .song-preview {
     border-color: var(--accent);
 }
+
 /* ====================================================
    MINIMAL GOLD THEME & PROFILE FIXES (v19 restore)
    ==================================================== */
@@ -777,7 +778,7 @@ textarea::placeholder {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     border: none;
     color: white;
     font-size: 1.2rem;
@@ -900,7 +901,7 @@ textarea::placeholder {
     max-height: 60vh;
     background: var(--bg-surface);
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-subtle);
     z-index: 1000;
     display: none;
@@ -912,6 +913,579 @@ textarea::placeholder {
 }
 
 /* Follow list modal */
+.follow-list-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.follow-list-content {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 360px;
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.follow-list-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.follow-list-body {
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.follow-user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.follow-user-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.follow-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.follow-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Clickable stats */
+.stat-item.clickable {
+    cursor: pointer;
+}
+
+.stat-item.clickable:hover {
+    opacity: 0.8;
+}
+/* ====================================================
+   V19 GOLD THEME - Header & Buttons
+   ==================================================== */
+
+/* Gold gradient title */
+h1 {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Add moment button - gold */
+.add-moment-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.add-moment-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+/* Active menu button */
+.icon-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* Notification button with badge */
+.notification-btn {
+    position: relative;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: white;
+    font-size: 0.6rem;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.notification-badge.hidden {
+    display: none;
+}
+
+/* Profile button */
+.profile-btn {
+    position: relative;
+}
+
+.profile-btn.has-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Hidden mode for sections */
+.hidden-mode {
+    display: none !important;
+}
+
+/* Login Overlay */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-main);
+    z-index: 5000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-overlay.active {
+    display: flex;
+}
+
+.login-content {
+    text-align: center;
+    padding: 40px;
+}
+
+.login-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.login-content p {
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: white;
+    color: #333;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 0 auto;
+    transition: all 0.2s;
+}
+
+.google-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+}
+
+.login-footer {
+    margin-top: 30px;
+    opacity: 0.5;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Profile View - Full Screen */
+.profile-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-main);
+    z-index: 2000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-view.hidden {
+    display: none !important;
+}
+
+.profile-view .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Profile Header */
+.profile-header-simple {
+    padding: 60px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.profile-avatar-large {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar-emoji {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    background: var(--bg-surface);
+}
+
+.profile-info-minimal h2 {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.profile-username {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.profile-bio {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+/* Profile Stats */
+.profile-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 16px 0;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.stat-item.clickable {
+    cursor: pointer;
+}
+
+/* Profile Actions */
+.profile-actions-row {
+    padding: 8px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.own-profile-tools {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.theme-icons-inline {
+    display: flex;
+    gap: 8px;
+}
+
+.theme-icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.theme-icon-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.profile-tool-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Scrollable Content */
+.profile-scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.profile-tabs {
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* 4 Column Grid */
+.profile-moments-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.grid-item {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    cursor: pointer;
+}
+
+.grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.grid-item .text-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Follow button */
+.follow-btn-main {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 32px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.follow-btn-main.following {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+/* Notification View */
+.noti-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.noti-list-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    background: var(--bg-surface);
+}
+
+.notification-item.unread {
+    border-left: 3px solid var(--accent);
+}
+
+.notif-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.notif-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.notif-text {
+    font-size: 0.9rem;
+}
+
+.notif-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Custom Modal */
+.custom-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 6000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.custom-modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-bottom: 12px;
+}
+
+.modal-content p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.modal-btn.primary {
+    background: var(--accent);
+    color: white;
+}
+
+.modal-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+/* Follow List Modal */
 .follow-list-modal {
     position: fixed;
     top: 0;
@@ -977,13 +1551,4 @@ textarea::placeholder {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-/* Clickable stats */
-.stat-item.clickable {
-    cursor: pointer;
-}
-
-.stat-item.clickable:hover {
-    opacity: 0.8;
 }
