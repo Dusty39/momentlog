@@ -2114,3 +2114,98 @@ body.app-theme-vintage {
     font-weight: 600;
     cursor: pointer;
 }
+
+/* ====================================================
+   MEDIA PREVIEW STYLES
+   ==================================================== */
+
+.media-preview {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+}
+
+.preview-item {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--border-subtle);
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.preview-item audio {
+    width: 100%;
+    height: 100%;
+}
+
+.remove-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    background: #ef4444;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.remove-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Upload Progress Overlay */
+.upload-progress {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--bg-surface);
+    padding: 24px 40px;
+    border-radius: 16px;
+    text-align: center;
+    z-index: 1100;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.upload-progress h4 {
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.upload-progress .progress-text {
+    font-size: 1.5rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.upload-progress-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1099;
+}
+
+.upload-progress-backdrop.hidden,
+.upload-progress.hidden {
+    display: none !important;
+}

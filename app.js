@@ -359,7 +359,7 @@ async function saveMoment() {
 
         const momentData = {
             text: String(text || ''),
-            media: [], // Temporarily disabled - will fix later
+            media: cleanMedia, // Use cleaned media array
             location: locationString,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
@@ -470,14 +470,54 @@ function handlePhotoInput(e) {
         return;
     }
 
+    // Show progress indicator
+    let loaded = 0;
+    const total = files.length;
+    showUploadProgress(loaded, total);
+
     files.forEach(file => {
         const reader = new FileReader();
         reader.onload = (event) => {
             currentMedia.push({ type: 'image', data: event.target.result });
-            renderMediaPreview();
+            loaded++;
+            showUploadProgress(loaded, total);
+
+            if (loaded === total) {
+                hideUploadProgress();
+                renderMediaPreview();
+            }
         };
         reader.readAsDataURL(file);
     });
+}
+
+function showUploadProgress(current, total) {
+    let overlay = document.getElementById('uploadProgressOverlay');
+    let popup = document.getElementById('uploadProgress');
+
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'uploadProgressOverlay';
+        overlay.className = 'upload-progress-backdrop';
+        document.body.appendChild(overlay);
+    }
+
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'uploadProgress';
+        popup.className = 'upload-progress';
+        popup.innerHTML = '<h4>Fotoğraflar Yükleniyor...</h4><div class="progress-text"></div>';
+        document.body.appendChild(popup);
+    }
+
+    overlay.classList.remove('hidden');
+    popup.classList.remove('hidden');
+    popup.querySelector('.progress-text').textContent = `${current}/${total}`;
+}
+
+function hideUploadProgress() {
+    document.getElementById('uploadProgressOverlay')?.classList.add('hidden');
+    document.getElementById('uploadProgress')?.classList.add('hidden');
 }
 
 function renderMediaPreview() {
