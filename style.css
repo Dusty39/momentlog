@@ -4215,3 +4215,289 @@ html {
     width: 64px;
     height: 64px;
 }
+
+/* ====================================================
+   FINAL FIX - Feed and Profile Layout (Phase 28)
+   ==================================================== */
+
+/* --- FEED CARDS - Reset to proper sizes --- */
+.moment-card {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+}
+
+.moment-card .card-header {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.moment-card .user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: var(--bg-main);
+    flex-shrink: 0;
+}
+
+.moment-card .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.moment-card .user-details {
+    margin-left: 10px;
+}
+
+.moment-card .username {
+    font-size: 0.85rem !important;
+    font-weight: 600;
+}
+
+.moment-card .date {
+    font-size: 0.7rem !important;
+    color: var(--text-secondary);
+    margin-left: 8px;
+}
+
+.moment-card .card-media img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.moment-card .card-content {
+    padding: 12px;
+    font-size: 0.9rem !important;
+    line-height: 1.5;
+}
+
+.moment-card .card-actions {
+    padding: 8px 12px;
+    display: flex;
+    gap: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.moment-card .action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* --- PROFILE VIEW - Full height, no body scroll --- */
+#profileView {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: var(--bg-main);
+    z-index: 2000;
+    overflow: hidden !important;
+}
+
+#profileContent {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    position: relative;
+}
+
+/* Close button - Top right corner */
+#closeProfile {
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    border: none;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Profile Header - Compact */
+#profileView .profile-header-simple {
+    flex-shrink: 0;
+    padding: 50px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Profile Avatar */
+#profileView .profile-avatar-wrapper {
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+#profileView .profile-avatar-large,
+#profileView .profile-avatar-emoji {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+}
+
+#profileView .profile-avatar-emoji {
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+}
+
+/* Profile Info */
+#profileView .profile-info-minimal {
+    flex: 1;
+}
+
+#profileView .profile-info-minimal h2 {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+#profileView .profile-username {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 2px 0;
+}
+
+#profileView .profile-bio {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+}
+
+/* Stats - Horizontal, centered */
+#profileView .profile-stats {
+    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    padding: 8px 0;
+}
+
+#profileView .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+#profileView .stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+#profileView .stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+/* Actions Row */
+#profileView .profile-actions-row {
+    flex-shrink: 0;
+    padding: 4px 16px 8px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Scrollable Content Area - Only this scrolls */
+#profileView .profile-scroll-content {
+    flex: 1;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    padding: 0 8px 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Profile Tabs */
+#profileView .profile-tabs {
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#profileView .tab-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#profileView .tab-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* 4 Column Grid */
+#profileView .profile-moments-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+}
+
+#profileView .grid-item {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    cursor: pointer;
+}
+
+#profileView .grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#profileView .grid-item .text-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
