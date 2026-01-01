@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =============================================
+    // HELPER FUNCTIONS
+    // =============================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is the owner of the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if the moment is public
+    function isPublicMoment() {
+      return resource.data.isPublic == true;
+    }
+    
+    // =============================================
+    // MOMENTS COLLECTION
+    // =============================================
+    match /moments/{momentId} {
+      
+      // READ: Public moments visible to all, private only to owner
+      allow read: if isPublicMoment() || isOwner(resource.data.userId);
+      
+      // CREATE: Only authenticated users can create their own moments
+      allow create: if isAuthenticated() 
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // UPDATE: Owner can update anything, others can only update likes array
+      allow update: if isOwner(resource.data.userId) 
+                    || (isAuthenticated() 
+                        && isPublicMoment()
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentsCount']));
+      
+      // DELETE: Only owner can delete
+      allow delete: if isOwner(resource.data.userId);
+      
+      // =============================================
+      // COMMENTS SUB-COLLECTION
+      // =============================================
+      match /comments/{commentId} {
+        // Anyone can read comments on public moments
+        allow read: if get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
+                    || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
+        
+        // Authenticated users can create comments on public moments
+        allow create: if isAuthenticated()
+                      && get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
+                      && request.resource.data.userId == request.auth.uid;
+        
+        // Comment owner can update (like) their comment, moment owner can delete
+        allow update: if isAuthenticated()
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+        
+        allow delete: if isOwner(resource.data.userId)
+                      || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
+      }
+    }
+    
+    // =============================================
+    // USERS COLLECTION
+    // =============================================
+    match /users/{userId} {
+      // Public profile data readable by all authenticated users
+      allow read: if isAuthenticated();
+      
+      // Only owner can create their own profile
+      allow create: if isOwner(userId);
+      
+      // Owner can update their own profile, others can update follow arrays
+      allow update: if isOwner(userId) 
+                    || (isAuthenticated() 
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['followers', 'following', 'pendingFollowers']));
+      
+      // Only owner can delete
+      allow delete: if isOwner(userId);
+      
+      // =============================================
+      // FOLLOWERS SUB-COLLECTION
+      // =============================================
+      match /followers/{followerId} {
+        allow read: if isAuthenticated();
+        allow create, delete: if isAuthenticated() && request.auth.uid == followerId;
+      }
+      
+      // =============================================
+      // FOLLOWING SUB-COLLECTION
+      // =============================================
+      match /following/{followingId} {
+        allow read: if isAuthenticated();
+        allow create, delete: if isOwner(userId);
+      }
+      
+      // =============================================
+      // FOLLOW REQUESTS SUB-COLLECTION
+      // =============================================
+      match /followRequests/{requesterId} {
+        allow read: if isOwner(userId) || isOwner(requesterId);
+        allow create: if isAuthenticated() && request.auth.uid == requesterId;
+        allow delete: if isOwner(userId) || isOwner(requesterId);
+      }
+      
+      // =============================================
+      // NOTIFICATIONS SUB-COLLECTION
+      // =============================================
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow create: if isAuthenticated();
+        allow update, delete: if isOwner(userId);
+      }
+    }
+    
+    // =============================================
+    // JOURNALS COLLECTION (if exists)
+    // =============================================
+    match /journals/{journalId} {
+      allow read, write: if isOwner(resource.data.userId) || 
+                           (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+    }
+  }
+}

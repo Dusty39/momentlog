@@ -100,8 +100,18 @@ class StoryMode {
             // Just show first image for story slide (simplicity vs collage)
             const imageItem = moment.media.find(m => m.type === 'image');
             if (imageItem) {
-                mediaContent = `<img src="${imageItem.data}" class="story-img">`;
+                mediaContent = `<div class="img-container"><img src="${imageItem.data}" class="story-img"></div>`;
             }
+        }
+
+        let spotifyHtml = '';
+        if (moment.song && moment.song.id) {
+            spotifyHtml = `
+                <div class="spotify-embed" style="margin-top: 15px;">
+                    <iframe src="https://open.spotify.com/embed/track/${moment.song.id}?autoplay=1" 
+                        width="100%" height="80" frameBorder="0" allowtransparency="true" 
+                        allow="encrypted-media; autoplay"></iframe>
+                </div>`;
         }
 
         if (hasAudio) {
@@ -119,6 +129,7 @@ class StoryMode {
                 </div>
                 <div class="story-body">
                     ${mediaContent}
+                    ${spotifyHtml}
                     <p class="story-text">${moment.content}</p>
                     ${hasAudio ? '<div class="story-audio-indicator">🔊 Sesli Not</div>' : ''}
                 </div>
