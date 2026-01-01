@@ -1421,11 +1421,11 @@ async function openProfileView(uid) {
                     <span class="stat-value">${userMoments.length}</span>
                     <span class="stat-label">Anı</span>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item clickable" onclick="window.showFollowersList('${uid}', 'followers')">
                     <span class="stat-value">${userProfile.followers?.length || 0}</span>
                     <span class="stat-label">Takipçi</span>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item clickable" onclick="window.showFollowersList('${uid}', 'following')">
                     <span class="stat-value">${userProfile.following?.length || 0}</span>
                     <span class="stat-label">Takip</span>
                 </div>
@@ -1753,6 +1753,63 @@ window.handleFollowAction = async (targetUid, action) => {
         }
         console.error('Follow action error:', e);
         showModal('Hata', "İşlem başarısız: " + e.message);
+    }
+};
+
+// Show Followers/Following List
+window.showFollowersList = async (uid, type) => {
+    try {
+        const userProfile = await DBService.getUserProfile(uid);
+        const userIds = type === 'followers' ? (userProfile.followers || []) : (userProfile.following || []);
+        const title = type === 'followers' ? 'Takipçiler' : 'Takip Edilenler';
+
+        if (userIds.length === 0) {
+            showModal(title, type === 'followers' ? 'Henüz takipçi yok' : 'Henüz kimse takip edilmiyor');
+            return;
+        }
+
+        // Fetch all user profiles
+        const users = [];
+        for (const userId of userIds) {
+            try {
+                const profile = await DBService.getUserProfile(userId);
+                users.push({ uid: userId, ...profile });
+            } catch (e) {
+                users.push({ uid: userId, displayName: 'Bilinmiyor' });
+            }
+        }
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'follow-list-modal';
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+        modal.innerHTML = `
+            <div class="follow-list-content">
+                <div class="follow-list-header">
+                    <h3>${title}</h3>
+                    <button onclick="this.closest('.follow-list-modal').remove()" style="font-size: 1.2rem;">×</button>
+                </div>
+                <div class="follow-list-body">
+                    ${users.map(u => `
+                        <div class="follow-user-item" onclick="this.closest('.follow-list-modal').remove(); openProfileView('${u.uid}')">
+                            <div class="follow-user-avatar">
+                                ${u.photoURL?.startsWith('http') ? `<img src="${u.photoURL}">` : '👤'}
+                            </div>
+                            <div class="follow-user-info">
+                                <div class="follow-user-name">${u.displayName || 'Kullanıcı'}</div>
+                                <div class="follow-user-username">@${u.username || u.uid.slice(0, 8)}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    } catch (e) {
+        console.error('Error loading followers list:', e);
+        showModal('Hata', 'Liste yüklenemedi');
     }
 };
 
@@ -2300,7 +2357,8 @@ window.toggleMapView = () => {
     }
 };
 
-document.getElementById('mapBtn').onclick = window.toggleMapView;
+const mapBtnElement = document.getElementById('mapBtn');
+if (mapBtnElement) mapBtnElement.onclick = window.toggleMapView;
 
 // --- Nostalgia (On This Day) Logic ---
 function setupNostalgia() {

@@ -3499,3 +3499,112 @@ html {
     text-align: center;
     color: var(--text-secondary);
 }
+
+/* --- Clickable Stats --- */
+.stat-item.clickable {
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.stat-item.clickable:hover {
+    transform: scale(1.05);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+/* --- Followers/Following Modal List --- */
+.follow-list-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.follow-list-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 70vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+.follow-list-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.follow-list-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.follow-list-body {
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.follow-user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.follow-user-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.follow-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    overflow: hidden;
+}
+
+.follow-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.follow-user-info {
+    flex: 1;
+}
+
+.follow-user-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.follow-user-username {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.follow-list-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-secondary);
+}
