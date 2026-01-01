@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v20-mobile';
+const CACHE_NAME = 'momentlog-v21-overflow-fix';
 const ASSETS = [
     './',
     './index.html',

@@ -27,6 +27,11 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
 body {
     background-color: var(--bg-main);
     color: var(--text-primary);
@@ -34,7 +39,9 @@ body {
     display: flex;
     justify-content: center;
     min-height: 100vh;
-    padding: 20px;
+    padding: 12px;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 #app {
@@ -988,6 +995,7 @@ textarea::placeholder {
 .stat-item.clickable:hover {
     opacity: 0.8;
 }
+
 /* ====================================================
    V19 GOLD THEME - Header & Buttons
    ==================================================== */
@@ -1116,7 +1124,7 @@ h1 {
 
 .google-login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
 }
 
 .login-footer {
@@ -1151,7 +1159,7 @@ h1 {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
     font-size: 1.5rem;
@@ -1296,7 +1304,7 @@ h1 {
 
 .profile-tabs {
     display: flex;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     padding: 4px;
     margin-bottom: 12px;
@@ -1430,7 +1438,7 @@ h1 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     z-index: 6000;
     display: flex;
     align-items: center;
@@ -1492,7 +1500,7 @@ h1 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 3000;
     display: flex;
     align-items: center;
@@ -1533,7 +1541,7 @@ h1 {
 }
 
 .follow-user-item:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .follow-user-avatar {
@@ -1562,39 +1570,39 @@ h1 {
         padding: 8px;
         font-size: 14px;
     }
-    
+
     #app {
         max-width: 100%;
         padding-bottom: 60px;
     }
-    
+
     header {
         padding: 12px 0 16px;
         gap: 12px;
     }
-    
+
     h1 {
         font-size: 1.4rem;
     }
-    
+
     .header-actions {
         gap: 6px;
     }
-    
+
     .icon-btn {
         width: 36px;
         height: 36px;
     }
-    
+
     .moment-card {
         border-radius: 12px;
         margin-bottom: 10px;
     }
-    
+
     .input-section {
         padding: 12px;
     }
-    
+
     textarea {
         font-size: 14px;
     }
@@ -1604,16 +1612,16 @@ h1 {
     body {
         padding: 4px;
     }
-    
+
     .header-actions {
         gap: 4px;
     }
-    
+
     .icon-btn {
         width: 32px;
         height: 32px;
     }
-    
+
     h1 {
         font-size: 1.2rem;
     }
