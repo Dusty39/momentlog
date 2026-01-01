@@ -903,6 +903,7 @@ function setupNotifications() {
     DBService.onNotifications(currentUser.uid, (notifications) => {
         const unreadCount = notifications.filter(n => !n.isRead).length;
         const badge = document.getElementById('notifBadge');
+        const notifBtn = document.getElementById('notificationsBtn');
 
         if (badge) {
             if (unreadCount > 0) {
@@ -913,17 +914,27 @@ function setupNotifications() {
             }
         }
 
+        // Gold highlight for bell when has notifications
+        if (notifBtn) {
+            if (unreadCount > 0) {
+                notifBtn.classList.add('has-notifications');
+            } else {
+                notifBtn.classList.remove('has-notifications');
+            }
+        }
+
         window._notifications = notifications;
-        renderNotifications(notifications);
+        renderNotificationsInView(notifications);
     });
 }
 
-function renderNotifications(notifications) {
-    const list = document.getElementById('notificationList');
+
+function renderNotificationsInView(notifications) {
+    const list = document.getElementById('notiContent');
     if (!list) return;
 
-    if (notifications.length === 0) {
-        list.innerHTML = '<div class="notification-empty">Henüz bildirim yok</div>';
+    if (!notifications || notifications.length === 0) {
+        list.innerHTML = '<div class="notification-empty" style="padding: 40px; text-align: center; color: var(--text-secondary);">Henüz bildirim yok</div>';
         return;
     }
 
@@ -962,14 +973,21 @@ function getTimeAgo(dateStr) {
 }
 
 function toggleNotificationPanel() {
-    const panel = document.getElementById('notificationPanel');
-    if (panel) {
-        panel.classList.toggle('active');
+    const view = document.getElementById('notiView');
+    const closeBtn = document.getElementById('closeNoti');
 
-        if (panel.classList.contains('active')) {
-            setTimeout(() => {
-                document.addEventListener('click', closeNotifOnOutsideClick);
-            }, 100);
+    if (view) {
+        view.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Render notifications in the view
+        renderNotificationsInView(window._notifications || []);
+
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                view.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
         }
     }
 }
