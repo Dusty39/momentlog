@@ -120,10 +120,10 @@
                         <button id="addLocationBtn" class="tool-btn" title="Gerçek Konum Ekle">📍</button>
 
                         <!-- Tarih -->
-                        <label class="tool-btn date-btn" title="Tarih Seç">
-                            📅
-                            <input type="date" id="momentDate" class="date-input-hidden">
-                        </label>
+                        <button id="dateBtn" class="tool-btn" title="Tarih Seç"
+                            onclick="document.getElementById('momentDate').showPicker()">📅</button>
+                        <input type="date" id="momentDate"
+                            style="position:absolute;visibility:hidden;width:0;height:0;">
 
                         <!-- Görünürlük -->
                         <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
