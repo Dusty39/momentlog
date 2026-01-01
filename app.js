@@ -103,10 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.momentDate.value = today;
     }
 
-    const savedView = localStorage.getItem('momentLog_lastView');
-    if (savedView) {
-        currentView = savedView;
-    }
+    // Always start with akış (my-moments) view - no persistence
+    currentView = 'my-moments';
 
     try {
         setupEventListeners();
@@ -336,22 +334,26 @@ async function saveMoment() {
     try {
         const userProfile = await DBService.getUserProfile(currentUser.uid);
 
+        // Ensure location is a simple string
+        const locationString = typeof currentLocation === 'string' ? currentLocation :
+            (currentLocation?.text || currentLocation?.name || null);
+
         const momentData = {
-            text: text || '',
-            media: cleanMedia,
-            location: currentLocation || null,
-            theme: currentMomentTheme,
-            mood: currentMood,
-            userId: currentUser.uid,
-            userDisplayName: userProfile?.username || userProfile?.displayName || currentUser.displayName || 'Anonim',
-            userPhotoURL: userProfile?.photoURL || currentUser.photoURL || '👤',
-            isPublic: isPublicState,
+            text: String(text || ''),
+            media: [], // Temporarily disabled - will fix later
+            location: locationString,
+            theme: String(currentMomentTheme || 'minimal'),
+            mood: String(currentMood || '😊'),
+            userId: String(currentUser.uid),
+            userDisplayName: String(userProfile?.username || userProfile?.displayName || currentUser.displayName || 'Anonim'),
+            userPhotoURL: String(userProfile?.photoURL || currentUser.photoURL || '👤'),
+            isPublic: Boolean(isPublicState),
             likes: [],
             commentsCount: 0,
             createdAt: dateInput ? new Date(dateInput).toISOString() : new Date().toISOString()
         };
 
-        if (isRealLocationActive && currentLocation) {
+        if (isRealLocationActive && locationString) {
             momentData.verifiedLocation = true;
         }
 
