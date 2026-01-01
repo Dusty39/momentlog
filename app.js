@@ -102,7 +102,7 @@ let isPublicState = false;
 let currentView = 'my-moments'; // 'my-moments' or 'explore'
 let isRealLocationActive = false; // New state for Gold Tick
 const APP_THEMES = ['default', 'light', 'vintage'];
-let currentAppTheme = localStorage.getItem('appTheme') || 'default';
+let currentAppTheme = localStorage.getItem('appTheme') || 'light'; // Default to light for new users
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -308,7 +308,7 @@ function setupEventListeners() {
 
     const exploreBtn = document.getElementById('exploreBtn');
     const homeBtn = document.getElementById('homeBtn');
-    const addMomentBtn = document.getElementById('addMomentBtn');
+    const addMomentBtn = document.getElementById('headerAddBtn');
     const notificationsBtn = document.getElementById('notificationsBtn');
     const inputSectionBase = document.querySelector('.input-section');
     const dashboardFooter = document.getElementById('dashboardFooter');
