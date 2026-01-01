@@ -52,21 +52,25 @@ body {
 
 /* Header */
 header {
-    padding: 20px 0 30px;
+    padding: 12px 0;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-}
-
-.header-top {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
-.header-actions {
+.header-logo {
+    text-align: center;
+    width: 100%;
+}
+
+.header-menu {
     display: flex;
-    gap: 12px;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    flex-wrap: wrap;
 }
 
 .icon-btn {
@@ -1625,4 +1629,140 @@ h1 {
     h1 {
         font-size: 1.2rem;
     }
+}
+/* ====================================================
+   COMPACT POST CARDS FOR MOBILE
+   ==================================================== */
+
+/* Card container */
+.moment-card {
+    background: var(--bg-surface);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Card header - user info */
+.card-header {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.verified-badge {
+    color: var(--accent);
+    font-size: 0.7rem;
+    margin-left: 4px;
+}
+
+.date {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Card media */
+.card-media {
+    width: 100%;
+    max-height: 300px;
+    overflow: hidden;
+}
+
+.card-media img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+/* Card content - text */
+.card-content {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+/* Card actions - like/comment */
+.card-actions {
+    padding: 8px 12px;
+    display: flex;
+    gap: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.action-btn:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.action-btn.liked {
+    color: #ef4444;
+}
+
+.like-icon, .like-count {
+    font-size: 0.85rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
 }

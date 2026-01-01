@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v21-overflow-fix';
+const CACHE_NAME = 'momentlog-v23-cards';
 const ASSETS = [
     './',
     './index.html',
