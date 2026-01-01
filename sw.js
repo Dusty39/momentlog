@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v19-clean-restore';
+const CACHE_NAME = 'momentlog-v19-restored';
 const ASSETS = [
     './',
     './index.html',
