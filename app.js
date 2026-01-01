@@ -611,15 +611,22 @@ async function loadInlineComments(momentId) {
 
         list.innerHTML = comments.map(c => {
             const isOwner = currentUser?.uid === c.userId;
+            const isLiked = c.likes?.includes(currentUser?.uid);
+            const likeCount = c.likes?.length || 0;
             const date = new Date(c.createdAt).toLocaleDateString('tr-TR');
             return `
                 <div class="comment-item">
                     <div class="comment-header">
-                        <span class="comment-author">${c.userDisplayName || 'Anonim'}</span>
+                        <span class="comment-author">${c.userDisplayName || c.userName || 'Anonim'}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwner ? `<button class="comment-delete" onclick="window.deleteComment('${momentId}', '${c.id}')">×</button>` : ''}
                     </div>
                     <div class="comment-text">${c.text}</div>
+                    <div class="comment-actions">
+                        <button class="comment-like ${isLiked ? 'liked' : ''}" onclick="window.toggleCommentLike('${momentId}', '${c.id}')">
+                            ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -627,6 +634,15 @@ async function loadInlineComments(momentId) {
         list.innerHTML = '<div class="error">Yorumlar yüklenemedi</div>';
     }
 }
+
+window.toggleCommentLike = async (momentId, commentId) => {
+    try {
+        await DBService.toggleCommentLike(momentId, commentId);
+        await loadInlineComments(momentId);
+    } catch (e) {
+        console.error('Comment like error:', e);
+    }
+};
 
 window.addComment = async (momentId) => {
     const input = document.getElementById(`commentInput-${momentId}`);

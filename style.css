@@ -2349,3 +2349,26 @@ body.app-theme-vintage {
 .comment-input-row button:hover {
     opacity: 0.9;
 }
+
+/* Comment Actions & Like */
+.comment-actions {
+    margin-top: 4px;
+}
+
+.comment-like {
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-secondary);
+}
+
+.comment-like:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.comment-like.liked {
+    color: #ef4444;
+}

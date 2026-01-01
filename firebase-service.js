@@ -370,15 +370,18 @@ const DBService = {
     },
 
     // Yorum Ekle
-    async addComment(momentId, text) {
+    async addComment(momentId, textOrData) {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 
+        // Handle both string and object parameter
+        const commentText = typeof textOrData === 'string' ? textOrData : (textOrData?.text || '');
+
         const commentData = {
             userId: user.uid,
-            userName: user.displayName,
-            userPhoto: user.photoURL,
-            text: text,
+            userDisplayName: user.displayName || 'Anonim',
+            userPhoto: user.photoURL || '👤',
+            text: commentText,
             likes: [],
             createdAt: new Date().toISOString()
         };
@@ -391,8 +394,28 @@ const DBService = {
             commentsCount: firebase.firestore.FieldValue.increment(1)
         });
 
-        await this.addNotification(momentData.userId, { type: 'comment', momentId: momentId, text: text });
+        await this.addNotification(momentData.userId, { type: 'comment', momentId: momentId, text: commentText });
         return { id: commentRef.id, ...commentData };
+    },
+
+    // Yorum Beğeni
+    async toggleCommentLike(momentId, commentId) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        const commentRef = db.collection('moments').doc(momentId).collection('comments').doc(commentId);
+        const doc = await commentRef.get();
+        if (!doc.exists) return;
+
+        const likes = doc.data().likes || [];
+        const isLiked = likes.includes(user.uid);
+
+        if (isLiked) {
+            await commentRef.update({ likes: firebase.firestore.FieldValue.arrayRemove(user.uid) });
+        } else {
+            await commentRef.update({ likes: firebase.firestore.FieldValue.arrayUnion(user.uid) });
+        }
+        return !isLiked;
     },
 
     // Yorumları Getir
