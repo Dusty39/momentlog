@@ -1,6 +1,6 @@
 /**
- * momentLog - Complete Application Logic
- * Gold Theme Edition - Rebuilt
+ * momentLog - Complete Application Logic v19
+ * Gold Theme Edition - Phase 29 Restore
  */
 
 // --- Global Error Monitor ---
@@ -9,7 +9,7 @@ window.onerror = function (msg, url, line) {
     return false;
 };
 
-console.log("momentLog: Script loading...");
+console.log("momentLog: Script loading v19...");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
@@ -95,7 +95,7 @@ let currentAppTheme = localStorage.getItem('appTheme') || 'light';
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     initializeSelectors();
-    console.log("momentLog: DOM Loaded");
+    console.log("momentLog: DOM Loaded v19");
 
     if (dom.momentDate) {
         dom.momentDate.valueAsDate = new Date();
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTimeline();
         }
 
-        console.log("momentLog: UI Initialized Successfully");
+        console.log("momentLog: UI Initialized Successfully v19");
     } catch (e) {
         console.error("Initialization Error:", e);
     }
@@ -127,12 +127,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) {
             console.log("Kullanıcı giriş yaptı:", user.displayName);
-            loginOverlay.classList.remove('active');
+            if (loginOverlay) loginOverlay.classList.remove('active');
 
             if (user.photoURL && dom.profileBtn) {
                 const img = dom.profileBtn.querySelector('img') || document.createElement('img');
                 img.src = user.photoURL;
-                if (!dom.profileBtn.querySelector('img')) dom.profileBtn.appendChild(img);
+                if (!dom.profileBtn.querySelector('img')) {
+                    dom.profileBtn.innerHTML = '';
+                    dom.profileBtn.appendChild(img);
+                }
                 dom.profileBtn.classList.add('has-avatar');
             }
 
@@ -147,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setupNotifications();
         } else {
             console.log("Kullanıcı giriş yapmadı.");
-            loginOverlay.classList.add('active');
+            if (loginOverlay) loginOverlay.classList.add('active');
             moments = [];
             renderTimeline();
         }
@@ -219,22 +222,27 @@ function setupEventListeners() {
         currentView = viewName;
         localStorage.setItem('momentLog_lastView', currentView);
 
+        const titleEl = document.querySelector('h1');
+
         if (currentView === 'explore') {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
-            document.querySelector('h1').textContent = "Keşfet";
+            headerAddBtn?.classList.remove('active');
+            if (titleEl) titleEl.textContent = "Keşfet";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
         } else if (currentView === 'write') {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
-            document.querySelector('h1').textContent = "Anı Yaz";
+            headerAddBtn?.classList.add('active');
+            if (titleEl) titleEl.textContent = "Anı Yaz";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
         } else {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
-            document.querySelector('h1').textContent = "Akış";
+            headerAddBtn?.classList.remove('active');
+            if (titleEl) titleEl.textContent = "Akış";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
         }
@@ -270,38 +278,9 @@ function applyAppTheme(theme) {
     } else if (theme === 'vintage') {
         document.body.classList.add('app-theme-vintage');
     }
+    currentAppTheme = theme;
+    localStorage.setItem('appTheme', theme);
 }
-
-window.openAppThemePicker = () => {
-    const themes = [
-        { id: 'default', name: 'Koyu', icon: '🌙' },
-        { id: 'light', name: 'Açık', icon: '☀️' },
-        { id: 'vintage', name: 'Vintage', icon: '📜' }
-    ];
-
-    const modal = document.createElement('div');
-    modal.className = 'follow-list-modal';
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-
-    modal.innerHTML = `
-        <div class="follow-list-content" style="max-width: 300px;">
-            <div class="follow-list-header">
-                <h3>🎨 Tema Seç</h3>
-                <button onclick="this.closest('.follow-list-modal').remove()" style="font-size: 1.2rem;">×</button>
-            </div>
-            <div class="follow-list-body" style="padding: 16px;">
-                ${themes.map(t => `
-                    <button class="profile-tool-btn" style="width: 100%; margin-bottom: 8px; justify-content: center; ${currentAppTheme === t.id ? 'background: var(--accent); color: white;' : ''}" 
-                            onclick="currentAppTheme = '${t.id}'; localStorage.setItem('appTheme', '${t.id}'); applyAppTheme('${t.id}'); this.closest('.follow-list-modal').remove();">
-                        ${t.icon} ${t.name}
-                    </button>
-                `).join('')}
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-};
 
 // --- Data Operations ---
 async function loadMoments() {
@@ -531,7 +510,9 @@ async function openProfileView(uid) {
     const content = document.getElementById('profileContent');
     const closeBtn = document.getElementById('closeProfile');
 
-    content.innerHTML = '<div class="loading">Yükleniyor...</div>';
+    if (!view || !content) return;
+
+    content.innerHTML = '<div class="loading" style="padding: 40px; text-align: center;">Yükleniyor...</div>';
     view.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     window._currentProfileUid = uid;
@@ -540,23 +521,19 @@ async function openProfileView(uid) {
         const userProfile = await DBService.getUserProfile(uid);
         const userMoments = await DBService.getMomentsByUser(uid);
         const isOwnProfile = uid === AuthService.currentUser()?.uid;
+        const isFollowing = userProfile.followers?.includes(AuthService.currentUser()?.uid);
 
         content.innerHTML = `
             <div class="profile-header-simple">
-                <div class="profile-avatar-wrapper ${isOwnProfile ? 'editable' : ''}" onclick="${isOwnProfile ? 'window.showAvatarPicker()' : ''}">
+                <div class="profile-avatar-wrapper">
                     ${userProfile.photoURL?.startsWith('http') ?
                 `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
-                    ${isOwnProfile ? '<div class="edit-overlay">📷</div>' : ''}
                 </div>
                 <div class="profile-info-minimal">
-                    <h2 onclick="${isOwnProfile ? 'window.promptDisplayNameChange()' : ''}" style="${isOwnProfile ? 'cursor:pointer; border-bottom:1px dashed var(--accent);' : ''}">
-                        ${userProfile.displayName || 'İsimsiz'}
-                    </h2>
-                    <p class="profile-username" onclick="${isOwnProfile ? 'window.promptNicknameChange()' : ''}" style="${isOwnProfile ? 'cursor:pointer; opacity:0.7;' : ''}">
-                        @${userProfile.username || 'isimsiz'}
-                    </p>
-                    <p class="profile-bio">${userProfile.bio || 'Henüz bir biyografi eklenmedi.'}</p>
+                    <h2>${userProfile.displayName || 'İsimsiz'}</h2>
+                    <p class="profile-username">@${userProfile.username || 'kullanici'}</p>
+                    <p class="profile-bio">${userProfile.bio || ''}</p>
                 </div>
             </div>
 
@@ -576,10 +553,9 @@ async function openProfileView(uid) {
             </div>
 
             <div class="profile-actions-row">
-                ${uid !== AuthService.currentUser()?.uid ? `
-                    <button id="followBtn" class="follow-btn-main ${userProfile.followers?.includes(AuthService.currentUser()?.uid) ? 'following' : ''}">
-                        ${userProfile.followers?.includes(AuthService.currentUser()?.uid) ? 'Takibi Bırak' :
-                    (userProfile.pendingFollowers?.includes(AuthService.currentUser()?.uid) ? 'İstek Gönderildi' : 'Takip Et')}
+                ${!isOwnProfile ? `
+                    <button id="followBtn" class="follow-btn-main ${isFollowing ? 'following' : ''}">
+                        ${isFollowing ? 'Takibi Bırak' : 'Takip Et'}
                     </button>
                 ` : `
                     <div class="own-profile-tools">
@@ -587,9 +563,9 @@ async function openProfileView(uid) {
                             ${userProfile.isPrivateProfile ? '🔒' : '🌐'}
                         </button>
                         <div class="theme-icons-inline">
-                            <button onclick="currentAppTheme='default'; localStorage.setItem('appTheme','default'); applyAppTheme('default'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'default' ? 'active' : ''}" title="Koyu">🌙</button>
-                            <button onclick="currentAppTheme='light'; localStorage.setItem('appTheme','light'); applyAppTheme('light'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'light' ? 'active' : ''}" title="Açık">☀️</button>
-                            <button onclick="currentAppTheme='vintage'; localStorage.setItem('appTheme','vintage'); applyAppTheme('vintage'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'vintage' ? 'active' : ''}" title="Vintage">📜</button>
+                            <button onclick="applyAppTheme('default'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'default' ? 'active' : ''}" title="Koyu">🌙</button>
+                            <button onclick="applyAppTheme('light'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'light' ? 'active' : ''}" title="Açık">☀️</button>
+                            <button onclick="applyAppTheme('vintage'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'vintage' ? 'active' : ''}" title="Vintage">📜</button>
                         </div>
                     </div>
                 `}
@@ -601,15 +577,15 @@ async function openProfileView(uid) {
                     <button class="tab-btn">Koleksiyonlar</button>
                 </div>
 
-                <div class="profile-moments-grid" id="profileMomentsGrid">
+                <div class="profile-moments-grid">
                     ${userMoments.map(m => {
-                        const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
-                        return `
-                        <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
-                            ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
-                        </div>
-                    `;
-                    }).join('')}
+                    const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+                    return `
+                            <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
+                                ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
+                            </div>
+                        `;
+                }).join('')}
                 </div>
             </div>
         `;
@@ -622,14 +598,18 @@ async function openProfileView(uid) {
 
     } catch (e) {
         console.error("Profil yükleme hatası:", e);
-        content.innerHTML = '<div class="error">Profil yüklenemedi</div>';
+        content.innerHTML = '<div class="error" style="padding: 40px; text-align: center;">Profil yüklenemedi</div>';
     }
 
-    closeBtn.onclick = () => {
-        view.classList.add('hidden');
-        document.body.style.overflow = '';
-    };
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            view.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+    }
 }
+
+window.openProfileView = openProfileView;
 
 // --- Follow System ---
 window.handleFollowAction = async (targetUid) => {
@@ -703,7 +683,7 @@ window.showFollowersList = async (uid, type) => {
             <div class="follow-list-content">
                 <div class="follow-list-header">
                     <h3>${title}</h3>
-                    <button onclick="this.closest('.follow-list-modal').remove()" style="font-size: 1.2rem;">×</button>
+                    <button onclick="this.closest('.follow-list-modal').remove()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button>
                 </div>
                 <div class="follow-list-body">
                     ${users.map(u => `
@@ -713,7 +693,7 @@ window.showFollowersList = async (uid, type) => {
                             </div>
                             <div class="follow-user-info">
                                 <div class="follow-user-name">${u.displayName || 'Kullanıcı'}</div>
-                                <div class="follow-user-username">@${u.username || u.uid.slice(0, 8)}</div>
+                                <div class="follow-user-username" style="font-size:0.8rem; color:var(--text-secondary);">@${u.username || u.uid.slice(0, 8)}</div>
                             </div>
                         </div>
                     `).join('')}
@@ -760,7 +740,7 @@ window.toggleLike = async (id) => {
     try {
         await DBService.toggleLike(id);
     } catch (e) {
-        // Revert on error
+        // Revert on error - silently for permission errors
         if (isCurrentlyLiked) {
             likeBtn?.classList.add('liked');
             if (likeIcon) likeIcon.textContent = '❤️';
@@ -842,16 +822,16 @@ async function loadComments(momentId) {
         const comments = await DBService.getComments(momentId);
 
         if (comments.length === 0) {
-            commentsList.innerHTML = '<p class="no-comments">Henüz yorum yok</p>';
+            commentsList.innerHTML = '<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:20px;">Henüz yorum yok</p>';
             return;
         }
 
         commentsList.innerHTML = comments.map(c => `
-            <div class="comment-item">
-                <div class="comment-user-info" onclick="openProfileView('${c.userId}')">
-                    <span class="comment-username">${c.userDisplayName || 'Anonim'}</span>
+            <div class="comment-item" style="padding: 10px; border-bottom: 1px solid var(--border-subtle);">
+                <div class="comment-user-info" onclick="openProfileView('${c.userId}')" style="cursor:pointer;">
+                    <span class="comment-username" style="font-weight:600;">${c.userDisplayName || 'Anonim'}</span>
                 </div>
-                <p class="comment-text">${c.text}</p>
+                <p class="comment-text" style="margin-top:4px;">${c.text}</p>
             </div>
         `).join('');
     } catch (e) {
@@ -885,25 +865,9 @@ function setupNotifications() {
     const currentUser = AuthService.currentUser();
     if (!currentUser) return;
 
-    // Create notification panel
-    if (!document.getElementById('notificationPanel')) {
-        const panel = document.createElement('div');
-        panel.id = 'notificationPanel';
-        panel.className = 'notification-panel';
-        panel.innerHTML = `
-            <div class="notification-header">
-                <h3>Bildirimler</h3>
-                <button onclick="markAllNotificationsRead()" style="font-size: 0.8rem; opacity: 0.7;">Tümünü oku</button>
-            </div>
-            <div class="notification-list" id="notificationList"></div>
-        `;
-        document.body.appendChild(panel);
-    }
-
     DBService.onNotifications(currentUser.uid, (notifications) => {
         const unreadCount = notifications.filter(n => !n.isRead).length;
         const badge = document.getElementById('notifBadge');
-        const notifBtn = document.getElementById('notificationsBtn');
 
         if (badge) {
             if (unreadCount > 0) {
@@ -914,27 +878,35 @@ function setupNotifications() {
             }
         }
 
-        // Gold highlight for bell when has notifications
-        if (notifBtn) {
-            if (unreadCount > 0) {
-                notifBtn.classList.add('has-notifications');
-            } else {
-                notifBtn.classList.remove('has-notifications');
-            }
-        }
-
         window._notifications = notifications;
-        renderNotificationsInView(notifications);
     });
 }
 
+function toggleNotificationPanel() {
+    const view = document.getElementById('notiView');
+    const closeBtn = document.getElementById('closeNoti');
+
+    if (view) {
+        view.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        renderNotificationsInView(window._notifications || []);
+
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                view.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
+        }
+    }
+}
 
 function renderNotificationsInView(notifications) {
     const list = document.getElementById('notiContent');
     if (!list) return;
 
     if (!notifications || notifications.length === 0) {
-        list.innerHTML = '<div class="notification-empty" style="padding: 40px; text-align: center; color: var(--text-secondary);">Henüz bildirim yok</div>';
+        list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Henüz bildirim yok</div>';
         return;
     }
 
@@ -972,38 +944,10 @@ function getTimeAgo(dateStr) {
     return `${Math.floor(diff / 86400)} gün önce`;
 }
 
-function toggleNotificationPanel() {
-    const view = document.getElementById('notiView');
-    const closeBtn = document.getElementById('closeNoti');
-
-    if (view) {
-        view.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-
-        // Render notifications in the view
-        renderNotificationsInView(window._notifications || []);
-
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                view.classList.add('hidden');
-                document.body.style.overflow = '';
-            };
-        }
-    }
-}
-
-function closeNotifOnOutsideClick(e) {
-    const panel = document.getElementById('notificationPanel');
-    const btn = document.getElementById('notificationsBtn');
-    if (panel && !panel.contains(e.target) && !btn?.contains(e.target)) {
-        panel.classList.remove('active');
-        document.removeEventListener('click', closeNotifOnOutsideClick);
-    }
-}
-
 window.handleNotificationClick = async (notifId, momentId, senderUid) => {
-    const panel = document.getElementById('notificationPanel');
-    panel?.classList.remove('active');
+    const view = document.getElementById('notiView');
+    if (view) view.classList.add('hidden');
+    document.body.style.overflow = '';
 
     if (momentId) {
         window.openImmersiveViewById(momentId);
@@ -1019,72 +963,4 @@ window.markAllNotificationsRead = async () => {
     }
 };
 
-// --- Avatar Picker ---
-window.showAvatarPicker = () => {
-    const picker = document.getElementById('avatarPicker');
-    if (picker) picker.classList.toggle('hidden');
-};
-
-window.updateAvatar = async (emoji) => {
-    const currentUser = AuthService.currentUser();
-    if (!currentUser) return;
-
-    try {
-        await DBService.updateUserProfile(currentUser.uid, { photoURL: emoji });
-        openProfileView(currentUser.uid);
-    } catch (e) {
-        showModal('Hata', 'Avatar güncellenemedi');
-    }
-};
-
-window.handleProfilePhotoUpload = async (input) => {
-    const file = input.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) return;
-
-        try {
-            await DBService.updateUserProfile(currentUser.uid, { photoURL: e.target.result });
-            openProfileView(currentUser.uid);
-        } catch (err) {
-            showModal('Hata', 'Fotoğraf yüklenemedi');
-        }
-    };
-    reader.readAsDataURL(file);
-};
-
-// --- Name Change ---
-window.promptDisplayNameChange = async () => {
-    const newName = prompt('Yeni görünen adınızı girin:');
-    if (!newName || newName.trim() === '') return;
-
-    const currentUser = AuthService.currentUser();
-    if (!currentUser) return;
-
-    try {
-        await DBService.updateUserProfile(currentUser.uid, { displayName: newName.trim() });
-        openProfileView(currentUser.uid);
-    } catch (e) {
-        showModal('Hata', 'İsim güncellenemedi');
-    }
-};
-
-window.promptNicknameChange = async () => {
-    const newUsername = prompt('Yeni kullanıcı adınızı girin (@username):');
-    if (!newUsername || newUsername.trim() === '') return;
-
-    const currentUser = AuthService.currentUser();
-    if (!currentUser) return;
-
-    try {
-        await DBService.updateUserProfile(currentUser.uid, { username: newUsername.trim().toLowerCase() });
-        openProfileView(currentUser.uid);
-    } catch (e) {
-        showModal('Hata', 'Kullanıcı adı güncellenemedi');
-    }
-};
-
-console.log("momentLog: Script loaded successfully");
+console.log("momentLog: Script loaded successfully v19");
