@@ -896,19 +896,18 @@ window.handleFollowAction = async (targetUid) => {
     const followBtn = document.getElementById('followBtn');
     if (!followBtn) return;
 
-    const originalText = followBtn.innerText;
-    const originalClass = followBtn.className;
     followBtn.disabled = true;
     followBtn.innerText = 'İşleniyor...';
 
     try {
         await DBService.toggleFollow(targetUid);
-        openProfileView(targetUid);
+        // Force refresh profile view with fresh data
+        await openProfileView(targetUid);
     } catch (e) {
-        followBtn.innerText = originalText;
-        followBtn.className = originalClass;
-        followBtn.disabled = false;
         console.error('Follow action error:', e);
+        showModal('Hata', 'Takip işlemi başarısız: ' + e.message);
+        // Restore button on error
+        await openProfileView(targetUid);
     }
 };
 
