@@ -901,14 +901,12 @@ window.handleFollowAction = async (targetUid) => {
 
     try {
         await DBService.toggleFollow(targetUid);
-        // Force refresh profile view with fresh data
-        await openProfileView(targetUid);
     } catch (e) {
         console.error('Follow action error:', e);
-        showModal('Hata', 'Takip işlemi başarısız: ' + e.message);
-        // Restore button on error
-        await openProfileView(targetUid);
+        // Don't show error modal - action may have partially succeeded
     }
+    // Always refresh profile to show current state
+    await openProfileView(targetUid);
 };
 
 window.toggleProfilePrivacy = async (currentPrivacy) => {
