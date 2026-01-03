@@ -1711,14 +1711,18 @@ h1 {
 /* Card media */
 .card-media {
     width: 100%;
-    max-height: 300px;
     overflow: hidden;
+    border-radius: 8px;
+    margin: 8px 0;
 }
 
 .card-media img {
     width: 100%;
     height: auto;
-    object-fit: cover;
+    display: block;
+    max-height: 400px;
+    object-fit: contain;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 /* Card content - text */
@@ -1819,6 +1823,7 @@ body.app-theme-vintage h1 {
     background-clip: text;
     color: transparent;
 }
+
 /* ====================================================
    CRITICAL OVERRIDE FIXES - Use !important
    ==================================================== */
@@ -2051,7 +2056,7 @@ body.app-theme-vintage {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -2181,7 +2186,7 @@ body.app-theme-vintage {
     border-radius: 16px;
     text-align: center;
     z-index: 1100;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .upload-progress h4 {
@@ -2201,7 +2206,7 @@ body.app-theme-vintage {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 1099;
 }
 
@@ -2223,7 +2228,7 @@ body.app-theme-vintage {
     width: 32px;
     height: 32px;
     border: none;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     font-size: 1rem;
     cursor: pointer;
@@ -2253,7 +2258,7 @@ body.app-theme-vintage {
 .inline-comments {
     padding: 12px;
     border-top: 1px solid var(--border-subtle);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .inline-comments.hidden {
@@ -2268,7 +2273,7 @@ body.app-theme-vintage {
 
 .comment-item {
     padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .comment-item:last-child {
@@ -2314,7 +2319,9 @@ body.app-theme-vintage {
     line-height: 1.4;
 }
 
-.no-comments, .loading, .error {
+.no-comments,
+.loading,
+.error {
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.85rem;
@@ -2366,7 +2373,7 @@ body.app-theme-vintage {
 }
 
 .comment-like:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .comment-like.liked {
