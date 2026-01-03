@@ -524,7 +524,12 @@ function renderTimeline(searchQuery = '') {
                         💬 ${m.commentsCount || 0}
                     </button>
                     <div class="action-spacer"></div>
-                    ${isOwner ? `<button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>` : ''}
+                    ${isOwner ? `
+                        <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
+                            ${m.isPublic ? '🌐' : '🔒'}
+                        </button>
+                        <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
+                    ` : ''}
                 </div>
                 
                 <!-- Inline Comments Section -->
@@ -628,6 +633,19 @@ window.deleteMomentConfirm = async (momentId) => {
             console.error('Delete error:', e);
             showModal('Hata', 'Anı silinemedi: ' + e.message);
         }
+    }
+};
+
+// Toggle moment visibility (public/private)
+window.toggleMomentVisibility = async (momentId, makePublic) => {
+    try {
+        await DBService.setMomentVisibility(momentId, makePublic);
+        await loadMoments();
+        renderTimeline();
+        showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
+    } catch (e) {
+        console.error('Visibility error:', e);
+        showModal('Hata', 'Görünürlük değiştirilemedi: ' + e.message);
     }
 };
 
