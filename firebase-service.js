@@ -114,6 +114,22 @@ const DBService = {
         });
     },
 
+    // Takip Aç/Kapat
+    async toggleFollow(targetUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        // Check if already following
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        const following = userDoc.data()?.following || [];
+
+        if (following.includes(targetUid)) {
+            return this.unfollowUser(targetUid);
+        } else {
+            return this.followUser(targetUid);
+        }
+    },
+
     // Takip İsteğini Kabul Et
     async acceptFollowRequest(requestUid) {
         const currentUser = auth.currentUser;
