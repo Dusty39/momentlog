@@ -853,9 +853,10 @@ async function openProfileView(uid) {
                 <div class="profile-moments-grid">
                     ${userMoments.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+                    const imgSrc = firstImg?.url || firstImg?.data || '';
                     return `
                             <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
-                                ${firstImg ? `<img src="${firstImg.data}">` : '<div class="text-placeholder">📝</div>'}
+                                ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
                             </div>
                         `;
                 }).join('')}
