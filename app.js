@@ -26,6 +26,34 @@ let mediaRecorder = null;
 let audioChunks = [];
 const MAX_AUDIO_SECONDS = 30;
 
+// --- Image Compression for Fallback ---
+async function compressImage(dataUrl, quality = 0.5, maxWidth = 800) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedData = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedData);
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+    });
+}
+
 // --- Theme Selector Functions ---
 window.openThemeSelector = () => {
     const picker = document.getElementById('themePicker');
@@ -351,23 +379,45 @@ async function saveMoment() {
         const uploadedMedia = [];
         const mediaToUpload = currentMedia.filter(m => m && typeof m.data === 'string');
 
+        console.log('Media to upload:', mediaToUpload.length);
+
         if (mediaToUpload.length > 0) {
             showUploadProgress(0, mediaToUpload.length);
 
             for (let i = 0; i < mediaToUpload.length; i++) {
                 const m = mediaToUpload[i];
+                console.log('Uploading media', i + 1, 'type:', m.type);
                 try {
                     const url = await DBService.uploadMedia(m.data, m.type || 'image');
+                    console.log('Upload result:', url ? 'success' : 'failed');
                     if (url) {
                         uploadedMedia.push({ type: m.type || 'image', url: url });
+                    } else {
+                        // Fallback: if Storage fails, try to save compressed base64
+                        console.log('Storage failed, using compressed data URL');
+                        const compressedData = await compressImage(m.data, 0.5, 800);
+                        if (compressedData) {
+                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        }
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);
+                    // Fallback on error too
+                    try {
+                        const compressedData = await compressImage(m.data, 0.5, 800);
+                        if (compressedData) {
+                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        }
+                    } catch (compressErr) {
+                        console.error('Compression error:', compressErr);
+                    }
                 }
                 showUploadProgress(i + 1, mediaToUpload.length);
             }
             hideUploadProgress();
         }
+
+        console.log('Uploaded media count:', uploadedMedia.length);
 
         // Ensure location is a simple string
         const locationString = typeof currentLocation === 'string' ? currentLocation :
