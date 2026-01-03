@@ -850,17 +850,23 @@ async function openProfileView(uid) {
                     <button class="tab-btn">Koleksiyonlar</button>
                 </div>
 
-                <div class="profile-moments-grid">
-                    ${userMoments.map(m => {
+                ${(isOwnProfile || !userProfile.isPrivateProfile || isFollowing) ? `
+                    <div class="profile-moments-grid">
+                        ${userMoments.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
-                    return `
-                            <div class="grid-item" onclick="openImmersiveViewById('${m.id}')">
-                                ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
-                            </div>
-                        `;
+                    return '<div class="grid-item" onclick="openImmersiveViewById(\'' + m.id + '\')">' +
+                        (imgSrc ? '<img src="' + imgSrc + '">' : '<div class="text-placeholder">📝</div>') +
+                        '</div>';
                 }).join('')}
-                </div>
+                    </div>
+                ` : `
+                    <div class="private-profile-message">
+                        <div class="private-icon">🔒</div>
+                        <h3>Gizli Profil</h3>
+                        <p>Bu kullanıcının paylaşımlarını görmek için takip edin.</p>
+                    </div>
+                `}
             </div>
         `;
 

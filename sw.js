@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v43-error-fix';
+const CACHE_NAME = 'momentlog-v44-privacy';
 const ASSETS = [
     './',
     './index.html',

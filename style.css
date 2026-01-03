@@ -2379,3 +2379,24 @@ body.app-theme-vintage {
 .comment-like.liked {
     color: #ef4444;
 }
+/* Private Profile Message */
+.private-profile-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.private-profile-message .private-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.private-profile-message h3 {
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    font-size: 1.2rem;
+}
+
+.private-profile-message p {
+    font-size: 0.9rem;
+}
