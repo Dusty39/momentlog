@@ -1243,6 +1243,10 @@ function renderNotificationsInView(notifications) {
 }
 
 window.deleteNotification = async (notifId) => {
+    // Immediate UI update - remove from list
+    window._notifications = (window._notifications || []).filter(n => n.id !== notifId);
+    renderNotificationsInView(window._notifications);
+
     try {
         await DBService.deleteNotification(notifId);
     } catch (e) {
@@ -1253,6 +1257,10 @@ window.deleteNotification = async (notifId) => {
 window.clearAllNotifications = async () => {
     const currentUser = AuthService.currentUser();
     if (!currentUser) return;
+
+    // Immediate UI update - empty list
+    window._notifications = [];
+    renderNotificationsInView([]);
 
     try {
         await DBService.clearAllNotifications(currentUser.uid);

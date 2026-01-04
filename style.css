@@ -2481,3 +2481,36 @@ body.app-theme-vintage {
 .clear-all-btn:hover {
     background: rgba(239, 68, 68, 0.2);
 }
+
+/* Compact Notification Rows */
+.notif-main {
+    padding: 8px 12px !important;
+}
+
+.notif-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+}
+
+.notif-avatar img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.notif-text {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.notif-time {
+    font-size: 0.75rem;
+}
+
+.notif-delete-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+}
