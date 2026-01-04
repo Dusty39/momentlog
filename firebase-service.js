@@ -501,13 +501,11 @@ const DBService = {
 
     // Bildirimleri Dinle
     onNotifications(uid, callback) {
-        console.log('Setting up notification listener for:', uid);
         return db.collection('notifications')
             .where('targetUid', '==', uid)
             .limit(50)
             .onSnapshot(
                 snapshot => {
-                    console.log('Notifications received:', snapshot.docs.length);
                     const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     // Sort client-side to avoid composite index
                     notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
@@ -515,7 +513,7 @@ const DBService = {
                 },
                 error => {
                     console.error('Notification listener error:', error);
-                    callback([]); // Return empty on error
+                    callback([]);
                 }
             );
     },

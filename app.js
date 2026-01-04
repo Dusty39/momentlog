@@ -1144,14 +1144,12 @@ function setupNotifications() {
     if (!currentUser) return;
 
     DBService.onNotifications(currentUser.uid, (notifications) => {
-        console.log('Notifications callback, count:', notifications.length);
+
         const unreadCount = notifications.filter(n => !n.isRead).length;
-        console.log('Unread count:', unreadCount);
 
         const badge = document.getElementById('notifBadge');
         const btn = document.getElementById('notificationsBtn');
 
-        console.log('Badge element:', !!badge, 'Button element:', !!btn);
 
         if (badge) {
             if (unreadCount > 0) {
@@ -1166,7 +1164,7 @@ function setupNotifications() {
         if (btn) {
             if (unreadCount > 0) {
                 btn.classList.add('has-unread');
-                console.log('Added has-unread class');
+
             } else {
                 btn.classList.remove('has-unread');
             }
