@@ -656,6 +656,7 @@ function renderTimeline(searchQuery = '') {
     dom.timeline.innerHTML = filteredMoments.map(m => {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const locationText = m.location ? ` • ${m.location}` : '';
         const firstImg = m.media?.find(med => med.type === 'image');
         const imgSrc = firstImg?.url || firstImg?.data || '';
         const currentUser = AuthService.currentUser();
@@ -672,7 +673,7 @@ function renderTimeline(searchQuery = '') {
                         <div class="user-details">
                             <span class="username">${m.userDisplayName || 'Anonim'}</span>
                             ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
-                            <span class="date">${formattedDate}</span>
+                            <span class="date">${formattedDate}${locationText}</span>
                         </div>
                     </div>
                 </div>
