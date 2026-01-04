@@ -1145,6 +1145,7 @@ function setupNotifications() {
     DBService.onNotifications(currentUser.uid, (notifications) => {
         const unreadCount = notifications.filter(n => !n.isRead).length;
         const badge = document.getElementById('notifBadge');
+        const btn = document.getElementById('notificationsBtn');
 
         if (badge) {
             if (unreadCount > 0) {
@@ -1152,6 +1153,15 @@ function setupNotifications() {
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
+            }
+        }
+
+        // Add/remove has-unread class for button color
+        if (btn) {
+            if (unreadCount > 0) {
+                btn.classList.add('has-unread');
+            } else {
+                btn.classList.remove('has-unread');
             }
         }
 
@@ -1168,6 +1178,12 @@ function toggleNotificationPanel() {
         document.body.style.overflow = 'hidden';
 
         renderNotificationsInView(window._notifications || []);
+
+        // Mark all as read when panel opens
+        const currentUser = AuthService.currentUser();
+        if (currentUser) {
+            DBService.markNotificationsAsRead(currentUser.uid);
+        }
 
         if (closeBtn) {
             closeBtn.onclick = () => {

@@ -125,5 +125,21 @@ service cloud.firestore {
       allow read, write: if isOwner(resource.data.userId) || 
                            (isAuthenticated() && request.resource.data.userId == request.auth.uid);
     }
+    
+    // =============================================
+    // NOTIFICATIONS COLLECTION (root level)
+    // =============================================
+    match /notifications/{notificationId} {
+      // Only target user can read their notifications
+      allow read: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
+      
+      // Any authenticated user can create notifications for others
+      allow create: if isAuthenticated() 
+                    && request.resource.data.senderUid == request.auth.uid
+                    && request.resource.data.targetUid != request.auth.uid;
+      
+      // Only target user can update (mark as read) or delete
+      allow update, delete: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
+    }
   }
 }
