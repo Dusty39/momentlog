@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v61-debug';
+const CACHE_NAME = 'momentlog-v62-step-debug';
 const ASSETS = [
     './',
     './index.html',
