@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v77-timeout-fix';
+const CACHE_NAME = 'momentlog-v78-avatar-render-fix';
 const ASSETS = [
     './',
     './index.html',

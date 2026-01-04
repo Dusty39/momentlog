@@ -744,7 +744,7 @@ function renderTimeline(searchQuery = '') {
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
-                            ${m.userPhotoURL?.startsWith('http') ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
+                            ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
                         <div class="user-details">
                             <span class="username">${m.userDisplayName || 'Anonim'}</span>

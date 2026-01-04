@@ -307,7 +307,17 @@ const DBService = {
                 .where('userId', '==', user.uid)
                 .orderBy('createdAt', 'desc')
                 .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Enrich with fresh profile
+            const profileDoc = await db.collection('users').doc(user.uid).get();
+            const profile = profileDoc.exists ? profileDoc.data() : null;
+
+            return moments.map(m => ({
+                ...m,
+                userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+            }));
         } catch (e) {
             console.error("Personal Feed error:", e);
             throw e;
@@ -319,12 +329,21 @@ const DBService = {
         try {
             const snapshot = await db.collection('moments')
                 .where('userId', '==', uid)
-                .where('isPublic', '==', true)
                 .orderBy('createdAt', 'desc')
                 .get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Enrich with fresh profile
+            const profileDoc = await db.collection('users').doc(uid).get();
+            const profile = profileDoc.exists ? profileDoc.data() : null;
+
+            return moments.map(m => ({
+                ...m,
+                userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+            }));
         } catch (e) {
-            console.error("Profile View error:", e);
+            console.error("User Feed error:", e);
             throw e;
         }
     },
