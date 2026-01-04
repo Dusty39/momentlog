@@ -329,9 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
 
-        if (window.setView && currentView) {
-            window.setView(currentView, true);
-        } else {
+        // setView will be called inside onAuthStateChanged to prevent title flicker
+        if (!window.setView || !currentView) {
             renderTimeline();
         }
 
@@ -380,13 +379,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Auth state processing error:", error);
         } finally {
+            // Set initial view if not already set
+            if (window.setView && currentView) {
+                await window.setView(currentView, true);
+            }
+
             // ALWAYS hide loading splash and show app after auth check (even on error)
             if (loadingSplash) {
                 loadingSplash.classList.add('hidden');
             }
-            if (appDiv) {
-                appDiv.classList.remove('hidden');
-            }
+
+            // Show app with a slight delay to allow splash to start fading and prevent flicker
+            setTimeout(() => {
+                if (appDiv) {
+                    appDiv.classList.remove('hidden');
+                    appDiv.classList.add('fade-in');
+                }
+            }, 100);
         }
     });
 

@@ -2379,6 +2379,7 @@ body.app-theme-vintage {
 .comment-like.liked {
     color: #ef4444;
 }
+
 /* Private Profile Message */
 .private-profile-message {
     text-align: center;
@@ -2420,8 +2421,17 @@ body.app-theme-vintage {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
 }
 
 /* Notification Delete Buttons */
@@ -2801,8 +2811,13 @@ body.app-theme-vintage {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .splash-content p {
@@ -2844,4 +2859,21 @@ body.app-theme-vintage {
 .dashboard-footer .designer-name {
     color: var(--accent);
     font-weight: 500;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
