@@ -165,7 +165,9 @@ async function checkUsernameAvailability() {
 }
 
 window.saveProfileChanges = async () => {
+    console.log('saveProfileChanges called');
     const currentUser = AuthService.currentUser();
+    console.log('currentUser:', currentUser?.uid);
     if (!currentUser) return;
 
     const displayName = document.getElementById('editDisplayName').value.trim();
