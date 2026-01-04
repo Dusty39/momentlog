@@ -93,7 +93,7 @@ window.openEditProfileModal = async () => {
 
     // Show current photo
     const preview = document.getElementById('editAvatarPreview');
-    if (profile.photoURL?.startsWith('http')) {
+    if (profile.photoURL?.startsWith('http') || profile.photoURL?.startsWith('data:')) {
         preview.innerHTML = `<img src="${profile.photoURL}">`;
     } else {
         preview.innerHTML = profile.photoURL || '👤';
@@ -212,6 +212,17 @@ window.saveProfileChanges = async () => {
         }
 
         await DBService.updateUserProfile(currentUser.uid, updateData);
+
+        // Update header profile photo if changed
+        if (photoURL && dom.profileBtn) {
+            const img = dom.profileBtn.querySelector('img') || document.createElement('img');
+            img.src = photoURL;
+            if (!dom.profileBtn.querySelector('img')) {
+                dom.profileBtn.innerHTML = '';
+                dom.profileBtn.appendChild(img);
+            }
+            dom.profileBtn.classList.add('has-avatar');
+        }
 
         window.closeEditProfileModal();
         showModal('Başarılı', 'Profiliniz güncellendi!');
@@ -1038,7 +1049,7 @@ async function openProfileView(uid) {
         content.innerHTML = `
             <div class="profile-header-simple">
                 <div class="profile-avatar-wrapper">
-                    ${userProfile.photoURL?.startsWith('http') ?
+                    ${(userProfile.photoURL?.startsWith('http') || userProfile.photoURL?.startsWith('data:')) ?
                 `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
                 </div>
