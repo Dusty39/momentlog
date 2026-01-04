@@ -196,39 +196,55 @@ const DBService = {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 
-        try {
-            let storageEnabled = false;
+        // Timeout promise (10 seconds)
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 10000)
+        );
+
+        const uploadTask = (async () => {
             try {
-                if (firebase.storage && firebase.storage().ref()) {
-                    storageEnabled = true;
+                let storageEnabled = false;
+                try {
+                    if (firebase.storage && firebase.storage().ref()) {
+                        storageEnabled = true;
+                    }
+                } catch (initErr) {
+                    console.warn("Storage check failed:", initErr);
                 }
-            } catch (initErr) {
-                console.warn("Storage check failed:", initErr);
+
+                if (!storageEnabled) return null;
+
+                const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
+                const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
+
+                const dataParts = fileData.split(',');
+                const mime = dataParts[0].match(/:(.*?);/)[1];
+                const binary = atob(dataParts[1]);
+                const array = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    array[i] = binary.charCodeAt(i);
+                }
+                const blob = new Blob([array], { type: mime });
+
+                const snapshot = await storageRef.put(blob);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                return downloadURL;
+            } catch (e) {
+                console.error("Storage upload error:", e);
+                return null;
             }
+        })();
 
-            if (!storageEnabled) return null;
-
-            const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
-            const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
-
-            const dataParts = fileData.split(',');
-            const mime = dataParts[0].match(/:(.*?);/)[1];
-            const binary = atob(dataParts[1]);
-            const array = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                array[i] = binary.charCodeAt(i);
-            }
-            const blob = new Blob([array], { type: mime });
-
-            const snapshot = await storageRef.put(blob);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            return downloadURL;
+        try {
+            return await Promise.race([uploadTask, timeoutPromise]);
         } catch (e) {
-            console.error("Storage upload error:", e);
-            return null;
+            if (e.message === "Timeout") {
+                console.warn("Upload timed out, falling back to compression.");
+                return null;
+            }
+            throw e;
         }
     },
-
     // Anı Ekle
     async addMoment(data) {
         const user = auth.currentUser;

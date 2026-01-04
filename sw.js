@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v76-profile-fix';
+const CACHE_NAME = 'momentlog-v77-timeout-fix';
 const ASSETS = [
     './',
     './index.html',

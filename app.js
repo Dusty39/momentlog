@@ -29,8 +29,14 @@ const MAX_AUDIO_SECONDS = 30;
 // --- Image Compression for Fallback ---
 async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
     return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+            console.warn("Compression timed out");
+            resolve(null);
+        }, 15000);
+
         const img = new Image();
         img.onload = () => {
+            clearTimeout(timeout);
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
@@ -49,7 +55,10 @@ async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
             const compressedData = canvas.toDataURL('image/jpeg', quality);
             resolve(compressedData);
         };
-        img.onerror = () => resolve(null);
+        img.onerror = () => {
+            clearTimeout(timeout);
+            resolve(null);
+        };
         img.src = dataUrl;
     });
 }
