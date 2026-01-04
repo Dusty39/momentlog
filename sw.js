@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v71-logout';
+const CACHE_NAME = 'momentlog-v72-photo-sync';
 const ASSETS = [
     './',
     './index.html',

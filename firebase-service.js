@@ -29,6 +29,14 @@ const AuthService = {
     onAuthStateChanged: (callback) => {
         return auth.onAuthStateChanged(callback);
     },
+    // Profili Güncelle
+    updateProfile: (data) => {
+        const user = auth.currentUser;
+        if (user) {
+            return user.updateProfile(data);
+        }
+        return Promise.reject("Kullanıcı bulunamadı");
+    },
 
     // Mevcut Kullanıcı
     currentUser: () => {
@@ -68,6 +76,26 @@ const DBService = {
     // Kullanıcı Profilini Güncelle
     async updateUserProfile(uid, data) {
         return db.collection('users').doc(uid).update(data);
+    },
+
+    // Tüm anılardaki kullanıcı bilgilerini güncelle
+    async syncUserMoments(uid, updateData) {
+        const batch = db.batch();
+        const moments = await db.collection('moments').where('userId', '==', uid).get();
+
+        const dataToSync = {};
+        if (updateData.username) dataToSync.userDisplayName = updateData.username;
+        else if (updateData.displayName) dataToSync.userDisplayName = updateData.displayName;
+
+        if (updateData.photoURL) dataToSync.userPhotoURL = updateData.photoURL;
+
+        if (Object.keys(dataToSync).length === 0) return;
+
+        moments.forEach(doc => {
+            batch.update(doc.ref, dataToSync);
+        });
+
+        return batch.commit();
     },
 
     // Profil Fotoğrafı - Base64 olarak döndür (Storage yerine Firestore'da sakla)

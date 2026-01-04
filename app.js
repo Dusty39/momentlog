@@ -213,6 +213,15 @@ window.saveProfileChanges = async () => {
 
         await DBService.updateUserProfile(currentUser.uid, updateData);
 
+        // Update Firebase Auth profile as well for consistency on refresh
+        await AuthService.updateProfile({
+            displayName: updateData.displayName,
+            photoURL: updateData.photoURL || currentUser.photoURL
+        });
+
+        // Sync older moments with new profile data
+        await DBService.syncUserMoments(currentUser.uid, updateData);
+
         // Update header profile photo if changed
         if (photoURL && dom.profileBtn) {
             const img = dom.profileBtn.querySelector('img') || document.createElement('img');
@@ -1065,7 +1074,7 @@ async function openProfileView(uid) {
 
         content.innerHTML = `
             <div class="profile-header-simple">
-                <div class="profile-avatar-wrapper">
+                <div class="profile-avatar-wrapper" onclick="window.viewFullSizePhoto('${userProfile.photoURL}')" style="cursor: pointer;">
                     ${(userProfile.photoURL?.startsWith('http') || userProfile.photoURL?.startsWith('data:')) ?
                 `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
@@ -1159,6 +1168,38 @@ async function openProfileView(uid) {
 }
 
 window.openProfileView = openProfileView;
+
+// Profil fotoğrafını tam ekran gör
+window.viewFullSizePhoto = (url) => {
+    if (!url || (!url.startsWith('http') && !url.startsWith('data:'))) return;
+
+    const viewer = document.createElement('div');
+    viewer.className = 'full-size-photo-viewer';
+    viewer.innerHTML = `
+        <div class="photo-viewer-overlay">
+            <button class="close-viewer">✕</button>
+            <div class="photo-container">
+                <img src="${url}">
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(viewer);
+    document.body.style.overflow = 'hidden';
+
+    const close = () => {
+        viewer.classList.add('fade-out');
+        setTimeout(() => {
+            viewer.remove();
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    viewer.querySelector('.photo-viewer-overlay').onclick = (e) => {
+        if (e.target.tagName !== 'IMG') close();
+    };
+    viewer.querySelector('.close-viewer').onclick = close;
+};
 
 // --- Logout Handler ---
 window.handleLogout = async () => {
