@@ -2831,3 +2831,17 @@ body.app-theme-vintage {
     color: var(--text-secondary);
     font-size: 0.85rem;
 }
+
+/* Dashboard Footer */
+.dashboard-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.dashboard-footer .designer-name {
+    color: var(--accent);
+    font-weight: 500;
+}

@@ -448,6 +448,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.timeline?.classList.remove('hidden-mode');
         } else if (currentView === 'write') {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
@@ -456,6 +457,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
+            dom.timeline?.classList.add('hidden-mode');
         } else {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
@@ -464,6 +466,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.timeline?.classList.remove('hidden-mode');
         }
 
         await loadMoments();
