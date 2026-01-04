@@ -27,7 +27,7 @@ let audioChunks = [];
 const MAX_AUDIO_SECONDS = 30;
 
 // --- Image Compression for Fallback ---
-async function compressImage(dataUrl, quality = 0.5, maxWidth = 800) {
+async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
@@ -608,7 +608,7 @@ async function saveMoment() {
                     } else {
                         // Fallback: if Storage fails, try to save compressed base64
                         console.log('Storage failed, using compressed data URL');
-                        const compressedData = await compressImage(m.data, 0.5, 800);
+                        const compressedData = await compressImage(m.data, 0.3, 500);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }
@@ -617,7 +617,7 @@ async function saveMoment() {
                     console.error('Media upload error:', uploadErr);
                     // Fallback on error too
                     try {
-                        const compressedData = await compressImage(m.data, 0.5, 800);
+                        const compressedData = await compressImage(m.data, 0.3, 500);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }

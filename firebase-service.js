@@ -192,7 +192,7 @@ const DBService = {
     },
 
     // Dosya Yükle (Storage)
-    uploadFile: async (fileData, type) => {
+    uploadMedia: async (fileData, type) => {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 

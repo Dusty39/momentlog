@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v74-immersive-fix';
+const CACHE_NAME = 'momentlog-v75-size-fix';
 const ASSETS = [
     './',
     './index.html',
