@@ -191,8 +191,7 @@ window.saveProfileChanges = async () => {
 
         // Upload new photo if selected
         if (editPhotoData) {
-            showModal('Yükleniyor', 'Fotoğraf yükleniyor...');
-            photoURL = await DBService.uploadMedia(editPhotoData, 'image');
+            photoURL = await DBService.uploadProfilePhoto(currentUser.uid, editPhotoData);
         }
 
         // Prepare update data
@@ -217,7 +216,7 @@ window.saveProfileChanges = async () => {
 
         await DBService.updateUserProfile(currentUser.uid, updateData);
 
-        closeEditProfileModal();
+        window.closeEditProfileModal();
         showModal('Başarılı', 'Profiliniz güncellendi!');
         openProfileView(currentUser.uid);
 

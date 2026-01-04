@@ -2669,3 +2669,13 @@ body.app-theme-vintage {
     text-align: center;
     color: var(--text-primary);
 }
+
+/* Modal Overlay Opacity Fix */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.95) !important;
+}
+
+.edit-profile-modal {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-subtle);
+}

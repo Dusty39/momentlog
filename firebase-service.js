@@ -70,6 +70,25 @@ const DBService = {
         return db.collection('users').doc(uid).update(data);
     },
 
+    // Profil Fotoğrafı Yükle
+    async uploadProfilePhoto(uid, base64Data) {
+        try {
+            // Convert base64 to blob
+            const response = await fetch(base64Data);
+            const blob = await response.blob();
+
+            // Upload to Firebase Storage
+            const photoRef = storage.ref().child(`profiles/${uid}/avatar_${Date.now()}.jpg`);
+            await photoRef.put(blob);
+
+            // Get download URL
+            return await photoRef.getDownloadURL();
+        } catch (error) {
+            console.error('Photo upload error:', error);
+            throw error;
+        }
+    },
+
     // Takip Et / İstek Gönder
     async followUser(targetUid) {
         const currentUser = auth.currentUser;
