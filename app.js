@@ -165,24 +165,15 @@ async function checkUsernameAvailability() {
 }
 
 window.saveProfileChanges = async () => {
-    alert('Kaydet butonu tıklandı!');
-    console.log('saveProfileChanges called');
     const currentUser = AuthService.currentUser();
-    console.log('currentUser:', currentUser?.uid);
-    if (!currentUser) {
-        alert('Kullanıcı giriş yapmamış!');
-        return;
-    }
+    if (!currentUser) return;
 
     const displayName = document.getElementById('editDisplayName').value.trim();
     const username = document.getElementById('editUsername').value.trim().toLowerCase();
     const bio = document.getElementById('editBio').value.trim();
 
-    alert('Adım 2: Değerler alındı - displayName: ' + displayName);
-
     // Validate username
     if (username && username !== originalUsername.toLowerCase()) {
-        alert('Adım 3: Username değişti, kontrol ediliyor');
         if (!/^[a-z0-9_]+$/.test(username)) {
             showModal('Hata', 'Kullanıcı adı sadece harf, rakam ve alt çizgi içerebilir.');
             return;
@@ -194,16 +185,12 @@ window.saveProfileChanges = async () => {
         }
     }
 
-    alert('Adım 4: Try bloğuna giriliyor');
-
     try {
         let photoURL = null;
 
-        // Upload new photo if selected
+        // Upload new photo if selected (returns base64 directly)
         if (editPhotoData) {
-            alert('Adım 5: Fotoğraf yükleniyor');
             photoURL = await DBService.uploadProfilePhoto(currentUser.uid, editPhotoData);
-            alert('Adım 6: Fotoğraf yüklendi: ' + photoURL);
         }
 
         // Prepare update data
@@ -224,9 +211,7 @@ window.saveProfileChanges = async () => {
             updateData.photoURL = photoURL;
         }
 
-        alert('Adım 7: Profil güncelleniyor: ' + JSON.stringify(updateData));
         await DBService.updateUserProfile(currentUser.uid, updateData);
-        alert('Adım 8: Profil güncellendi!');
 
         window.closeEditProfileModal();
         showModal('Başarılı', 'Profiliniz güncellendi!');
@@ -234,7 +219,6 @@ window.saveProfileChanges = async () => {
 
     } catch (e) {
         console.error('Profile update error:', e);
-        alert('HATA: ' + e.message);
         showModal('Hata', 'Profil güncellenemedi: ' + e.message);
     }
 };

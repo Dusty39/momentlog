@@ -70,41 +70,10 @@ const DBService = {
         return db.collection('users').doc(uid).update(data);
     },
 
-    // Profil Fotoğrafı Yükle
+    // Profil Fotoğrafı - Base64 olarak döndür (Storage yerine Firestore'da sakla)
     async uploadProfilePhoto(uid, base64Data) {
-        try {
-            alert('uploadProfilePhoto başladı');
-
-            // Convert base64 to blob properly
-            const base64Parts = base64Data.split(',');
-            const contentType = base64Parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-            const base64String = base64Parts[1];
-            const byteCharacters = atob(base64String);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: contentType });
-
-            alert('Blob oluşturuldu, boyut: ' + blob.size);
-
-            // Upload to Firebase Storage
-            const photoRef = storage.ref().child(`profiles/${uid}/avatar_${Date.now()}.jpg`);
-            alert('Storage referansı oluşturuldu');
-
-            await photoRef.put(blob);
-            alert('Fotoğraf yüklendi, URL alınıyor...');
-
-            // Get download URL
-            const url = await photoRef.getDownloadURL();
-            alert('URL alındı: ' + url.substring(0, 50) + '...');
-            return url;
-        } catch (error) {
-            console.error('Photo upload error:', error);
-            alert('Fotoğraf yükleme hatası: ' + error.message);
-            throw error;
-        }
+        // Firebase Storage kullanmıyoruz, base64'ü direkt döndür
+        return base64Data;
     },
 
     // Takip Et / İstek Gönder
