@@ -430,6 +430,7 @@ function setupEventListeners() {
     const notificationsBtn = document.getElementById('notificationsBtn');
     const inputSectionBase = document.querySelector('.input-section');
     const dashboardFooter = document.getElementById('dashboardFooter');
+    const myRecentMoments = document.getElementById('myRecentMoments');
 
     window.setView = async (viewName, force = false) => {
         if (!force && currentView === viewName) return;
@@ -446,6 +447,7 @@ function setupEventListeners() {
             if (titleEl) titleEl.textContent = "Keşfet";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
+            myRecentMoments?.classList.add('hidden-mode');
         } else if (currentView === 'write') {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
@@ -453,6 +455,7 @@ function setupEventListeners() {
             if (titleEl) titleEl.textContent = "Anı Yaz";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
+            myRecentMoments?.classList.remove('hidden-mode');
         } else {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
@@ -460,6 +463,7 @@ function setupEventListeners() {
             if (titleEl) titleEl.textContent = "Akış";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
+            myRecentMoments?.classList.add('hidden-mode');
         }
 
         await loadMoments();

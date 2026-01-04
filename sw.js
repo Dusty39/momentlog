@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v64-base64';
+const CACHE_NAME = 'momentlog-v65-mymoments-toggle';
 const ASSETS = [
     './',
     './index.html',
