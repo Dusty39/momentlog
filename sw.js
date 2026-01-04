@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v50-profile-edit';
+const CACHE_NAME = 'momentlog-v51-modal-fix';
 const ASSETS = [
     './',
     './index.html',
