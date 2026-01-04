@@ -819,23 +819,90 @@ function renderMyRecentMoments() {
         const imgSrc = firstImg?.url || firstImg?.data || '';
 
         return `
-            <div class="compact-moment-item" onclick="openImmersiveViewById('${m.id}')">
-                <div class="compact-thumb">
-                    ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+            <div class="swipe-item-wrapper">
+                <div class="swipe-action-delete" onclick="window.handleSwipeDelete('${m.id}')">
+                    <span>Sil</span>
                 </div>
-                <div class="compact-info">
-                    <div class="compact-date">${formattedDate}</div>
-                    ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
-                    ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
-                </div>
-                <div class="compact-stats">
-                    <span>❤️ ${m.likes?.length || 0}</span>
-                    <span>💬 ${m.commentsCount || 0}</span>
+                <div class="compact-moment-item" 
+                     onclick="openImmersiveViewById('${m.id}')"
+                     ontouchstart="window.handleSwipeStart(event)"
+                     ontouchmove="window.handleSwipeMove(event)"
+                     ontouchend="window.handleSwipeEnd(event)">
+                    <div class="compact-thumb">
+                        ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+                    </div>
+                    <div class="compact-info">
+                        <div class="compact-date">${formattedDate}</div>
+                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
+                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                    </div>
+                    <div class="compact-stats">
+                        <span>❤️ ${m.likes?.length || 0}</span>
+                        <span>💬 ${m.commentsCount || 0}</span>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 }
+
+// --- Swipe to Delete Handlers ---
+let swipeStartX = 0;
+let swipingElement = null;
+
+window.handleSwipeStart = (e) => {
+    swipeStartX = e.touches[0].clientX;
+    swipingElement = e.currentTarget;
+    swipingElement.style.transition = 'none';
+};
+
+window.handleSwipeMove = (e) => {
+    if (!swipingElement) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - swipeStartX;
+    if (diff < 0) { // Only swipe left
+        const pull = Math.max(diff, -100);
+        swipingElement.style.transform = `translateX(${pull}px)`;
+    }
+};
+
+window.handleSwipeEnd = (e) => {
+    if (!swipingElement) return;
+    swipingElement.style.transition = '';
+    const currentX = e.changedTouches[0].clientX;
+    const diff = currentX - swipeStartX;
+
+    if (diff < -50) {
+        swipingElement.style.transform = 'translateX(-80px)';
+    } else {
+        swipingElement.style.transform = 'translateX(0)';
+    }
+    swipingElement = null;
+};
+
+window.handleSwipeDelete = async (id) => {
+    if (confirm('Bu anıyı silmek istediğinizden emin misiniz?')) {
+        try {
+            await DBService.deleteMoment(id);
+            // Update local state and re-render
+            myPrivateMoments = myPrivateMoments.filter(m => m.id !== id);
+            moments = moments.filter(m => m.id !== id);
+            renderMyRecentMoments();
+            // Also refresh main timeline if needed
+            if (typeof loadMoments === 'function') {
+                loadMoments().then(() => renderTimeline());
+            }
+        } catch (e) {
+            console.error("Delete error:", e);
+            alert("Silme işlemi sırasında hata oluştu.");
+        }
+    } else {
+        // Reset all swipe positions
+        document.querySelectorAll('.compact-moment-item').forEach(el => {
+            el.style.transform = 'translateX(0)';
+        });
+    }
+};
 
 // --- Photo Input ---
 function handlePhotoInput(e) {
