@@ -919,7 +919,18 @@ function fetchLocation() {
                 const data = await response.json();
 
                 const address = data.address;
-                currentLocation = address.neighbourhood || address.suburb || address.city || 'Bilinmeyen Konum';
+                // Format: İlçe, İl, Ülke
+                const parts = [];
+                if (address.town || address.county || address.suburb) {
+                    parts.push(address.town || address.county || address.suburb);
+                }
+                if (address.city || address.state) {
+                    parts.push(address.city || address.state);
+                }
+                if (address.country) {
+                    parts.push(address.country);
+                }
+                currentLocation = parts.length > 0 ? parts.join(', ') : 'Bilinmeyen Konum';
 
                 if (dom.locationStatus) {
                     dom.locationStatus.textContent = `📍 ${currentLocation}`;
@@ -936,11 +947,18 @@ function fetchLocation() {
 window.handleRealLocation = () => {
     isRealLocationActive = !isRealLocationActive;
     const btn = document.getElementById('addLocationBtn');
-    if (btn) {
-        btn.classList.toggle('active', isRealLocationActive);
-    }
+
     if (isRealLocationActive) {
+        if (btn) btn.classList.add('active');
         fetchLocation();
+    } else {
+        // Clear location when toggled off
+        if (btn) btn.classList.remove('active');
+        currentLocation = '';
+        if (dom.locationStatus) {
+            dom.locationStatus.textContent = '';
+            dom.locationStatus.classList.add('hidden');
+        }
     }
 };
 
