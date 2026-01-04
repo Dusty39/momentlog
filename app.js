@@ -165,10 +165,14 @@ async function checkUsernameAvailability() {
 }
 
 window.saveProfileChanges = async () => {
+    alert('Kaydet butonu tıklandı!');
     console.log('saveProfileChanges called');
     const currentUser = AuthService.currentUser();
     console.log('currentUser:', currentUser?.uid);
-    if (!currentUser) return;
+    if (!currentUser) {
+        alert('Kullanıcı giriş yapmamış!');
+        return;
+    }
 
     const displayName = document.getElementById('editDisplayName').value.trim();
     const username = document.getElementById('editUsername').value.trim().toLowerCase();
