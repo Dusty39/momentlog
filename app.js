@@ -1108,6 +1108,7 @@ async function openProfileView(uid) {
                             <button onclick="applyAppTheme('light'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'light' ? 'active' : ''}" title="Açık">☀️</button>
                             <button onclick="applyAppTheme('vintage'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'vintage' ? 'active' : ''}" title="Vintage">📜</button>
                         </div>
+                        <button onclick="window.handleLogout()" class="profile-tool-btn danger" title="Çıkış Yap">🚪</button>
                     </div>
                 `}
             </div>
@@ -1158,6 +1159,24 @@ async function openProfileView(uid) {
 }
 
 window.openProfileView = openProfileView;
+
+// --- Logout Handler ---
+window.handleLogout = async () => {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+        try {
+            await AuthService.signOut();
+            const view = document.getElementById('profileView');
+            if (view) {
+                view.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            // Auth listener will handle showing login overlay
+        } catch (e) {
+            console.error('Logout error:', e);
+            showModal('Hata', 'Çıkış yapılırken bir hata oluştu.');
+        }
+    }
+};
 
 // --- Follow System ---
 window.handleFollowAction = async (targetUid) => {

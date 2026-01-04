@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v70-flicker-fix';
+const CACHE_NAME = 'momentlog-v71-logout';
 const ASSETS = [
     './',
     './index.html',
