@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v49-notif-ui';
+const CACHE_NAME = 'momentlog-v50-profile-edit';
 const ASSETS = [
     './',
     './index.html',

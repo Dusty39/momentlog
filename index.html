@@ -192,6 +192,41 @@
         </div>
     </div>
 
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal-overlay hidden">
+        <div class="modal-content edit-profile-modal">
+            <h3>Profili Düzenle</h3>
+
+            <div class="edit-photo-section">
+                <div class="edit-avatar-preview" id="editAvatarPreview">👤</div>
+                <input type="file" id="editPhotoInput" accept="image/*" style="display:none">
+                <button class="upload-photo-btn" onclick="document.getElementById('editPhotoInput').click()">📷 Fotoğraf
+                    Değiştir</button>
+            </div>
+
+            <div class="edit-field">
+                <label>Görünen Ad</label>
+                <input type="text" id="editDisplayName" placeholder="Görünen adınız" maxlength="30">
+            </div>
+
+            <div class="edit-field">
+                <label>Kullanıcı Adı (@)</label>
+                <input type="text" id="editUsername" placeholder="kullanici_adi" maxlength="20">
+                <small class="username-status" id="usernameStatus"></small>
+            </div>
+
+            <div class="edit-field">
+                <label>Biyografi</label>
+                <textarea id="editBio" placeholder="Kendinizi kısaca tanıtın..." maxlength="150" rows="3"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="window.closeEditProfileModal()">İptal</button>
+                <button class="modal-btn save" onclick="window.saveProfileChanges()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Theme Picker Modal -->
     <div id="themePicker" class="theme-picker-modal hidden">
         <div class="theme-picker-content">

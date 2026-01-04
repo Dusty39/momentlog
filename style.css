@@ -2514,3 +2514,123 @@ body.app-theme-vintage {
     height: 28px;
     font-size: 1.2rem;
 }
+
+/* Edit Profile Modal */
+.edit-profile-modal {
+    max-width: 400px;
+    width: 90%;
+}
+
+.edit-photo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.edit-avatar-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    overflow: hidden;
+    border: 3px solid var(--accent);
+}
+
+.edit-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.upload-photo-btn {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.upload-photo-btn:hover {
+    border-color: var(--accent);
+}
+
+.edit-field {
+    margin-bottom: 16px;
+}
+
+.edit-field label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.edit-field input,
+.edit-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.edit-field input:focus,
+.edit-field textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.username-status {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+
+.username-status.available {
+    color: #22c55e;
+}
+
+.username-status.taken {
+    color: #ef4444;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-btn.cancel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+.modal-btn.save {
+    background: var(--accent);
+    border: none;
+    color: #000;
+}
+
+.modal-btn:hover {
+    transform: translateY(-1px);
+}

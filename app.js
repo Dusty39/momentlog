@@ -71,6 +71,171 @@ window.selectTheme = (theme) => {
     if (themeBtn) themeBtn.title = `Tema: ${theme}`;
 };
 
+// --- Profile Edit Functions ---
+let editPhotoData = null;
+let originalUsername = '';
+
+window.openEditProfileModal = async () => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    const modal = document.getElementById('editProfileModal');
+    if (!modal) return;
+
+    // Load current profile data
+    const profile = await DBService.getUserProfile(currentUser.uid);
+
+    document.getElementById('editDisplayName').value = profile.displayName || '';
+    document.getElementById('editUsername').value = profile.username || '';
+    document.getElementById('editBio').value = profile.bio || '';
+
+    originalUsername = profile.username || '';
+
+    // Show current photo
+    const preview = document.getElementById('editAvatarPreview');
+    if (profile.photoURL?.startsWith('http')) {
+        preview.innerHTML = `<img src="${profile.photoURL}">`;
+    } else {
+        preview.innerHTML = profile.photoURL || '👤';
+    }
+    editPhotoData = null;
+
+    modal.classList.remove('hidden');
+
+    // Setup photo input handler
+    document.getElementById('editPhotoInput').onchange = handleEditPhotoInput;
+
+    // Setup username check on input
+    document.getElementById('editUsername').oninput = debounce(checkUsernameAvailability, 500);
+};
+
+window.closeEditProfileModal = () => {
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.add('hidden');
+    editPhotoData = null;
+};
+
+function handleEditPhotoInput(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        editPhotoData = event.target.result;
+        const preview = document.getElementById('editAvatarPreview');
+        preview.innerHTML = `<img src="${editPhotoData}">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function checkUsernameAvailability() {
+    const input = document.getElementById('editUsername');
+    const status = document.getElementById('usernameStatus');
+    const username = input.value.trim().toLowerCase();
+
+    if (!username) {
+        status.textContent = '';
+        return;
+    }
+
+    if (username === originalUsername.toLowerCase()) {
+        status.textContent = '✓ Mevcut kullanıcı adınız';
+        status.className = 'username-status available';
+        return;
+    }
+
+    // Check if valid format (alphanumeric + underscore)
+    if (!/^[a-z0-9_]+$/.test(username)) {
+        status.textContent = '✗ Sadece harf, rakam ve _ kullanılabilir';
+        status.className = 'username-status taken';
+        return;
+    }
+
+    status.textContent = 'Kontrol ediliyor...';
+    status.className = 'username-status';
+
+    const available = await DBService.checkUsernameAvailability(username);
+    if (available) {
+        status.textContent = '✓ Bu kullanıcı adı müsait';
+        status.className = 'username-status available';
+    } else {
+        status.textContent = '✗ Bu kullanıcı adı alınmış';
+        status.className = 'username-status taken';
+    }
+}
+
+window.saveProfileChanges = async () => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    const displayName = document.getElementById('editDisplayName').value.trim();
+    const username = document.getElementById('editUsername').value.trim().toLowerCase();
+    const bio = document.getElementById('editBio').value.trim();
+    const status = document.getElementById('usernameStatus');
+
+    // Validate username
+    if (username && username !== originalUsername.toLowerCase()) {
+        if (!/^[a-z0-9_]+$/.test(username)) {
+            showModal('Hata', 'Kullanıcı adı sadece harf, rakam ve alt çizgi içerebilir.');
+            return;
+        }
+        const available = await DBService.checkUsernameAvailability(username);
+        if (!available) {
+            showModal('Hata', 'Bu kullanıcı adı zaten alınmış.');
+            return;
+        }
+    }
+
+    try {
+        let photoURL = null;
+
+        // Upload new photo if selected
+        if (editPhotoData) {
+            showModal('Yükleniyor', 'Fotoğraf yükleniyor...');
+            photoURL = await DBService.uploadMedia(editPhotoData, 'image');
+        }
+
+        // Prepare update data
+        const updateData = {
+            displayName: displayName || 'İsimsiz',
+            bio: bio
+        };
+
+        if (username && username !== originalUsername.toLowerCase()) {
+            updateData.username = username;
+            // Register new username
+            await DBService.registerUsername(username, currentUser.uid);
+            // Release old username if existed
+            if (originalUsername) {
+                await DBService.releaseUsername(originalUsername.toLowerCase());
+            }
+        }
+
+        if (photoURL) {
+            updateData.photoURL = photoURL;
+        }
+
+        await DBService.updateUserProfile(currentUser.uid, updateData);
+
+        closeEditProfileModal();
+        showModal('Başarılı', 'Profiliniz güncellendi!');
+        openProfileView(currentUser.uid);
+
+    } catch (e) {
+        console.error('Profile update error:', e);
+        showModal('Hata', 'Profil güncellenemedi: ' + e.message);
+    }
+};
+
+// Debounce helper
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
 
 // --- Custom Modal Helper ---
 function showModal(title, message, isConfirm = false) {
@@ -832,7 +997,8 @@ async function openProfileView(uid) {
                     </button>
                 ` : `
                     <div class="own-profile-tools">
-                        <button onclick="window.toggleProfilePrivacy(${userProfile.isPrivateProfile})" class="profile-tool-btn">
+                        <button onclick="window.openEditProfileModal()" class="profile-tool-btn" title="Profili Düzenle">✏️</button>
+                        <button onclick="window.toggleProfilePrivacy(${userProfile.isPrivateProfile})" class="profile-tool-btn" title="${userProfile.isPrivateProfile ? 'Gizli' : 'Herkese Açık'}">
                             ${userProfile.isPrivateProfile ? '🔒' : '🌐'}
                         </button>
                         <div class="theme-icons-inline">

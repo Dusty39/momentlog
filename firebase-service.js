@@ -581,6 +581,18 @@ const DBService = {
         });
     },
 
+    // Kullanıcı Adı Kaydet
+    async registerUsername(username, uid) {
+        const lowerUsername = username.toLowerCase();
+        return db.collection('usernames').doc(lowerUsername).set({ uid: uid });
+    },
+
+    // Kullanıcı Adı Serbest Bırak
+    async releaseUsername(username) {
+        const lowerUsername = username.toLowerCase();
+        return db.collection('usernames').doc(lowerUsername).delete();
+    },
+
     // Kullanıcı Ara
     async searchUsers(query) {
         if (!query) return [];
