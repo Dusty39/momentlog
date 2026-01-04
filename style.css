@@ -2810,3 +2810,24 @@ body.app-theme-vintage {
     margin-top: 16px;
     font-size: 0.9rem;
 }
+
+/* My Recent Moments Section */
+.my-recent-moments {
+    padding: 16px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.my-recent-moments h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.empty-compact {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}

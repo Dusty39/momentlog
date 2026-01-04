@@ -360,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await DBService.getUserProfile(user.uid);
             await loadMoments();
             renderTimeline();
+            renderMyRecentMoments();
             fetchLocation();
             setupNotifications();
         } else {
@@ -624,6 +625,7 @@ async function saveMoment() {
 
         await loadMoments();
         renderTimeline();
+        renderMyRecentMoments();
 
         showModal('Başarılı', 'Anınız kaydedildi! ✨');
     } catch (e) {
@@ -659,38 +661,7 @@ function renderTimeline(searchQuery = '') {
         return;
     }
 
-    // Check if we should use compact list view (for my-moments)
-    const useCompactView = currentView === 'my-moments';
-
-    if (useCompactView) {
-        // Compact list view for my moments
-        dom.timeline.innerHTML = `<div class="compact-moments-list">` + filteredMoments.map(m => {
-            const date = new Date(m.createdAt);
-            const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-            const firstImg = m.media?.find(med => med.type === 'image');
-            const imgSrc = firstImg?.url || firstImg?.data || '';
-
-            return `
-                <div class="compact-moment-item" onclick="openImmersiveViewById('${m.id}')">
-                    <div class="compact-thumb">
-                        ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
-                    </div>
-                    <div class="compact-info">
-                        <div class="compact-date">${formattedDate}</div>
-                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
-                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
-                    </div>
-                    <div class="compact-stats">
-                        <span>❤️ ${m.likes?.length || 0}</span>
-                        <span>💬 ${m.commentsCount || 0}</span>
-                    </div>
-                </div>
-            `;
-        }).join('') + `</div>`;
-        return;
-    }
-
-    // Full card view for other tabs
+    // Full card view for all tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -744,6 +715,49 @@ function renderTimeline(searchQuery = '') {
                         <input type="text" placeholder="Yorum yaz..." id="commentInput-${m.id}" onkeypress="if(event.key==='Enter') window.addComment('${m.id}')">
                         <button onclick="window.addComment('${m.id}')">Gönder</button>
                     </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// --- Render My Recent Moments (Compact List under input area) ---
+function renderMyRecentMoments() {
+    const list = document.getElementById('myMomentsList');
+    if (!list) return;
+
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    // Filter to only user's moments and take last 5
+    const myMoments = moments
+        .filter(m => m.userId === currentUser.uid)
+        .slice(0, 5);
+
+    if (myMoments.length === 0) {
+        list.innerHTML = '<div class="empty-compact">Henüz anı yok</div>';
+        return;
+    }
+
+    list.innerHTML = myMoments.map(m => {
+        const date = new Date(m.createdAt);
+        const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const firstImg = m.media?.find(med => med.type === 'image');
+        const imgSrc = firstImg?.url || firstImg?.data || '';
+
+        return `
+            <div class="compact-moment-item" onclick="openImmersiveViewById('${m.id}')">
+                <div class="compact-thumb">
+                    ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+                </div>
+                <div class="compact-info">
+                    <div class="compact-date">${formattedDate}</div>
+                    ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
+                    ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                </div>
+                <div class="compact-stats">
+                    <span>❤️ ${m.likes?.length || 0}</span>
+                    <span>💬 ${m.commentsCount || 0}</span>
                 </div>
             </div>
         `;
