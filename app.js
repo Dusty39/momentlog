@@ -1208,7 +1208,13 @@ function renderNotificationsInView(notifications) {
         return;
     }
 
-    list.innerHTML = notifications.map(n => {
+    const clearAllBtn = `
+        <div class="notif-clear-all">
+            <button onclick="window.clearAllNotifications()" class="clear-all-btn">🗑️ Tümünü Temizle</button>
+        </div>
+    `;
+
+    const notifItems = notifications.map(n => {
         const typeText = {
             'like': 'gönderini beğendi',
             'comment': 'yorum yaptı',
@@ -1220,16 +1226,40 @@ function renderNotificationsInView(notifications) {
         const timeAgo = getTimeAgo(n.createdAt);
 
         return `
-            <div class="notification-item ${unreadClass}" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}')">
-                <div class="notif-avatar">${avatar}</div>
-                <div class="notif-content">
-                    <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
-                    <div class="notif-time">${timeAgo}</div>
+            <div class="notification-item ${unreadClass}">
+                <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}')">
+                    <div class="notif-avatar">${avatar}</div>
+                    <div class="notif-content">
+                        <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
+                        <div class="notif-time">${timeAgo}</div>
+                    </div>
                 </div>
+                <button class="notif-delete-btn" onclick="window.deleteNotification('${n.id}')">×</button>
             </div>
         `;
     }).join('');
+
+    list.innerHTML = clearAllBtn + notifItems;
 }
+
+window.deleteNotification = async (notifId) => {
+    try {
+        await DBService.deleteNotification(notifId);
+    } catch (e) {
+        console.error('Delete notification error:', e);
+    }
+};
+
+window.clearAllNotifications = async () => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    try {
+        await DBService.clearAllNotifications(currentUser.uid);
+    } catch (e) {
+        console.error('Clear all notifications error:', e);
+    }
+};
 
 function getTimeAgo(dateStr) {
     const date = new Date(dateStr);

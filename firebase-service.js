@@ -532,6 +532,24 @@ const DBService = {
         return batch.commit();
     },
 
+    // Tek Bildirim Sil
+    async deleteNotification(notifId) {
+        return db.collection('notifications').doc(notifId).delete();
+    },
+
+    // Tüm Bildirimleri Temizle
+    async clearAllNotifications(uid) {
+        const snapshot = await db.collection('notifications')
+            .where('targetUid', '==', uid)
+            .get();
+
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        return batch.commit();
+    },
+
     // Kullanıcı Adı Müsait mi?
     async checkUsernameAvailability(username) {
         const doc = await db.collection('usernames').doc(username.toLowerCase()).get();
