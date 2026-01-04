@@ -326,11 +326,16 @@ const DBService = {
 
     // Belirli Bir Kullanıcının Anılarını Getir
     getMomentsByUser: async (uid) => {
+        const currentUser = auth.currentUser;
         try {
-            const snapshot = await db.collection('moments')
-                .where('userId', '==', uid)
-                .orderBy('createdAt', 'desc')
-                .get();
+            let query = db.collection('moments').where('userId', '==', uid);
+
+            // If not own profile, only show public moments to avoid security rule errors
+            if (!currentUser || currentUser.uid !== uid) {
+                query = query.where('isPublic', '==', true);
+            }
+
+            const snapshot = await query.orderBy('createdAt', 'desc').get();
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             // Enrich with fresh profile
@@ -348,6 +353,17 @@ const DBService = {
         }
     },
 
+    // Tek bir anıyı getir
+    getMomentById: async (id) => {
+        try {
+            const doc = await db.collection('moments').doc(id).get();
+            if (!doc.exists) return null;
+            return { id: doc.id, ...doc.data() };
+        } catch (e) {
+            console.error("Get Moment error:", e);
+            return null;
+        }
+    },
     // Anı Sil
     deleteMoment: async (id) => {
         return db.collection('moments').doc(id).delete();

@@ -25,6 +25,7 @@ let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
 const MAX_AUDIO_SECONDS = 30;
+let myPrivateMoments = []; // Separate cache for own moments to ensure individual visibility
 
 // --- Image Compression for Fallback ---
 async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
@@ -562,12 +563,19 @@ function applyAppTheme(theme) {
 // --- Data Operations ---
 async function loadMoments() {
     try {
+        const currentUser = AuthService.currentUser();
         let data;
+
+        // Always fetch user's own moments for the sidebar/recent view
+        if (currentUser) {
+            myPrivateMoments = await DBService.getMyMoments();
+        }
+
         if (currentView === 'explore') {
             data = await DBService.getPublicMoments();
             console.log("Dünya akışı yüklendi:", data.length);
         } else if (currentView === 'write') {
-            data = await DBService.getMyMoments();
+            data = myPrivateMoments; // Reuse the already fetched own moments
             console.log("Kişisel anılar yüklendi:", data.length);
         } else {
             data = await DBService.getFollowingMoments();
@@ -796,10 +804,8 @@ function renderMyRecentMoments() {
     const currentUser = AuthService.currentUser();
     if (!currentUser) return;
 
-    // Filter to only user's moments and take last 5
-    const myMoments = moments
-        .filter(m => m.userId === currentUser.uid)
-        .slice(0, 5);
+    // Use the dedicated private moments cache
+    const myMoments = myPrivateMoments.slice(0, 5);
 
     if (myMoments.length === 0) {
         list.innerHTML = '<div class="empty-compact">Henüz anı yok</div>';
@@ -1474,6 +1480,25 @@ function openImmersiveView(moment) {
 
     loadComments(moment.id);
 }
+
+// Function to fetch and open immersive view by ID (for grid/deep links)
+async function openImmersiveViewById(id) {
+    // First check if it's in our current memory
+    let moment = moments.find(m => m.id === id) || myPrivateMoments.find(m => m.id === id);
+
+    if (!moment) {
+        // Fetch from DB if not in memory
+        moment = await DBService.getMomentById(id);
+    }
+
+    if (moment) {
+        openImmersiveView(moment);
+    } else {
+        showModal('Hata', 'Anı bulunamadı veya görüntüleme izniniz yok.');
+    }
+}
+
+window.openImmersiveViewById = openImmersiveViewById;
 
 // --- Comments ---
 async function loadComments(momentId) {
