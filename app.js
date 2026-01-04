@@ -481,7 +481,7 @@ function setupEventListeners() {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "Keşfet";
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -490,7 +490,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.add('active');
-            if (titleEl) titleEl.textContent = "Anı Yaz";
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
@@ -499,7 +499,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "Akış";
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
