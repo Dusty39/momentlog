@@ -344,45 +344,49 @@ document.addEventListener('DOMContentLoaded', () => {
     AuthService.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
         const loadingSplash = document.getElementById('loadingSplash');
-
-        if (user) {
-            console.log("Kullanıcı giriş yaptı:", user.displayName);
-            if (loginOverlay) loginOverlay.classList.remove('active');
-
-            if (user.photoURL && dom.profileBtn) {
-                const img = dom.profileBtn.querySelector('img') || document.createElement('img');
-                img.src = user.photoURL;
-                if (!dom.profileBtn.querySelector('img')) {
-                    dom.profileBtn.innerHTML = '';
-                    dom.profileBtn.appendChild(img);
-                }
-                dom.profileBtn.classList.add('has-avatar');
-            }
-
-            if (dom.userNameSpan) {
-                dom.userNameSpan.textContent = `Merhaba, ${user.displayName || 'Gezgin'}`;
-            }
-
-            await DBService.getUserProfile(user.uid);
-            await loadMoments();
-            renderTimeline();
-            renderMyRecentMoments();
-            fetchLocation();
-            setupNotifications();
-        } else {
-            console.log("Kullanıcı giriş yapmadı.");
-            if (loginOverlay) loginOverlay.classList.add('active');
-            moments = [];
-            renderTimeline();
-        }
-
-        // Hide loading splash and show app after auth check
-        if (loadingSplash) {
-            loadingSplash.classList.add('hidden');
-        }
         const appDiv = document.getElementById('app');
-        if (appDiv) {
-            appDiv.classList.remove('hidden');
+
+        try {
+            if (user) {
+                console.log("Kullanıcı giriş yaptı:", user.displayName);
+                if (loginOverlay) loginOverlay.classList.remove('active');
+
+                if (user.photoURL && dom.profileBtn) {
+                    const img = dom.profileBtn.querySelector('img') || document.createElement('img');
+                    img.src = user.photoURL;
+                    if (!dom.profileBtn.querySelector('img')) {
+                        dom.profileBtn.innerHTML = '';
+                        dom.profileBtn.appendChild(img);
+                    }
+                    dom.profileBtn.classList.add('has-avatar');
+                }
+
+                if (dom.userNameSpan) {
+                    dom.userNameSpan.textContent = `Merhaba, ${user.displayName || 'Gezgin'}`;
+                }
+
+                await DBService.getUserProfile(user.uid);
+                await loadMoments();
+                renderTimeline();
+                renderMyRecentMoments();
+                fetchLocation();
+                setupNotifications();
+            } else {
+                console.log("Kullanıcı giriş yapmadı.");
+                if (loginOverlay) loginOverlay.classList.add('active');
+                moments = [];
+                renderTimeline();
+            }
+        } catch (error) {
+            console.error("Auth state processing error:", error);
+        } finally {
+            // ALWAYS hide loading splash and show app after auth check (even on error)
+            if (loadingSplash) {
+                loadingSplash.classList.add('hidden');
+            }
+            if (appDiv) {
+                appDiv.classList.remove('hidden');
+            }
         }
     });
 
@@ -453,7 +457,7 @@ function setupEventListeners() {
         currentView = viewName;
         localStorage.setItem('momentLog_lastView', currentView);
 
-        const titleEl = document.querySelector('h1');
+        const titleEl = document.querySelector('.main-title');
 
         if (currentView === 'explore') {
             exploreBtn?.classList.add('active');
