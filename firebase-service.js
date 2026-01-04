@@ -417,10 +417,15 @@ const DBService = {
         // Handle both string and object parameter
         const commentText = typeof textOrData === 'string' ? textOrData : (textOrData?.text || '');
 
+        // Get user profile for username
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userProfile = userDoc.exists ? userDoc.data() : {};
+
         const commentData = {
             userId: user.uid,
-            userDisplayName: user.displayName || 'Anonim',
-            userPhoto: user.photoURL || '👤',
+            username: userProfile.username || '',
+            userDisplayName: userProfile.displayName || user.displayName || 'Anonim',
+            userPhoto: userProfile.photoURL || user.photoURL || '👤',
             text: commentText,
             likes: [],
             createdAt: new Date().toISOString()

@@ -851,7 +851,7 @@ async function loadInlineComments(momentId) {
             return `
                 <div class="comment-item">
                     <div class="comment-header">
-                        <span class="comment-author">${c.userDisplayName || c.userName || 'Anonim'}</span>
+                        <span class="comment-author">@${c.username || c.userDisplayName || c.userName || 'anonim'}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwner ? `<button class="comment-delete" onclick="window.deleteComment('${momentId}', '${c.id}')">×</button>` : ''}
                     </div>
