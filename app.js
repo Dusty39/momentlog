@@ -311,6 +311,7 @@ function initializeSelectors() {
         journalBtn: document.getElementById('journalBtn'),
         themeBtn: document.getElementById('themeBtn'),
         moodBtn: document.getElementById('moodBtn'),
+        venueInput: document.getElementById('venueInput'),
     };
 }
 
@@ -635,10 +636,13 @@ async function saveMoment() {
         const locationString = typeof currentLocation === 'string' ? currentLocation :
             (currentLocation?.text || currentLocation?.name || null);
 
+        const venue = dom.venueInput?.value?.trim() || null;
+
         const momentData = {
             text: String(text || ''),
-            media: uploadedMedia, // Use URLs from Firebase Storage
+            media: uploadedMedia,
             location: locationString,
+            venue: venue,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
             userId: String(currentUser.uid),
@@ -655,6 +659,13 @@ async function saveMoment() {
         }
 
         await DBService.createMoment(momentData);
+
+        // Reset inputs
+        if (dom.input) dom.input.value = '';
+        if (dom.venueInput) {
+            dom.venueInput.value = '';
+            dom.venueInput.classList.add('hidden');
+        }
 
         // Reset form
         if (dom.input) dom.input.value = '';
@@ -1040,16 +1051,15 @@ window.handleRealLocation = () => {
     const btn = document.getElementById('addLocationBtn');
 
     if (isRealLocationActive) {
-        if (btn) btn.classList.add('active');
+        btn?.classList.add('active');
         fetchLocation();
+        if (dom.venueInput) dom.venueInput.classList.remove('hidden');
     } else {
-        // Clear location when toggled off
-        if (btn) btn.classList.remove('active');
+        btn?.classList.remove('active');
+        if (dom.locationStatus) dom.locationStatus.classList.add('hidden');
+        if (dom.venueInput) dom.venueInput.classList.add('hidden');
         currentLocation = '';
-        if (dom.locationStatus) {
-            dom.locationStatus.textContent = '';
-            dom.locationStatus.classList.add('hidden');
-        }
+        if (dom.venueInput) dom.venueInput.value = '';
     }
 };
 
@@ -1380,27 +1390,57 @@ function openImmersiveView(moment) {
     const view = dom.immersiveView;
     if (!view) return;
 
+    // Apply theme
+    view.className = 'immersive-modal';
+    if (moment.theme) {
+        view.classList.add(`theme-${moment.theme}`);
+    }
+
     const date = new Date(moment.createdAt);
     const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
+    // Multi-photo collage logic
+    const images = moment.media?.filter(m => m.type === 'image') || [];
+    let photoHtml = '';
+
+    if (images.length > 0) {
+        photoHtml = `<div class="collage-container count-${images.length}">`;
+        images.forEach((img, idx) => {
+            photoHtml += `
+                <div class="img-wrapper">
+                    <img src="${img.url || img.data}" class="immersive-img">
+                </div>
+            `;
+        });
+        photoHtml += `</div>`;
+    }
+
     view.innerHTML = `
+        <button id="closeImmersive" class="close-immersive">✕</button>
         <div class="immersive-header">
-            <button id="closeImmersive" class="close-btn">×</button>
-            <div class="moment-meta">
-                <span class="username">${moment.userDisplayName || 'Anonim'}</span>
-                <span class="date">${formattedDate}</span>
+            <div class="immersive-date">${formattedDate}</div>
+            <div class="immersive-meta-row">
+                <span class="immersive-user">@${moment.userDisplayName || 'anonim'}</span>
+                ${moment.location ? `<span class="immersive-location">📍 ${moment.location}</span>` : ''}
             </div>
         </div>
+
         <div class="immersive-content">
-            ${moment.media?.filter(m => m.type === 'image').map(m => `<img src="${m.data}" class="immersive-img">`).join('') || ''}
-            <div class="immersive-text">${moment.text || ''}</div>
-            ${moment.location ? `<div class="immersive-location">📍 ${moment.location}</div>` : ''}
+            ${moment.venue ? `<div class="venue-sticker">${moment.venue}</div>` : ''}
+            
+            ${photoHtml}
+            
+            <div class="immersive-text interspersed-text">${moment.text || ''}</div>
         </div>
-        <div class="immersive-actions">
-            <div class="comments-section">
-                <div id="commentsList" class="comments-list"></div>
+
+        <div class="immersive-actions-bar">
+            <button class="action-btn" onclick="window.toggleLike('${moment.id}')">
+                ❤️ <span class="count">${moment.likes?.length || 0}</span>
+            </button>
+            <div class="comments-section-immersive">
+                <div id="commentsList" class="comments-list-immersive"></div>
                 <div class="comment-input-row">
-                    <input type="text" id="commentInput" placeholder="Yorum yaz...">
+                    <input type="text" id="commentInput" placeholder="Düşüncelerini paylaş...">
                     <button onclick="window.submitComment('${moment.id}')">Gönder</button>
                 </div>
             </div>
@@ -1425,18 +1465,19 @@ async function loadComments(momentId) {
 
     try {
         const comments = await DBService.getComments(momentId);
+        const isImmersive = commentsList.classList.contains('comments-list-immersive');
 
         if (comments.length === 0) {
-            commentsList.innerHTML = '<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:20px;">Henüz yorum yok</p>';
+            commentsList.innerHTML = `<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:20px;">Henüz yorum yok</p>`;
             return;
         }
 
         commentsList.innerHTML = comments.map(c => `
-            <div class="comment-item" style="padding: 10px; border-bottom: 1px solid var(--border-subtle);">
-                <div class="comment-user-info" onclick="openProfileView('${c.userId}')" style="cursor:pointer;">
+            <div class="${isImmersive ? 'comment-item-immersive' : 'comment-item'}" ${!isImmersive ? 'style="padding: 10px; border-bottom: 1px solid var(--border-subtle);"' : ''}>
+                <div class="${isImmersive ? 'comment-user-immersive' : 'comment-user-info'}" onclick="openProfileView('${c.userId}')" style="cursor:pointer;">
                     <span class="comment-username" style="font-weight:600;">${c.userDisplayName || 'Anonim'}</span>
                 </div>
-                <p class="comment-text" style="margin-top:4px;">${c.text}</p>
+                <p class="${isImmersive ? 'comment-text-immersive' : 'comment-text'}" style="margin-top:4px;">${c.text}</p>
             </div>
         `).join('');
     } catch (e) {

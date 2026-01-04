@@ -637,14 +637,6 @@ textarea::placeholder {
     }
 }
 
-.immersive-content {
-    max-width: 600px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
-}
-
 .close-immersive {
     position: fixed;
     top: 20px;
@@ -664,7 +656,9 @@ textarea::placeholder {
 }
 
 .immersive-header {
-    margin-bottom: 20px;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    padding: 20px 0;
 }
 
 .immersive-date {
@@ -677,25 +671,180 @@ textarea::placeholder {
     color: transparent;
 }
 
-.immersive-location {
-    display: block;
-    color: var(--accent);
-    margin-top: 8px;
-    font-size: 1.1rem;
+.immersive-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-.interspersed-text {
-    font-size: 1.25rem;
-    line-height: 1.8;
-    color: rgba(255, 255, 255, 0.9);
-    padding: 20px 0;
+.immersive-user {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.immersive-location {
+    color: var(--text-secondary);
+}
+
+.immersive-content {
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-bottom: 100px;
+}
+
+/* Venue Sticker */
+.venue-sticker {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #fff;
+    color: #333;
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.2rem;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    transform: rotate(-3deg);
+    align-self: flex-start;
+    margin-bottom: -15px;
+    z-index: 5;
+    border-radius: 2px;
+}
+
+.theme-neon .venue-sticker {
+    background: transparent;
+    color: #00f2ff;
+    border: 1px solid #00f2ff;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    text-shadow: 0 0 5px #00f2ff;
+}
+
+/* Collage System */
+.collage-container {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    margin: 15px 0;
+}
+
+.collage-container.count-1 {
+    grid-template-columns: 1fr;
+}
+
+.collage-container.count-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.collage-container.count-3 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+}
+
+.collage-container.count-3 .img-wrapper:first-child {
+    grid-column: span 2;
+}
+
+.collage-container.count-4 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.collage-container.count-5 {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+}
+
+.collage-container.count-5 .img-wrapper:nth-child(1) {
+    grid-column: span 2;
+}
+
+.collage-container.count-5 .img-wrapper:nth-child(2) {
+    grid-column: span 1;
+}
+
+.img-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
 }
 
 .immersive-img {
     width: 100%;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    height: 100%;
+    object-fit: cover;
+    display: block;
     transition: transform 0.3s;
+}
+
+.collage-container.count-1 .immersive-img {
+    max-height: 500px;
+}
+
+.collage-container:not(.count-1) .img-wrapper {
+    aspect-ratio: 1;
+}
+
+/* Immersive Actions & Comments */
+.immersive-actions-bar {
+    max-width: 600px;
+    margin: 40px auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+}
+
+.comments-section-immersive {
+    margin-top: 20px;
+}
+
+.comments-list-immersive {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.comment-item-immersive {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.comment-user-immersive {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.comment-text-immersive {
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+/* Location Input Area */
+.location-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.venue-input {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.2s;
+}
+
+.venue-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
 }
 
 .immersive-img:hover {
