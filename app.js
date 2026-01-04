@@ -337,6 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth Listener
     AuthService.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
+        const loadingSplash = document.getElementById('loadingSplash');
 
         if (user) {
             console.log("Kullanıcı giriş yaptı:", user.displayName);
@@ -366,6 +367,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loginOverlay) loginOverlay.classList.add('active');
             moments = [];
             renderTimeline();
+        }
+
+        // Hide loading splash after auth check
+        if (loadingSplash) {
+            loadingSplash.classList.add('hidden');
         }
     });
 
