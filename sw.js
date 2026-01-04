@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v78-avatar-render-fix';
+const CACHE_NAME = 'momentlog-v80-swipe-delete-feature';
 const ASSETS = [
     './',
     './index.html',
