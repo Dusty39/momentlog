@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v80-swipe-delete-feature';
+const CACHE_NAME = 'momentlog-v82-swipe-visibility-fix';
 const ASSETS = [
     './',
     './index.html',

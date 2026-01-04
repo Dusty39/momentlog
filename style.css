@@ -2961,6 +2961,8 @@ body.app-theme-vintage {
     border-radius: 0 12px 12px 0;
     cursor: pointer;
     z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 .compact-moment-item {

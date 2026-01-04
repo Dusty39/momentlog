@@ -863,6 +863,12 @@ window.handleSwipeMove = (e) => {
     if (diff < 0) { // Only swipe left
         const pull = Math.max(diff, -100);
         swipingElement.style.transform = `translateX(${pull}px)`;
+
+        // Dynamic opacity for delete button
+        const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
+        if (btn) {
+            btn.style.opacity = Math.min(Math.abs(diff) / 50, 1);
+        }
     }
 };
 
@@ -871,11 +877,14 @@ window.handleSwipeEnd = (e) => {
     swipingElement.style.transition = '';
     const currentX = e.changedTouches[0].clientX;
     const diff = currentX - swipeStartX;
+    const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
 
     if (diff < -50) {
         swipingElement.style.transform = 'translateX(-80px)';
+        if (btn) btn.style.opacity = '1';
     } else {
         swipingElement.style.transform = 'translateX(0)';
+        if (btn) btn.style.opacity = '0';
     }
     swipingElement = null;
 };
