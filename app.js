@@ -376,9 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTimeline();
         }
 
-        // Hide loading splash after auth check
+        // Hide loading splash and show app after auth check
         if (loadingSplash) {
             loadingSplash.classList.add('hidden');
+        }
+        const appDiv = document.getElementById('app');
+        if (appDiv) {
+            appDiv.classList.remove('hidden');
         }
     });
 
