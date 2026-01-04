@@ -213,11 +213,15 @@ window.saveProfileChanges = async () => {
 
         await DBService.updateUserProfile(currentUser.uid, updateData);
 
-        // Update Firebase Auth profile as well for consistency on refresh
-        await AuthService.updateProfile({
-            displayName: updateData.displayName,
-            photoURL: updateData.photoURL || currentUser.photoURL
-        });
+        // Update Firebase Auth profile - ONLY displayName to avoid "Photo url too long" error
+        // Current Firebase Auth photoURL has a 2048 char limit, our Base64 is much longer.
+        try {
+            await AuthService.updateProfile({
+                displayName: updateData.displayName
+            });
+        } catch (authError) {
+            console.warn("Auth profile update (displayName) failed, continuing:", authError);
+        }
 
         // Sync older moments with new profile data
         await DBService.syncUserMoments(currentUser.uid, updateData);
@@ -360,9 +364,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Kullanıcı giriş yaptı:", user.displayName);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                if (user.photoURL && dom.profileBtn) {
+                // Get full profile from Firestore to get the Base64 photoURL
+                const userProfile = await DBService.getUserProfile(user.uid);
+                const displayPhoto = userProfile?.photoURL || user.photoURL;
+
+                if (displayPhoto && dom.profileBtn) {
                     const img = dom.profileBtn.querySelector('img') || document.createElement('img');
-                    img.src = user.photoURL;
+                    img.src = displayPhoto;
                     if (!dom.profileBtn.querySelector('img')) {
                         dom.profileBtn.innerHTML = '';
                         dom.profileBtn.appendChild(img);
