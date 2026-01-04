@@ -73,18 +73,36 @@ const DBService = {
     // Profil Fotoğrafı Yükle
     async uploadProfilePhoto(uid, base64Data) {
         try {
-            // Convert base64 to blob
-            const response = await fetch(base64Data);
-            const blob = await response.blob();
+            alert('uploadProfilePhoto başladı');
+
+            // Convert base64 to blob properly
+            const base64Parts = base64Data.split(',');
+            const contentType = base64Parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+            const base64String = base64Parts[1];
+            const byteCharacters = atob(base64String);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: contentType });
+
+            alert('Blob oluşturuldu, boyut: ' + blob.size);
 
             // Upload to Firebase Storage
             const photoRef = storage.ref().child(`profiles/${uid}/avatar_${Date.now()}.jpg`);
+            alert('Storage referansı oluşturuldu');
+
             await photoRef.put(blob);
+            alert('Fotoğraf yüklendi, URL alınıyor...');
 
             // Get download URL
-            return await photoRef.getDownloadURL();
+            const url = await photoRef.getDownloadURL();
+            alert('URL alındı: ' + url.substring(0, 50) + '...');
+            return url;
         } catch (error) {
             console.error('Photo upload error:', error);
+            alert('Fotoğraf yükleme hatası: ' + error.message);
             throw error;
         }
     },
