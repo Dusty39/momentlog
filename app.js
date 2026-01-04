@@ -653,6 +653,38 @@ function renderTimeline(searchQuery = '') {
         return;
     }
 
+    // Check if we should use compact list view (for my-moments)
+    const useCompactView = currentView === 'my-moments';
+
+    if (useCompactView) {
+        // Compact list view for my moments
+        dom.timeline.innerHTML = `<div class="compact-moments-list">` + filteredMoments.map(m => {
+            const date = new Date(m.createdAt);
+            const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+            const firstImg = m.media?.find(med => med.type === 'image');
+            const imgSrc = firstImg?.url || firstImg?.data || '';
+
+            return `
+                <div class="compact-moment-item" onclick="openImmersiveViewById('${m.id}')">
+                    <div class="compact-thumb">
+                        ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+                    </div>
+                    <div class="compact-info">
+                        <div class="compact-date">${formattedDate}</div>
+                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
+                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                    </div>
+                    <div class="compact-stats">
+                        <span>❤️ ${m.likes?.length || 0}</span>
+                        <span>💬 ${m.commentsCount || 0}</span>
+                    </div>
+                </div>
+            `;
+        }).join('') + `</div>`;
+        return;
+    }
+
+    // Full card view for other tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
