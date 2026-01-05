@@ -466,8 +466,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderMyRecentMoments();
 
                 // Set initial view and load data
-                const lastView = localStorage.getItem('momentLog_lastView') || 'my-moments';
-                await window.setView(lastView, true);
+                const lastView = localStorage.getItem('momentLog_lastView');
+                // Default to 'my-moments' (Akış) if no lastView
+                await window.setView(lastView || 'my-moments', true);
 
                 setupNotifications();
             } else {
@@ -578,7 +579,7 @@ function setupEventListeners() {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "Dünya"; // Updated for clarity
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -587,7 +588,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.add('active');
-            if (titleEl) titleEl.textContent = "Anı Paylaş";
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
@@ -596,7 +597,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "Akış";
+            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -678,8 +679,10 @@ async function loadMoments() {
         } else if (currentView === 'write') {
             result = { moments: myPrivateMoments, lastVisible: null };
             hasMore = false;
+        } else if (currentView === 'my-moments') {
+            result = await DBService.getMyMoments(currentLastDoc);
         } else {
-            result = await DBService.getFollowingMoments(); // Still fixed for now
+            result = await DBService.getFollowingMoments();
             hasMore = false;
         }
 
@@ -1325,7 +1328,10 @@ async function openProfileView(uid) {
 
     try {
         const userProfile = await DBService.getUserProfile(uid);
-        const userMoments = await DBService.getMomentsByUser(uid);
+        if (!userProfile) throw new Error("Profil bulunamadı.");
+
+        const momentsRes = await DBService.getMomentsByUser(uid);
+        const momentsList = momentsRes.moments || [];
         const isOwnProfile = uid === AuthService.currentUser()?.uid;
         const isFollowing = userProfile.followers?.includes(AuthService.currentUser()?.uid);
 
@@ -1345,7 +1351,7 @@ async function openProfileView(uid) {
 
             <div class="profile-stats">
                 <div class="stat-item">
-                    <span class="stat-value">${userMoments.length}</span>
+                    <span class="stat-value">${momentsList.length}</span>
                     <span class="stat-label">Anı</span>
                 </div>
                 <div class="stat-item clickable" onclick="window.showFollowersList('${uid}', 'followers')">
