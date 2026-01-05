@@ -876,11 +876,6 @@ function renderTimeline(searchQuery = '') {
             mediaHtml += `
                 <div class="carousel-slide collage-slide">
                     ${generateMiniCollage(m.media)}
-                    ${(m.stickerText) ? `
-                        <div class="feed-sticker-wrapper">
-                            <div class="brush-sticker feed-sticker">${m.stickerText}</div>
-                        </div>
-                    ` : ''}
                 </div>
             `;
 
@@ -908,6 +903,7 @@ function renderTimeline(searchQuery = '') {
                             <div class="meta-info">
                                 <span class="date">${formattedDate}${locationText}</span>
                                 ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
+                                ${m.stickerText ? `<span class="sticker-chip">${m.stickerText}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -1734,27 +1730,25 @@ function openImmersiveView(moment) {
         photoHtml += `</div>`;
     }
 
-    const stickerValue = moment.stickerText;
-    const stickerHtml = stickerValue ? `
+    const stickerHtml = moment.stickerText ? `
         <div class="brush-sticker-wrapper">
-            <div class="brush-sticker">${stickerValue}</div>
+            <div class="brush-sticker">${moment.stickerText}</div>
         </div>
     ` : '';
 
     view.innerHTML = `
-        <button id="closeImmersive" class="close-immersive">✕</button>
         <div class="immersive-header">
             <div class="immersive-date">${formattedDate}</div>
             <div class="immersive-meta-row">
                 <span class="immersive-user">@${moment.userDisplayName || 'anonim'}</span>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location}</span>` : ''}
+                ${moment.stickerText ? `<span class="sticker-chip-large">${moment.stickerText}</span>` : ''}
             </div>
         </div>
 
         <div class="immersive-content">
             ${photoHtml}
-            ${stickerHtml}
-            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '5px' : '15px'}">${moment.text || ''}</div>
+            <div class="immersive-text interspersed-text">${moment.text || ''}</div>
         </div>
 
         <div class="immersive-actions-bar">
