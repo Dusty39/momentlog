@@ -13,7 +13,7 @@ console.log("momentLog: Script loading v19...");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
-const MAX_PHOTOS = 5;
+const MAX_PHOTOS = 4;
 
 let moments = [];
 let currentMedia = [];
@@ -76,10 +76,40 @@ window.selectTheme = (theme) => {
         btn.classList.toggle('active', btn.dataset.theme === theme);
     });
     document.getElementById('themePicker')?.classList.add('hidden');
+
+    // Preview theme in input area
+    const inputSection = document.querySelector('.input-section');
+    if (inputSection) {
+        // Remove old theme classes
+        inputSection.className = 'input-section';
+        if (theme !== 'minimal') {
+            inputSection.classList.add(`theme-${theme}`);
+        }
+    }
+
     // Update theme button to show selected
     const themeBtn = document.getElementById('themeBtn');
     if (themeBtn) themeBtn.title = `Tema: ${theme}`;
 };
+
+// --- Mini Collage Generator (for Feed Carousel) ---
+function generateMiniCollage(media) {
+    const images = media.filter(m => m.type === 'image').slice(0, 4);
+    if (images.length === 0) return '';
+
+    let html = `<div class="mini-collage count-${images.length}">`;
+    images.forEach((img, idx) => {
+        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 5 + 2);
+        const offset = (Math.random() * 10 - 5);
+        html += `
+            <div class="mini-img-wrapper" style="transform: rotate(${rotation}deg) translate(${offset}px, ${offset}px)">
+                <img src="${img.url || img.data}">
+            </div>
+        `;
+    });
+    html += `</div>`;
+    return html;
+}
 
 // --- Profile Edit Functions ---
 let editPhotoData = null;
@@ -754,11 +784,35 @@ function renderTimeline(searchQuery = '') {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
         const locationText = m.location ? ` • ${m.location}` : '';
-        const firstImg = m.media?.find(med => med.type === 'image');
-        const imgSrc = firstImg?.url || firstImg?.data || '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
         const isOwner = currentUser?.uid === m.userId;
+
+        // Media Carousel Logic
+        const images = m.media?.filter(med => med.type === 'image') || [];
+        let mediaHtml = '';
+
+        if (images.length > 0) {
+            mediaHtml = `<div class="card-media-carousel" onclick="openImmersiveViewById('${m.id}')">`;
+
+            // Slide 1: Mini Collage
+            mediaHtml += `
+                <div class="carousel-slide collage-slide">
+                    ${generateMiniCollage(m.media)}
+                </div>
+            `;
+
+            // Sequential Slides: Individual Photos
+            images.forEach(img => {
+                mediaHtml += `
+                    <div class="carousel-slide">
+                        <img src="${img.url || img.data}" alt="">
+                    </div>
+                `;
+            });
+
+            mediaHtml += `</div>`;
+        }
 
         return `
             <div class="moment-card" data-id="${m.id}">
@@ -775,7 +829,7 @@ function renderTimeline(searchQuery = '') {
                     </div>
                 </div>
                 
-                ${imgSrc ? `<div class="card-media" onclick="openImmersiveViewById('${m.id}')"><img src="${imgSrc}" alt=""></div>` : ''}
+                ${mediaHtml}
                 
                 ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}
                 
@@ -1516,10 +1570,12 @@ function openImmersiveView(moment) {
     let photoHtml = '';
 
     if (images.length > 0) {
-        photoHtml = `<div class="collage-container count-${images.length}">`;
+        photoHtml = `<div class="collage-container scattered count-${images.length}">`;
         images.forEach((img, idx) => {
+            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 3);
+            const offset = (Math.random() * 20 - 10);
             photoHtml += `
-                <div class="img-wrapper">
+                <div class="img-wrapper" style="transform: rotate(${rotation}deg) translate(${offset}px, ${offset}px)">
                     <img src="${img.url || img.data}" class="immersive-img">
                 </div>
             `;
