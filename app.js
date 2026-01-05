@@ -236,7 +236,8 @@ async function checkUsernameAvailability() {
     } catch (e) {
         if (currentSeq === usernameCheckSeq) {
             console.error("Username check error:", e);
-            status.textContent = '⚠ Kontrol edilemedi';
+            // If it's a permission error, it might be due to Firestore propagation delay
+            status.textContent = '⚠ Bağlantı hatası, tekrar deneyin';
             status.className = 'username-status taken';
         }
     }

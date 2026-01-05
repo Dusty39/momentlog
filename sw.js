@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v88-collage-spacing';
+const CACHE_NAME = 'momentlog-v89-username-fix';
 const ASSETS = [
     './',
     './index.html',
