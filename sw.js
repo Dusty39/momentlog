@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v85-visual-overhaul';
+const CACHE_NAME = 'momentlog-v86-sticker-refinement';
 const ASSETS = [
     './',
     './index.html',

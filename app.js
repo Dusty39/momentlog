@@ -369,6 +369,7 @@ function initializeSelectors() {
         themeBtn: document.getElementById('themeBtn'),
         moodBtn: document.getElementById('moodBtn'),
         venueInput: document.getElementById('venueInput'),
+        stickerInput: document.getElementById('stickerInput'),
     };
 }
 
@@ -705,12 +706,14 @@ async function saveMoment() {
             (currentLocation?.text || currentLocation?.name || null);
 
         const venue = dom.venueInput?.value?.trim() || null;
+        const stickerText = dom.stickerInput?.value?.trim() || null;
 
         const momentData = {
             text: String(text || ''),
             media: uploadedMedia,
             location: locationString,
             venue: venue,
+            stickerText: stickerText,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
             userId: String(currentUser.uid),
@@ -733,6 +736,9 @@ async function saveMoment() {
         if (dom.venueInput) {
             dom.venueInput.value = '';
             dom.venueInput.classList.add('hidden');
+        }
+        if (dom.stickerInput) {
+            dom.stickerInput.value = '';
         }
 
         // Reset form
@@ -1572,16 +1578,48 @@ function openImmersiveView(moment) {
     if (images.length > 0) {
         photoHtml = `<div class="collage-container scattered count-${images.length}">`;
         images.forEach((img, idx) => {
-            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 3);
-            const offset = (Math.random() * 20 - 10);
+            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 4);
+            // Spreading logic: calculate rough positions to reduce overlap
+            let top = 0, left = 0;
+            if (images.length === 1) {
+                top = 5; left = 12;
+            } else if (images.length === 2) {
+                top = idx === 0 ? 2 : 45;
+                left = idx === 0 ? 5 : 20;
+            } else if (images.length === 3) {
+                const positions = [
+                    { t: 2, l: 15 },
+                    { t: 35, l: 5 },
+                    { t: 60, l: 25 }
+                ];
+                top = positions[idx].t;
+                left = positions[idx].l;
+            } else { // 4 photos
+                const positions = [
+                    { t: 0, l: 20 },
+                    { t: 25, l: 0 },
+                    { t: 50, l: 25 },
+                    { t: 75, l: 5 }
+                ];
+                top = positions[idx].t;
+                left = positions[idx].l;
+            }
+
             photoHtml += `
-                <div class="img-wrapper" style="transform: rotate(${rotation}deg) translate(${offset}px, ${offset}px)">
+                <div class="img-wrapper" style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%;">
                     <img src="${img.url || img.data}" class="immersive-img">
                 </div>
             `;
         });
         photoHtml += `</div>`;
     }
+
+    const stickerValue = moment.stickerText || moment.venue;
+    const stickerHtml = stickerValue ? `
+        <div class="brush-sticker-wrapper">
+            <div class="brush-sticker">${stickerValue}</div>
+        </div>
+    ` : '';
 
     view.innerHTML = `
         <button id="closeImmersive" class="close-immersive">✕</button>
@@ -1594,7 +1632,7 @@ function openImmersiveView(moment) {
         </div>
 
         <div class="immersive-content">
-            ${moment.venue ? `<div class="venue-sticker">${moment.venue}</div>` : ''}
+            ${stickerHtml}
             
             ${photoHtml}
             
