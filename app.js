@@ -827,7 +827,7 @@ function renderTimeline(searchQuery = '') {
         if (images.length > 0) {
             mediaHtml = `<div class="card-media-carousel" onclick="openImmersiveViewById('${m.id}')">`;
 
-            // Slide 1: Mini Collage + Overlaid Sticker
+            // Slide 1: Mini Collage + Overlaid Sticker (Forced)
             mediaHtml += `
                 <div class="carousel-slide collage-slide">
                     ${generateMiniCollage(m.media)}
@@ -1606,19 +1606,19 @@ function openImmersiveView(moment) {
     const images = moment.media?.filter(m => m.type === 'image') || [];
     let photoHtml = '';
 
-    // Dynamic collage spacing based on photo count (Refined heights)
-    let collageMinHeight = '350px';
-    let collageMargin = '10px 0';
+    // Dynamic collage spacing based on photo count (Aggressive suppression)
+    let collageMinHeight = '300px';
+    let collageMargin = '5px 0';
 
     if (images.length === 1) {
-        collageMinHeight = '280px';
-        collageMargin = '5px 0';
+        collageMinHeight = '240px';
+        collageMargin = '0';
     } else if (images.length === 2) {
-        collageMinHeight = '420px';
-        collageMargin = '15px 0';
+        collageMinHeight = '360px';
+        collageMargin = '8px 0';
     } else if (images.length >= 3) {
-        collageMinHeight = '580px';
-        collageMargin = '25px 0';
+        collageMinHeight = '500px';
+        collageMargin = '12px 0';
     }
 
     if (images.length > 0) {
