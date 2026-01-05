@@ -827,10 +827,15 @@ function renderTimeline(searchQuery = '') {
         if (images.length > 0) {
             mediaHtml = `<div class="card-media-carousel" onclick="openImmersiveViewById('${m.id}')">`;
 
-            // Slide 1: Mini Collage
+            // Slide 1: Mini Collage + Overlaid Sticker
             mediaHtml += `
                 <div class="carousel-slide collage-slide">
                     ${generateMiniCollage(m.media)}
+                    ${(m.stickerText || m.venue) ? `
+                        <div class="feed-sticker-wrapper">
+                            <div class="brush-sticker feed-sticker">${m.stickerText || m.venue}</div>
+                        </div>
+                    ` : ''}
                 </div>
             `;
 
@@ -862,12 +867,6 @@ function renderTimeline(searchQuery = '') {
                 </div >
                 
                 ${mediaHtml}
-
-                ${(m.stickerText || m.venue) ? `
-                    <div class="feed-sticker-wrapper">
-                        <div class="brush-sticker feed-sticker">${m.stickerText || m.venue}</div>
-                    </div>
-                ` : ''}
                 
                 ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}
                 
@@ -1607,19 +1606,19 @@ function openImmersiveView(moment) {
     const images = moment.media?.filter(m => m.type === 'image') || [];
     let photoHtml = '';
 
-    // Dynamic collage spacing based on photo count
-    let collageMinHeight = '400px';
-    let collageMargin = '20px 0';
+    // Dynamic collage spacing based on photo count (Refined heights)
+    let collageMinHeight = '350px';
+    let collageMargin = '10px 0';
 
     if (images.length === 1) {
-        collageMinHeight = '350px';
-        collageMargin = '10px 0';
+        collageMinHeight = '280px';
+        collageMargin = '5px 0';
     } else if (images.length === 2) {
-        collageMinHeight = '500px';
-        collageMargin = '30px 0';
+        collageMinHeight = '420px';
+        collageMargin = '15px 0';
     } else if (images.length >= 3) {
-        collageMinHeight = '700px';
-        collageMargin = '50px 0';
+        collageMinHeight = '580px';
+        collageMargin = '25px 0';
     }
 
     if (images.length > 0) {
@@ -1683,7 +1682,7 @@ function openImmersiveView(moment) {
             
             ${photoHtml}
             
-            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '10px' : '40px'}">${moment.text || ''}</div>
+            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '5px' : '20px'}">${moment.text || ''}</div>
         </div>
 
         <div class="immersive-actions-bar">
