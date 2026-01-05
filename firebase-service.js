@@ -427,7 +427,7 @@ const DBService = {
 
             // Sort by createdAt and limit
             allMoments.sort((a, b) => (b.moments.createdAt || '').localeCompare(a.moments.createdAt || ''));
-            const moments = allMoments.slice(0, 10);
+            const moments = allMoments.slice(0, 5);
 
             // Enrich with user profiles
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];

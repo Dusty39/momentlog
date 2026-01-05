@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v95-atomic-username';
+const CACHE_NAME = 'momentlog-v96-faster-pagination';
 const ASSETS = [
     './',
     './index.html',

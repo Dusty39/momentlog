@@ -702,7 +702,7 @@ async function loadMoments() {
             moments = [...moments, ...newMoments];
             currentLastDoc = result.lastVisible;
 
-            if (newMoments.length < 10) {
+            if (newMoments.length < 5) {
                 hasMore = false;
             }
         } else {
