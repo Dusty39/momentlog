@@ -80,22 +80,26 @@ const DBService = {
 
     // Tüm anılardaki kullanıcı bilgilerini güncelle
     async syncUserMoments(uid, updateData) {
-        const batch = db.batch();
-        const moments = await db.collection('moments').where('userId', '==', uid).get();
+        const snapshots = await db.collection('moments').where('userId', '==', uid).get();
+        if (snapshots.empty) return;
 
         const dataToSync = {};
         if (updateData.username) dataToSync.userDisplayName = updateData.username;
         else if (updateData.displayName) dataToSync.userDisplayName = updateData.displayName;
-
         if (updateData.photoURL) dataToSync.userPhotoURL = updateData.photoURL;
 
         if (Object.keys(dataToSync).length === 0) return;
 
-        moments.forEach(doc => {
-            batch.update(doc.ref, dataToSync);
-        });
-
-        return batch.commit();
+        // Process in batches of 500 (Firestore limit)
+        const docs = snapshots.docs;
+        for (let i = 0; i < docs.length; i += 500) {
+            const batch = db.batch();
+            const chunk = docs.slice(i, i + 500);
+            chunk.forEach(doc => {
+                batch.update(doc.ref, dataToSync);
+            });
+            await batch.commit();
+        }
     },
 
     // Profil Fotoğrafı - Base64 olarak döndür (Storage yerine Firestore'da sakla)

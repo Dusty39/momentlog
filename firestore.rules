@@ -141,5 +141,14 @@ service cloud.firestore {
       // Only target user can update (mark as read) or delete
       allow update, delete: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
     }
+
+    // =============================================
+    // USERNAMES COLLECTION (for unique check)
+    // =============================================
+    match /usernames/{username} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
   }
 }

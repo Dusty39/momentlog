@@ -138,39 +138,52 @@ function handleEditPhotoInput(e) {
     reader.readAsDataURL(file);
 }
 
+let usernameCheckSeq = 0;
 async function checkUsernameAvailability() {
     const input = document.getElementById('editUsername');
     const status = document.getElementById('usernameStatus');
-    const username = input.value.trim().toLowerCase();
+    const username = input.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+    // Auto-clean input
+    if (input.value.toLowerCase() !== username) {
+        input.value = username;
+    }
 
     if (!username) {
         status.textContent = '';
         return;
     }
 
-    if (username === originalUsername.toLowerCase()) {
+    if (originalUsername && username === originalUsername.toLowerCase()) {
         status.textContent = '✓ Mevcut kullanıcı adınız';
         status.className = 'username-status available';
-        return;
-    }
-
-    // Check if valid format (alphanumeric + underscore)
-    if (!/^[a-z0-9_]+$/.test(username)) {
-        status.textContent = '✗ Sadece harf, rakam ve _ kullanılabilir';
-        status.className = 'username-status taken';
         return;
     }
 
     status.textContent = 'Kontrol ediliyor...';
     status.className = 'username-status';
 
-    const available = await DBService.checkUsernameAvailability(username);
-    if (available) {
-        status.textContent = '✓ Bu kullanıcı adı müsait';
-        status.className = 'username-status available';
-    } else {
-        status.textContent = '✗ Bu kullanıcı adı alınmış';
-        status.className = 'username-status taken';
+    const currentSeq = ++usernameCheckSeq;
+
+    try {
+        const available = await DBService.checkUsernameAvailability(username);
+
+        // Only update if this is still the latest request
+        if (currentSeq === usernameCheckSeq) {
+            if (available) {
+                status.textContent = '✓ Bu kullanıcı adı müsait';
+                status.className = 'username-status available';
+            } else {
+                status.textContent = '✗ Bu kullanıcı adı alınmış';
+                status.className = 'username-status taken';
+            }
+        }
+    } catch (e) {
+        if (currentSeq === usernameCheckSeq) {
+            console.error("Username check error:", e);
+            status.textContent = '⚠ Kontrol edilemedi';
+            status.className = 'username-status taken';
+        }
     }
 }
 

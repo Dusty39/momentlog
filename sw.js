@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v83-zindex-final-fix';
+const CACHE_NAME = 'momentlog-v84-username-fix';
 const ASSETS = [
     './',
     './index.html',
