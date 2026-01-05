@@ -319,8 +319,8 @@ const DBService = {
             }
 
             const snapshot = await query.limit(5).get();
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(user.uid).get();
@@ -358,8 +358,8 @@ const DBService = {
             }
 
             const snapshot = await query.limit(5).get();
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(uid).get();
@@ -426,7 +426,7 @@ const DBService = {
                     .where('userId', 'in', chunk)
                     .where('isPublic', '==', true)
                     .orderBy('createdAt', 'desc')
-                    .limit(20)
+                    .limit(10) // Chunk bazlı limit
                     .get();
                 allMoments = [...allMoments, ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
             }
