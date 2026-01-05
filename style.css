@@ -817,9 +817,7 @@ textarea::placeholder {
 .collage-container.scattered {
     position: relative;
     width: 100%;
-    min-height: 700px;
-    /* Increased for better spreading */
-    margin: 60px 0;
+    /* margin and min-height set dynamically in JS */
     display: block;
     /* Absolute children */
 }
@@ -908,6 +906,23 @@ textarea::placeholder {
 
 .theme-art .brush-sticker {
     background: linear-gradient(to right, #6c5ce7, #a29bfe);
+}
+
+/* Feed Sticker (Smaller version) */
+.feed-sticker-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: -15px 0 10px;
+    /* Overlap with media slightly */
+    z-index: 5;
+    position: relative;
+}
+
+.brush-sticker.feed-sticker {
+    padding: 6px 25px;
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    transform: rotate(-3deg);
 }
 
 .collage-container.scattered .immersive-img {

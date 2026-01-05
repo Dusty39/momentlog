@@ -859,9 +859,15 @@ function renderTimeline(searchQuery = '') {
                             <span class="date">${formattedDate}${locationText}</span>
                         </div>
                     </div>
-                </div>
+                </div >
                 
                 ${mediaHtml}
+
+                ${(m.stickerText || m.venue) ? `
+                    <div class="feed-sticker-wrapper">
+                        <div class="brush-sticker feed-sticker">${m.stickerText || m.venue}</div>
+                    </div>
+                ` : ''}
                 
                 ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}
                 
@@ -1601,8 +1607,23 @@ function openImmersiveView(moment) {
     const images = moment.media?.filter(m => m.type === 'image') || [];
     let photoHtml = '';
 
+    // Dynamic collage spacing based on photo count
+    let collageMinHeight = '400px';
+    let collageMargin = '20px 0';
+
+    if (images.length === 1) {
+        collageMinHeight = '350px';
+        collageMargin = '10px 0';
+    } else if (images.length === 2) {
+        collageMinHeight = '500px';
+        collageMargin = '30px 0';
+    } else if (images.length >= 3) {
+        collageMinHeight = '700px';
+        collageMargin = '50px 0';
+    }
+
     if (images.length > 0) {
-        photoHtml = `<div class="collage-container scattered count-${images.length}">`;
+        photoHtml = `<div class="collage-container scattered count-${images.length}" style="min-height: ${collageMinHeight}; margin: ${collageMargin};">`;
         images.forEach((img, idx) => {
             const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 4);
             // Spreading logic: calculate rough positions to reduce overlap
@@ -1662,7 +1683,7 @@ function openImmersiveView(moment) {
             
             ${photoHtml}
             
-            <div class="immersive-text interspersed-text">${moment.text || ''}</div>
+            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '10px' : '40px'}">${moment.text || ''}</div>
         </div>
 
         <div class="immersive-actions-bar">
