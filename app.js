@@ -26,6 +26,9 @@ let mediaRecorder = null;
 let audioChunks = [];
 const MAX_AUDIO_SECONDS = 30;
 let myPrivateMoments = []; // Separate cache for own moments to ensure individual visibility
+let currentLastDoc = null; // Pagination: track last visible document
+let hasMore = true; // Pagination: flag if more data exists
+let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 
 // --- Image Compression for Fallback ---
 async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
@@ -407,7 +410,13 @@ let currentAppTheme = localStorage.getItem('appTheme') || 'light';
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize selectors and events
     initializeSelectors();
+
+    // Setup Infinite Scroll
+    setupInfiniteScroll();
+
+    // Check last view
     console.log("momentLog: DOM Loaded v19");
 
     if (dom.momentDate) {
@@ -572,6 +581,12 @@ function setupEventListeners() {
         currentView = viewName;
         localStorage.setItem('momentLog_lastView', currentView);
 
+        // Reset pagination state on view change
+        currentLastDoc = null;
+        hasMore = true;
+        moments = [];
+        if (dom.timeline) dom.timeline.innerHTML = ''; // Clear feed for fresh load
+
         const titleEl = document.querySelector('.main-title');
 
         if (currentView === 'explore') {
@@ -626,6 +641,25 @@ function setupEventListeners() {
     }
 }
 
+// --- Infinite Scroll ---
+function setupInfiniteScroll() {
+    const sentinel = document.createElement('div');
+    sentinel.id = 'infinite-scroll-sentinel';
+    sentinel.style.height = '10px';
+    sentinel.style.margin = '20px 0';
+    dom.timeline?.after(sentinel);
+
+    const observer = new IntersectionObserver(async (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingNextPage) {
+            console.log("Loading more moments...");
+            await loadMoments();
+            renderTimeline();
+        }
+    }, { rootMargin: '400px' });
+
+    observer.observe(sentinel);
+}
+
 // --- App Theme System ---
 function applyAppTheme(theme) {
     document.body.classList.remove('app-theme-light', 'app-theme-vintage');
@@ -640,29 +674,45 @@ function applyAppTheme(theme) {
 
 // --- Data Operations ---
 async function loadMoments() {
+    if (isLoadingNextPage || !hasMore) return;
+    isLoadingNextPage = true;
+
     try {
         const currentUser = AuthService.currentUser();
-        let data;
+        let result;
 
-        // Always fetch user's own moments for the sidebar/recent view
-        if (currentUser) {
-            myPrivateMoments = await DBService.getMyMoments();
+        // Fetch own moments once for sidebar
+        if (currentUser && myPrivateMoments.length === 0) {
+            const res = await DBService.getMyMoments();
+            myPrivateMoments = res.moments || [];
         }
 
         if (currentView === 'explore') {
-            data = await DBService.getPublicMoments();
-            console.log("Dünya akışı yüklendi:", data.length);
+            result = await DBService.getPublicMoments(currentLastDoc);
         } else if (currentView === 'write') {
-            data = myPrivateMoments; // Reuse the already fetched own moments
-            console.log("Kişisel anılar yüklendi:", data.length);
+            result = { moments: myPrivateMoments, lastVisible: null };
+            hasMore = false;
         } else {
-            data = await DBService.getFollowingMoments();
-            console.log("Takip akışı yüklendi:", data.length);
+            result = await DBService.getFollowingMoments(); // Still fixed for now
+            hasMore = false;
         }
-        moments = data || [];
+
+        if (result) {
+            const newMoments = result.moments || [];
+            moments = [...moments, ...newMoments];
+            currentLastDoc = result.lastVisible;
+
+            if (newMoments.length < 10) {
+                hasMore = false;
+            }
+        } else {
+            hasMore = false;
+        }
     } catch (e) {
         console.error("Veri yükleme hatası:", e);
-        moments = [];
+        hasMore = false;
+    } finally {
+        isLoadingNextPage = false;
     }
 }
 

@@ -40,6 +40,7 @@ html {
 
 * {
     scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
 }
 
 body {
@@ -57,7 +58,8 @@ body {
 #app {
     width: 100%;
     max-width: 600px;
-    padding-bottom: 100px;
+    padding-bottom: 30px;
+    /* Reduced from 100px to solve bottom gap */
 }
 
 /* Header */
@@ -931,7 +933,8 @@ textarea::placeholder {
     right: 0 !important;
     display: flex !important;
     justify-content: center !important;
-    z-index: 100 !important;
+    z-index: 9999 !important;
+    /* Absolute top priority */
     pointer-events: none !important;
 }
 
@@ -989,8 +992,8 @@ textarea::placeholder {
 .mini-collage {
     position: relative;
     width: 100%;
-    height: 300px;
-    /* Increased for better spreading */
+    height: 260px;
+    /* Reduced to tighten card height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2115,8 +2118,8 @@ h1 {
 .moment-card {
     background: var(--bg-surface);
     border-radius: 12px;
-    margin-bottom: 8px;
-    /* Tighter margin */
+    margin-bottom: 6px !important;
+    /* Aggressive reduction */
     overflow: hidden;
     border: 1px solid var(--border-subtle);
 }

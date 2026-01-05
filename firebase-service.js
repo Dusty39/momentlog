@@ -302,16 +302,22 @@ const DBService = {
     },
 
     // Kişisel Anıları Getir
-    getMyMoments: async () => {
+    getMyMoments: async (lastVisible = null) => {
         const user = auth.currentUser;
-        if (!user) return [];
+        if (!user) return { moments: [], lastVisible: null };
 
         try {
-            const snapshot = await db.collection('moments')
+            let query = db.collection('moments')
                 .where('userId', '==', user.uid)
-                .orderBy('createdAt', 'desc')
-                .get();
+                .orderBy('createdAt', 'desc');
+
+            if (lastVisible) {
+                query = query.startAfter(lastVisible);
+            }
+
+            const snapshot = await query.limit(10).get();
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(user.uid).get();
@@ -329,7 +335,7 @@ const DBService = {
     },
 
     // Belirli Bir Kullanıcının Anılarını Getir
-    getMomentsByUser: async (uid) => {
+    async getMomentsByUser(uid, lastVisible = null) {
         const currentUser = auth.currentUser;
         try {
             let query = db.collection('moments').where('userId', '==', uid);
@@ -339,18 +345,28 @@ const DBService = {
                 query = query.where('isPublic', '==', true);
             }
 
-            const snapshot = await query.orderBy('createdAt', 'desc').get();
+            query = query.orderBy('createdAt', 'desc');
+
+            if (lastVisible) {
+                query = query.startAfter(lastVisible);
+            }
+
+            const snapshot = await query.limit(10).get();
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(uid).get();
             const profile = profileDoc.exists ? profileDoc.data() : null;
 
-            return moments.map(m => ({
-                ...m,
-                userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
-            }));
+            return {
+                moments: moments.map(m => ({
+                    ...m,
+                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                })),
+                lastVisible: lastDoc
+            };
         } catch (e) {
             console.error("User Feed error:", e);
             throw e;
@@ -410,8 +426,8 @@ const DBService = {
             }
 
             // Sort by createdAt and limit
-            allMoments.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-            const moments = allMoments.slice(0, 20);
+            allMoments.sort((a, b) => (b.moments.createdAt || '').localeCompare(a.moments.createdAt || ''));
+            const moments = allMoments.slice(0, 10);
 
             // Enrich with user profiles
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
@@ -423,11 +439,14 @@ const DBService = {
                 } catch (e) { console.warn('Could not fetch user:', uid); }
             }));
 
-            return moments.map(m => ({
-                ...m,
-                userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
-                userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
-            }));
+            return {
+                moments: moments.map(m => ({
+                    ...m,
+                    userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
+                    userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
+                })),
+                lastVisible: null // Following pagination is complex, simplified for now
+            };
         } catch (e) {
             console.error("Following Feed error:", e);
             return [];
@@ -435,13 +454,18 @@ const DBService = {
     },
 
     // Genel Anıları Getir (Social Feed)
-    async getPublicMoments() {
+    async getPublicMoments(lastVisible = null) {
         try {
-            const snapshot = await db.collection('moments')
+            let query = db.collection('moments')
                 .where('isPublic', '==', true)
-                .orderBy('createdAt', 'desc')
-                .limit(20)
-                .get();
+                .orderBy('createdAt', 'desc');
+
+            if (lastVisible) {
+                query = query.startAfter(lastVisible);
+            }
+
+            const snapshot = await query.limit(10).get();
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Enrich moments with fresh user profile data
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -463,16 +487,17 @@ const DBService = {
             }));
 
             // Enrich moments with user data
-            console.log('User profiles fetched:', userProfiles);
-            return moments.map(m => {
-                const profile = userProfiles[m.userId];
-                console.log('Moment userId:', m.userId, 'Profile username:', profile?.username, 'Profile displayName:', profile?.displayName);
-                return {
-                    ...m,
-                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
-                };
-            });
+            return {
+                moments: moments.map(m => {
+                    const profile = userProfiles[m.userId];
+                    return {
+                        ...m,
+                        userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                        userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                    };
+                }),
+                lastVisible: lastDoc
+            };
         } catch (e) {
             console.error("Public Feed error:", e);
             throw e;
