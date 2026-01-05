@@ -926,6 +926,30 @@ textarea::placeholder {
     background: linear-gradient(to right, #6c5ce7, #a29bfe);
 }
 
+.card-label-row,
+.immersive-label-row {
+    padding: 0 16px;
+    text-align: right;
+    margin: -10px 0 -5px;
+    /* Adjust to overlap or be tight */
+    position: relative;
+    z-index: 100;
+}
+
+.mini-brush-sticker {
+    display: inline-block;
+    padding: 4px 20px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transform: rotate(3deg);
+    clip-path: polygon(2% 15%, 98% 0%, 96% 85%, 4% 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* Feed Sticker Overlay */
 .collage-slide {
     position: relative;
@@ -980,8 +1004,7 @@ textarea::placeholder {
     align-items: center;
     justify-content: center;
     padding: 0 16px;
-    min-height: 180px;
-    /* Reduced to avoid gap */
+    min-height: 150px;
 }
 
 .carousel-slide img {
@@ -2165,7 +2188,7 @@ h1 {
 .user-details {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 0;
     min-width: 0;
     margin-left: 10px;
 }

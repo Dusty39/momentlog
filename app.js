@@ -612,6 +612,12 @@ function setupEventListeners() {
     if (headerAddBtn) headerAddBtn.onclick = () => window.setView('write');
     if (notificationsBtn) notificationsBtn.onclick = () => toggleNotificationPanel();
 
+    // Add Location Button
+    const addLocBtn = document.getElementById('addLocationBtn');
+    if (addLocBtn) {
+        addLocBtn.onclick = () => window.handleRealLocation();
+    }
+
     // Save button
     if (dom.addBtn) {
         dom.addBtn.onclick = saveMoment;
@@ -903,11 +909,16 @@ function renderTimeline(searchQuery = '') {
                             <div class="meta-info">
                                 <span class="date">${formattedDate}${locationText}</span>
                                 ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
-                                ${m.stickerText ? `<span class="sticker-chip">${m.stickerText}</span>` : ''}
                             </div>
                         </div>
                     </div>
                 </div >
+
+                ${m.stickerText ? `
+                    <div class="card-label-row">
+                        <div class="mini-brush-sticker">${m.stickerText}</div>
+                    </div>
+                ` : ''}
                 
                 ${mediaHtml}
                 
@@ -1742,9 +1753,14 @@ function openImmersiveView(moment) {
             <div class="immersive-meta-row">
                 <span class="immersive-user">@${moment.userDisplayName || 'anonim'}</span>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location}</span>` : ''}
-                ${moment.stickerText ? `<span class="sticker-chip-large">${moment.stickerText}</span>` : ''}
             </div>
         </div>
+
+        ${moment.stickerText ? `
+            <div class="immersive-label-row">
+                <div class="mini-brush-sticker">${moment.stickerText}</div>
+            </div>
+        ` : ''}
 
         <div class="immersive-content">
             ${photoHtml}
