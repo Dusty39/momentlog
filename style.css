@@ -621,7 +621,7 @@ textarea::placeholder {
     width: 100%;
     height: 100%;
     background: var(--bg-main);
-    z-index: 1000;
+    z-index: 8000;
     overflow-y: auto;
     padding: 40px 20px;
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);

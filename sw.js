@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v82-swipe-visibility-fix';
+const CACHE_NAME = 'momentlog-v83-zindex-final-fix';
 const ASSETS = [
     './',
     './index.html',
