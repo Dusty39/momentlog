@@ -293,6 +293,10 @@ textarea::placeholder {
     padding-bottom: 5px;
 }
 
+#app {
+    padding-bottom: 20px;
+}
+
 .preview-item {
     flex-shrink: 0;
     width: 70px;
@@ -859,7 +863,7 @@ textarea::placeholder {
 .brush-sticker-wrapper {
     display: flex;
     justify-content: center;
-    margin: 20px 0 40px;
+    margin: 10px 0 15px;
     perspective: 1000px;
 }
 
@@ -930,22 +934,18 @@ textarea::placeholder {
 
 .feed-sticker-wrapper {
     position: absolute !important;
-    bottom: 25px !important;
-    left: 0 !important;
-    right: 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    z-index: 9999 !important;
-    /* Absolute top priority */
+    top: 15px !important;
+    right: 15px !important;
+    z-index: 100 !important;
     pointer-events: none !important;
 }
 
 .brush-sticker.feed-sticker {
-    padding: 10px 35px !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 2.5px !important;
-    transform: rotate(-3deg) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    padding: 6px 20px !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 1.5px !important;
+    transform: rotate(-2deg) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
     white-space: nowrap !important;
 }
 
@@ -2164,8 +2164,17 @@ h1 {
 .user-details {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
+    margin-left: 10px;
+}
+
+.meta-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .username {
@@ -2324,9 +2333,9 @@ body.app-theme-vintage h1 {
 
 /* Icon buttons - no fill on active */
 .icon-btn.active {
-    background: transparent !important;
+    background: rgba(var(--accent-rgb, 245, 158, 11), 0.15) !important;
     color: var(--accent) !important;
-    border-color: var(--accent) !important;
+    border-radius: 8px;
 }
 
 /* Post card - date on right */

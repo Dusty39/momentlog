@@ -876,9 +876,9 @@ function renderTimeline(searchQuery = '') {
             mediaHtml += `
                 <div class="carousel-slide collage-slide">
                     ${generateMiniCollage(m.media)}
-                    ${(m.stickerText || m.venue) ? `
+                    ${(m.stickerText) ? `
                         <div class="feed-sticker-wrapper">
-                            <div class="brush-sticker feed-sticker">${m.stickerText || m.venue}</div>
+                            <div class="brush-sticker feed-sticker">${m.stickerText}</div>
                         </div>
                     ` : ''}
                 </div>
@@ -903,10 +903,12 @@ function renderTimeline(searchQuery = '') {
                         <div class="user-avatar">
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
-                        <div class="user-details">
+                        <div class="user-details" onclick="openProfileView('${m.userId}')">
                             <span class="username">${m.userDisplayName || 'Anonim'}</span>
-                            ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
-                            <span class="date">${formattedDate}${locationText}</span>
+                            <div class="meta-info">
+                                <span class="date">${formattedDate}${locationText}</span>
+                                ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
+                            </div>
                         </div>
                     </div>
                 </div >
@@ -1265,17 +1267,17 @@ function fetchLocation() {
         async (pos) => {
             try {
                 const { latitude, longitude } = pos.coords;
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr`);
                 const data = await response.json();
 
                 const address = data.address;
                 // Format: İlçe, İl, Ülke
                 const parts = [];
-                if (address.town || address.county || address.suburb) {
-                    parts.push(address.town || address.county || address.suburb);
+                if (address.town || address.village || address.suburb || address.district) {
+                    parts.push(address.town || address.village || address.suburb || address.district);
                 }
-                if (address.city || address.state) {
-                    parts.push(address.city || address.state);
+                if (address.province || address.city || address.state) {
+                    parts.push(address.province || address.city || address.state);
                 }
                 if (address.country) {
                     parts.push(address.country);
@@ -1286,11 +1288,23 @@ function fetchLocation() {
                     dom.locationStatus.textContent = `📍 ${currentLocation}`;
                     dom.locationStatus.classList.remove('hidden');
                 }
+
+                // Keep the button active if we successfully got a location
+                const btn = document.getElementById('addLocationBtn');
+                btn?.classList.add('active');
             } catch (e) {
                 console.error("Konum alınamadı:", e);
+                isRealLocationActive = false;
+                const btn = document.getElementById('addLocationBtn');
+                btn?.classList.remove('active');
             }
         },
-        (err) => console.log("Konum izni verilmedi")
+        (err) => {
+            console.log("Konum izni verilmedi");
+            isRealLocationActive = false;
+            const btn = document.getElementById('addLocationBtn');
+            btn?.classList.remove('active');
+        }
     );
 }
 
@@ -1301,11 +1315,9 @@ window.handleRealLocation = () => {
     if (isRealLocationActive) {
         btn?.classList.add('active');
         fetchLocation();
-        if (dom.venueInput) dom.venueInput.classList.remove('hidden');
     } else {
         btn?.classList.remove('active');
         if (dom.locationStatus) dom.locationStatus.classList.add('hidden');
-        if (dom.venueInput) dom.venueInput.classList.add('hidden');
         currentLocation = '';
         if (dom.venueInput) dom.venueInput.value = '';
     }
@@ -1722,7 +1734,7 @@ function openImmersiveView(moment) {
         photoHtml += `</div>`;
     }
 
-    const stickerValue = moment.stickerText || moment.venue;
+    const stickerValue = moment.stickerText;
     const stickerHtml = stickerValue ? `
         <div class="brush-sticker-wrapper">
             <div class="brush-sticker">${stickerValue}</div>
@@ -1740,11 +1752,9 @@ function openImmersiveView(moment) {
         </div>
 
         <div class="immersive-content">
-            ${stickerHtml}
-            
             ${photoHtml}
-            
-            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '5px' : '20px'}">${moment.text || ''}</div>
+            ${stickerHtml}
+            <div class="immersive-text interspersed-text" style="margin-top: ${images.length <= 1 ? '5px' : '15px'}">${moment.text || ''}</div>
         </div>
 
         <div class="immersive-actions-bar">
