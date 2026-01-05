@@ -99,10 +99,35 @@ function generateMiniCollage(media) {
 
     let html = `<div class="mini-collage count-${images.length}">`;
     images.forEach((img, idx) => {
-        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 5 + 2);
-        const offset = (Math.random() * 10 - 5);
+        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
+
+        let top = 0, left = 0;
+        if (images.length === 1) {
+            top = 10; left = 20;
+        } else if (images.length === 2) {
+            top = idx === 0 ? 5 : 40;
+            left = idx === 0 ? 5 : 35;
+        } else if (images.length === 3) {
+            const positions = [
+                { t: 5, l: 20 },
+                { t: 30, l: 5 },
+                { t: 55, l: 35 }
+            ];
+            top = positions[idx].t;
+            left = positions[idx].l;
+        } else { // 4 photos
+            const positions = [
+                { t: 0, l: 30 },
+                { t: 20, l: 5 },
+                { t: 45, l: 40 },
+                { t: 65, l: 10 }
+            ];
+            top = positions[idx].t;
+            left = positions[idx].l;
+        }
+
         html += `
-            <div class="mini-img-wrapper" style="transform: rotate(${rotation}deg) translate(${offset}px, ${offset}px)">
+            <div class="mini-img-wrapper" style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%;">
                 <img src="${img.url || img.data}">
             </div>
         `;
