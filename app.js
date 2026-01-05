@@ -282,11 +282,11 @@ window.saveProfileChanges = async () => {
         };
 
         if (username && username !== originalUsername.toLowerCase()) {
-            updateData.username = username;
-            await DBService.registerUsername(username, currentUser.uid);
-            if (originalUsername) {
-                await DBService.releaseUsername(originalUsername.toLowerCase());
-            }
+            await DBService.changeUsername(currentUser.uid, username);
+            // After changing username, avoid updating it again in updateUserProfile
+        } else {
+            // Only update display name and bio if username didn't change
+            // or if it changed, we update those too in the next step
         }
 
         if (photoURL) {
