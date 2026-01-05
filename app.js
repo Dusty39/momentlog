@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Set initial view and load data
                 const lastView = localStorage.getItem('momentLog_lastView');
-                // Default to 'my-moments' (Akış) if no lastView
+                console.log("Setting initial view:", lastView || 'my-moments');
                 await window.setView(lastView || 'my-moments', true);
 
                 setupNotifications();
@@ -574,12 +574,12 @@ function setupEventListeners() {
         if (dom.timeline) dom.timeline.innerHTML = ''; // Clear feed for fresh load
 
         const titleEl = document.querySelector('.main-title');
+        if (titleEl) titleEl.textContent = "momentLog";
 
         if (currentView === 'explore') {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -588,7 +588,6 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.add('active');
-            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
@@ -597,7 +596,6 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "momentLog";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -1327,10 +1325,24 @@ async function openProfileView(uid) {
     window._currentProfileUid = uid;
 
     try {
-        const userProfile = await DBService.getUserProfile(uid);
-        if (!userProfile) throw new Error("Profil bulunamadı.");
+        let userProfile = await DBService.getUserProfile(uid);
 
-        const momentsRes = await DBService.getMomentsByUser(uid);
+        // If profile doesn't exist, create a temporary object to avoid crashing
+        if (!userProfile) {
+            userProfile = {
+                displayName: 'momentLog Gezgini',
+                username: 'isimsiz',
+                photoURL: '👤',
+                bio: 'Profil bilgileri henüz oluşturulmamış.',
+                followers: [],
+                following: []
+            };
+        }
+
+        const momentsRes = await DBService.getMomentsByUser(uid).catch(err => {
+            console.warn("Moments fetch failed (likely missing index):", err);
+            return { moments: [], lastVisible: null };
+        });
         const momentsList = momentsRes.moments || [];
         const isOwnProfile = uid === AuthService.currentUser()?.uid;
         const isFollowing = userProfile.followers?.includes(AuthService.currentUser()?.uid);
@@ -1393,7 +1405,7 @@ async function openProfileView(uid) {
 
                 ${(isOwnProfile || !userProfile.isPrivateProfile || isFollowing) ? `
                     <div class="profile-moments-grid">
-                        ${userMoments.map(m => {
+                        ${momentsList.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
                     return '<div class="grid-item" onclick="openImmersiveViewById(\'' + m.id + '\')">' +

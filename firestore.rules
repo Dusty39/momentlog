@@ -68,8 +68,8 @@ service cloud.firestore {
     // USERS COLLECTION
     // =============================================
     match /users/{userId} {
-      // Public profile data readable by all authenticated users
-      allow read: if isAuthenticated();
+      // Public profile data readable by all
+      allow read: if true;
       
       // Only owner can create their own profile
       allow create: if isOwner(userId);

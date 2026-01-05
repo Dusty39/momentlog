@@ -53,23 +53,26 @@ const DBService = {
         if (doc.exists) {
             return doc.data();
         } else {
-            // Yeni kullanıcı profili oluştur
+            // Only create profile if it's the current user
             const user = auth.currentUser;
-            const newUser = {
-                uid: user.uid,
-                displayName: user.displayName,
-                email: user.email,
-                photoURL: user.photoURL,
-                bio: 'Merhaba, ben momentLog kullanıyorum!',
-                username: null,
-                isPrivateProfile: false, // Default public
-                followers: [],
-                following: [],
-                pendingFollowers: [], // People who want to follow this user
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            await docRef.set(newUser);
-            return newUser;
+            if (user && user.uid === uid) {
+                const newUser = {
+                    uid: user.uid,
+                    displayName: user.displayName || 'İsimsiz',
+                    email: user.email,
+                    photoURL: user.photoURL || '👤',
+                    bio: 'Merhaba, ben momentLog kullanıyorum!',
+                    username: null,
+                    isPrivateProfile: false,
+                    followers: [],
+                    following: [],
+                    pendingFollowers: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                await docRef.set(newUser);
+                return newUser;
+            }
+            return null; // Return null for others instead of throwing security error
         }
     },
 
