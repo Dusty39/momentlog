@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v103-sorting-compact';
+const CACHE_NAME = 'momentlog-v104-final-compact';
 const ASSETS = [
     './',
     './index.html',
