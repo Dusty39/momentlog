@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v96-faster-pagination';
+const CACHE_NAME = 'momentlog-v98-final-fixes';
 const ASSETS = [
     './',
     './index.html',

@@ -315,22 +315,25 @@ const DBService = {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.limit(10).get();
-            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const snapshot = await query.limit(5).get();
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(user.uid).get();
             const profile = profileDoc.exists ? profileDoc.data() : null;
 
-            return moments.map(m => ({
-                ...m,
-                userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
-            }));
+            return {
+                moments: moments.map(m => ({
+                    ...m,
+                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                })),
+                lastVisible: lastDoc
+            };
         } catch (e) {
             console.error("Personal Feed error:", e);
-            throw e;
+            return { moments: [], lastVisible: null };
         }
     },
 
@@ -351,7 +354,7 @@ const DBService = {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.limit(10).get();
+            const snapshot = await query.limit(5).get();
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -426,7 +429,7 @@ const DBService = {
             }
 
             // Sort by createdAt and limit
-            allMoments.sort((a, b) => (b.moments.createdAt || '').localeCompare(a.moments.createdAt || ''));
+            allMoments.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
             const moments = allMoments.slice(0, 5);
 
             // Enrich with user profiles
@@ -445,11 +448,11 @@ const DBService = {
                     userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
                     userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
                 })),
-                lastVisible: null // Following pagination is complex, simplified for now
+                lastVisible: null // Following pagination not fully supported yet
             };
         } catch (e) {
             console.error("Following Feed error:", e);
-            return [];
+            return { moments: [], lastVisible: null };
         }
     },
 
@@ -464,7 +467,7 @@ const DBService = {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.limit(10).get();
+            const snapshot = await query.limit(5).get();
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Enrich moments with fresh user profile data

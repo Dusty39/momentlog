@@ -431,12 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
-
-        // setView will be called inside onAuthStateChanged to prevent title flicker
-        if (!window.setView || !currentView) {
-            renderTimeline();
-        }
-
         console.log("momentLog: UI Initialized Successfully v19");
     } catch (e) {
         console.error("Initialization Error:", e);
@@ -453,57 +447,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Kullanıcı giriş yaptı:", user.displayName);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                // Get full profile from Firestore to get the Base64 photoURL
+                // Get full profile from Firestore
                 const userProfile = await DBService.getUserProfile(user.uid);
                 const displayPhoto = userProfile?.photoURL || user.photoURL;
 
                 if (displayPhoto && dom.profileBtn) {
-                    const img = dom.profileBtn.querySelector('img') || document.createElement('img');
-                    img.src = displayPhoto;
-                    if (!dom.profileBtn.querySelector('img')) {
-                        dom.profileBtn.innerHTML = '';
-                        dom.profileBtn.appendChild(img);
-                    }
+                    dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     dom.profileBtn.classList.add('has-avatar');
                 }
 
                 if (dom.userNameSpan) {
-                    dom.userNameSpan.textContent = `Merhaba, ${user.displayName || 'Gezgin'}`;
+                    dom.userNameSpan.textContent = userProfile?.username || user.displayName || 'Kullanıcı';
                 }
 
-                await DBService.getUserProfile(user.uid);
-                await loadMoments();
-                renderTimeline();
+                // Load initial sidebar data
+                const res = await DBService.getMyMoments();
+                myPrivateMoments = res.moments || [];
                 renderMyRecentMoments();
-                fetchLocation();
+
+                // Set initial view and load data
+                const lastView = localStorage.getItem('momentLog_lastView') || 'my-moments';
+                await window.setView(lastView, true);
+
                 setupNotifications();
             } else {
                 console.log("Kullanıcı giriş yapmadı.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
+                myPrivateMoments = [];
                 renderTimeline();
             }
         } catch (error) {
             console.error("Auth state processing error:", error);
         } finally {
-            // Set initial view if not already set
-            if (window.setView && currentView) {
-                await window.setView(currentView, true);
-            }
-
-            // ALWAYS hide loading splash and show app after auth check (even on error)
-            if (loadingSplash) {
-                loadingSplash.classList.add('hidden');
-            }
-
-            // Show app with a slight delay to allow splash to start fading and prevent flicker
-            setTimeout(() => {
-                if (appDiv) {
-                    appDiv.classList.remove('hidden');
-                    appDiv.classList.add('fade-in');
-                }
-            }, 100);
+            if (loadingSplash) loadingSplash.classList.add('hidden');
         }
+
+        // Show app with a slight delay
+        setTimeout(() => {
+            if (appDiv) {
+                appDiv.classList.remove('hidden');
+                appDiv.classList.add('fade-in');
+            }
+        }, 100);
     });
 
     // Login Button
@@ -522,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(() => console.log('SW Registered'))
             .catch(err => console.log('SW Registration Failed', err));
 
-        // Detect when a new service worker takes over and reload the page
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
@@ -593,7 +578,7 @@ function setupEventListeners() {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "momentLog";
+            if (titleEl) titleEl.textContent = "Dünya"; // Updated for clarity
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -602,7 +587,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.add('active');
-            if (titleEl) titleEl.textContent = "momentLog";
+            if (titleEl) titleEl.textContent = "Anı Paylaş";
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
@@ -611,7 +596,7 @@ function setupEventListeners() {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.add('active');
             headerAddBtn?.classList.remove('active');
-            if (titleEl) titleEl.textContent = "momentLog";
+            if (titleEl) titleEl.textContent = "Akış";
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
@@ -620,6 +605,7 @@ function setupEventListeners() {
 
         await loadMoments();
         renderTimeline();
+        if (currentView === 'write') renderMyRecentMoments();
     };
 
     if (homeBtn) homeBtn.onclick = () => window.setView('my-moments');

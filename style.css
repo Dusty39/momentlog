@@ -34,13 +34,15 @@ html {
     -ms-overflow-style: none !important;
 }
 
-::-webkit-scrollbar {
-    display: none !important;
-}
-
 * {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
 }
 
 body {
@@ -2188,7 +2190,7 @@ h1 {
     width: 100%;
     overflow: hidden;
     border-radius: 8px;
-    margin: 8px 0;
+    margin: 0 !important;
 }
 
 .card-media img {
@@ -2202,7 +2204,7 @@ h1 {
 
 /* Card content - text */
 .card-content {
-    padding: 5px 12px 10px 12px;
+    padding: 2px 12px 8px 12px;
     font-size: 0.85rem;
     line-height: 1.5;
     color: var(--text-primary);
