@@ -2076,4 +2076,3 @@ window._rejectFollowRequest = async (notifId, senderUid) => {
     }
 };
 console.log("momentLog: Script loaded successfully v19");
-```
