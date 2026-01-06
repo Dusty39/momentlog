@@ -400,6 +400,7 @@ function initializeSelectors() {
         venueInput: document.getElementById('venueInput'),
         stickerInput: document.getElementById('stickerInput'),
         musicInput: document.getElementById('musicInput'),
+        musicUrlInput: document.getElementById('musicUrlInput'),
     };
 }
 
@@ -408,6 +409,69 @@ let currentView = 'my-moments';
 let isRealLocationActive = false;
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'light';
+
+// --- Music Manager ---
+const MusicManager = {
+    audio: new Audio(),
+    currentMomentId: null,
+    isPlaying: false,
+
+    async play(url, momentId) {
+        if (!url) return;
+
+        // If same song, toggle
+        if (this.currentMomentId === momentId) {
+            if (this.isPlaying) {
+                this.pause();
+            } else {
+                try {
+                    await this.audio.play();
+                    this.isPlaying = true;
+                } catch (e) { console.warn("Playback failed:", e); }
+            }
+            this.updateUI();
+            return;
+        }
+
+        // Different song
+        this.pause();
+        this.audio.src = url;
+        this.audio.loop = true;
+        try {
+            await this.audio.play();
+            this.currentMomentId = momentId;
+            this.isPlaying = true;
+        } catch (e) {
+            console.warn("Autoplay blocked:", e);
+            // On mobile/safari, maybe show a "Tap to play" button
+        }
+        this.updateUI();
+    },
+
+    pause() {
+        this.audio.pause();
+        this.isPlaying = false;
+        this.updateUI();
+    },
+
+    updateUI() {
+        document.querySelectorAll('.music-toggle-btn').forEach(btn => {
+            const mid = btn.dataset.momentId;
+            if (mid === this.currentMomentId && this.isPlaying) {
+                btn.innerHTML = '⏸️';
+                btn.classList.add('playing');
+            } else {
+                btn.innerHTML = '▶️';
+                btn.classList.remove('playing');
+            }
+        });
+    }
+};
+
+window.toggleMusic = (url, momentId) => {
+    MusicManager.play(url, momentId);
+};
+// --------------------
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -623,6 +687,7 @@ function setupEventListeners() {
     if (dom.musicBtn) {
         dom.musicBtn.onclick = () => {
             dom.musicInput.classList.toggle('hidden');
+            dom.musicUrlInput.classList.toggle('hidden');
             if (!dom.musicInput.classList.contains('hidden')) {
                 dom.musicInput.focus();
             }
@@ -802,6 +867,7 @@ async function saveMoment() {
             venue: venue,
             stickerText: stickerText,
             musicText: dom.musicInput?.value?.trim() || null,
+            musicUrl: dom.musicUrlInput?.value?.trim() || null,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
             userId: String(currentUser.uid),
@@ -832,6 +898,10 @@ async function saveMoment() {
         if (dom.musicInput) {
             dom.musicInput.value = '';
             dom.musicInput.classList.add('hidden');
+        }
+        if (dom.musicUrlInput) {
+            dom.musicUrlInput.value = '';
+            dom.musicUrlInput.classList.add('hidden');
         }
 
         // Reset form
@@ -938,7 +1008,12 @@ function renderTimeline(searchQuery = '') {
                     <div class="card-label-row">
                         ${m.musicText ? `
                             <div class="music-marquee-container">
-                                <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
+                                ${m.musicUrl ? `
+                                    <button class="music-toggle-btn" 
+                                            onclick="event.stopPropagation(); window.toggleMusic('${m.musicUrl}', '${m.id}')" 
+                                            data-moment-id="${m.id}">▶️</button>
+                                ` : '🎵'}
+                                <div class="music-marquee-content">${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; ${m.musicText}</div>
                             </div>
                         ` : ''}
                         ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
@@ -1804,7 +1879,12 @@ function openImmersiveView(moment) {
             <div class="immersive-label-row">
                 ${moment.musicText ? `
                     <div class="music-marquee-container immersive-music">
-                        <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
+                        ${moment.musicUrl ? `
+                            <button class="music-toggle-btn" 
+                                    onclick="event.stopPropagation(); window.toggleMusic('${moment.musicUrl}', '${moment.id}')" 
+                                    data-moment-id="${moment.id}">▶️</button>
+                        ` : '🎵'}
+                        <div class="music-marquee-content">${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; ${moment.musicText}</div>
                     </div>
                 ` : ''}
                 ${moment.stickerText ? `<div class="mini-brush-sticker">${moment.stickerText}</div>` : ''}
@@ -1836,7 +1916,12 @@ function openImmersiveView(moment) {
     document.getElementById('closeImmersive').onclick = () => {
         view.classList.add('hidden');
         document.body.style.overflow = '';
+        MusicManager.pause();
     };
+
+    if (moment.musicUrl) {
+        MusicManager.play(moment.musicUrl, moment.id);
+    }
 
     loadComments(moment.id);
 }
