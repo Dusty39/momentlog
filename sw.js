@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v118-toolbar-fix';
+const CACHE_NAME = 'momentlog-v119-layout-refine';
 const ASSETS = [
     './',
     './index.html',

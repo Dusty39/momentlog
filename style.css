@@ -748,13 +748,13 @@ textarea::placeholder {
 
 .close-immersive {
     position: fixed;
-    top: 25px;
-    right: 25px;
+    top: 30px;
+    right: 20px;
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
-    width: 48px;
-    height: 48px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -762,7 +762,7 @@ textarea::placeholder {
     cursor: pointer;
     z-index: 1010;
     backdrop-filter: blur(15px);
-    font-size: 1.5rem;
+    font-size: 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -1024,9 +1024,18 @@ textarea::placeholder {
 .card-label-row,
 .immersive-label-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+    flex-direction: column;
+    align-items: flex-end;
+    /* Sticker is on the right */
+    gap: 8px;
+    width: 100%;
+}
+
+.card-label-row .music-marquee-container,
+.immersive-label-row .music-marquee-container {
+    align-self: flex-start;
+    /* Music is on the left */
+    width: 100%;
 }
 
 .music-marquee-container {

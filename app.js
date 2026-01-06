@@ -940,7 +940,7 @@ function renderTimeline(searchQuery = '') {
                             <div class="music-marquee-container">
                                 <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
                             </div>
-                        ` : '<div style="flex:1;"></div>'}
+                        ` : ''}
                         ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
                     </div>
                 ` : ''}
@@ -1806,7 +1806,7 @@ function openImmersiveView(moment) {
                     <div class="music-marquee-container immersive-music">
                         <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
                     </div>
-                ` : '<div style="flex:1;"></div>'}
+                ` : ''}
                 ${moment.stickerText ? `<div class="mini-brush-sticker">${moment.stickerText}</div>` : ''}
             </div>
         ` : ''}
