@@ -1866,9 +1866,11 @@ function openImmersiveView(moment) {
     ` : '';
 
     view.innerHTML = `
-        <button id="closeImmersive" class="close-immersive">✕</button>
         <div class="immersive-header">
-            <div class="immersive-date">${formattedDate}</div>
+            <div class="header-main-row">
+                <div class="immersive-date">${formattedDate}</div>
+                <button id="closeImmersive" class="close-immersive">✕</button>
+            </div>
             <div class="immersive-meta-row">
                 <span class="immersive-user">@${moment.userDisplayName || 'anonim'}</span>
                 ${moment.location ? `<span class="immersive-location">📍 ${moment.location}</span>` : ''}
@@ -1897,10 +1899,15 @@ function openImmersiveView(moment) {
         </div>
 
         <div class="immersive-actions-bar">
-            <button class="action-btn" onclick="window.toggleLike('${moment.id}')">
-                ❤️ <span class="count">${moment.likes?.length || 0}</span>
-            </button>
-            <div class="comments-section-immersive">
+            <div class="actions-row">
+                <button class="action-btn" onclick="window.toggleLike('${moment.id}')">
+                    ❤️ <span class="count">${moment.likes?.length || 0}</span>
+                </button>
+                <button class="action-btn" onclick="window.__toggleImmersiveComments()">
+                    💬 <span class="count">${moment.commentsCount || 0}</span>
+                </button>
+            </div>
+            <div id="commentsSectionImmersive" class="comments-section-immersive hidden">
                 <div id="commentsList" class="comments-list-immersive"></div>
                 <div class="comment-input-row">
                     <input type="text" id="commentInput" placeholder="Düşüncelerini paylaş...">
@@ -1917,6 +1924,11 @@ function openImmersiveView(moment) {
         view.classList.add('hidden');
         document.body.style.overflow = '';
         MusicManager.pause();
+    };
+
+    window.__toggleImmersiveComments = () => {
+        const section = document.getElementById('commentsSectionImmersive');
+        if (section) section.classList.toggle('hidden');
     };
 
     if (moment.musicUrl) {
@@ -1946,7 +1958,7 @@ async function openImmersiveViewById(id) {
 window.openImmersiveViewById = openImmersiveViewById;
 
 // --- Comments ---
-async function loadComments(momentId) {
+async function loadComments(momentId, expanded = false) {
     const commentsList = document.getElementById('commentsList');
     if (!commentsList) return;
 
@@ -1955,22 +1967,32 @@ async function loadComments(momentId) {
         const isImmersive = commentsList.classList.contains('comments-list-immersive');
 
         if (comments.length === 0) {
-            commentsList.innerHTML = `<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:20px;">Henüz yorum yok</p>`;
+            commentsList.innerHTML = `<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:10px; font-size:0.8rem; margin:0;">Henüz yorum yok</p>`;
             return;
         }
 
-        commentsList.innerHTML = comments.map(c => `
+        let displayComments = comments;
+        let showMoreBtn = '';
+
+        if (!expanded && comments.length > 3) {
+            displayComments = comments.slice(0, 3);
+            showMoreBtn = `<button class="show-more-comments" onclick="loadComments('${momentId}', true)">${comments.length - 3} yorum daha gör...</button>`;
+        }
+
+        commentsList.innerHTML = displayComments.map(c => `
             <div class="${isImmersive ? 'comment-item-immersive' : 'comment-item'}" ${!isImmersive ? 'style="padding: 10px; border-bottom: 1px solid var(--border-subtle);"' : ''}>
                 <div class="${isImmersive ? 'comment-user-immersive' : 'comment-user-info'}" onclick="openProfileView('${c.userId}')" style="cursor:pointer;">
                     <span class="comment-username" style="font-weight:600;">${c.userDisplayName || 'Anonim'}</span>
                 </div>
-                <p class="${isImmersive ? 'comment-text-immersive' : 'comment-text'}" style="margin-top:4px;">${c.text}</p>
+                <p class="${isImmersive ? 'comment-text-immersive' : 'comment-text'}" style="margin-top:2px;">${c.text}</p>
             </div>
-        `).join('');
+        `).join('') + showMoreBtn;
     } catch (e) {
         console.error("Yorumlar yüklenemedi:", e);
     }
 }
+
+window.loadComments = loadComments;
 
 window.submitComment = async (momentId) => {
     const input = document.getElementById('commentInput');
