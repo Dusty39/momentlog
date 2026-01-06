@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v114-carousel-logic-fix';
+const CACHE_NAME = 'momentlog-v115-ui-restore';
 const ASSETS = [
     './',
     './index.html',
