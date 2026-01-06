@@ -21,13 +21,19 @@ service cloud.firestore {
       return resource.data.isPublic == true;
     }
     
+    // Check if user follows the author
+    function isFollower(authorId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(authorId)).data.followers.hasAny([request.auth.uid]);
+    }
+    
     // =============================================
     // MOMENTS COLLECTION
     // =============================================
     match /moments/{momentId} {
       
-      // READ: Public moments visible to all, private only to owner
-      allow read: if isPublicMoment() || isOwner(resource.data.userId);
+      // READ: Public moments visible to all, private moments visible only to owner and followers
+      allow read: if isPublicMoment() || isOwner(resource.data.userId) || isFollower(resource.data.userId);
       
       // CREATE: Only authenticated users can create their own moments
       allow create: if isAuthenticated() 
@@ -46,9 +52,10 @@ service cloud.firestore {
       // COMMENTS SUB-COLLECTION
       // =============================================
       match /comments/{commentId} {
-        // Anyone can read comments on public moments
+        // Anyone can read comments on public moments, others must be followers
         allow read: if get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
-                    || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
+                    || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId)
+                    || isFollower(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
         
         // Authenticated users can create comments on public moments
         allow create: if isAuthenticated()

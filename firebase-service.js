@@ -424,7 +424,6 @@ const DBService = {
             for (const chunk of chunks) {
                 const snapshot = await db.collection('moments')
                     .where('userId', 'in', chunk)
-                    .where('isPublic', '==', true)
                     .orderBy('createdAt', 'desc')
                     .limit(10) // Chunk bazlı limit
                     .get();
@@ -464,6 +463,7 @@ const DBService = {
         try {
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
+                .where('isPrivateProfile', '==', false) // Only public profiles in Explore
                 .orderBy('createdAt', 'desc');
 
             if (lastVisible) {

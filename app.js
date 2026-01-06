@@ -797,6 +797,7 @@ async function saveMoment() {
             userDisplayName: String(userProfile?.username || userProfile?.displayName || currentUser.displayName || 'Anonim'),
             userPhotoURL: String(userProfile?.photoURL || currentUser.photoURL || '👤'),
             isPublic: Boolean(isPublicState),
+            isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
             createdAt: dateInput ? new Date(dateInput).toISOString() : new Date().toISOString()
@@ -1424,19 +1425,19 @@ async function openProfileView(uid) {
 
                 ${(isOwnProfile || !userProfile.isPrivateProfile || isFollowing) ? `
                     <div class="profile-moments-grid">
-                        ${momentsList.map(m => {
+                        ${momentsList.length > 0 ? momentsList.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
                     return '<div class="grid-item" onclick="openImmersiveViewById(\'' + m.id + '\')">' +
                         (imgSrc ? '<img src="' + imgSrc + '">' : '<div class="text-placeholder">📝</div>') +
                         '</div>';
-                }).join('')}
+                }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
                     </div>
                 ` : `
-                    <div class="private-profile-message">
-                        <div class="private-icon">🔒</div>
-                        <h3>Gizli Profil</h3>
-                        <p>Bu kullanıcının paylaşımlarını görmek için takip edin.</p>
+                    <div class="private-profile-notice">
+                        <div class="lock-icon-large">🔒</div>
+                        <h3>Bu Hesap Gizli</h3>
+                        <p>Fotoğrafları ve anıları görmek için bu hesabı takip etmelisin.</p>
                     </div>
                 `}
             </div>
