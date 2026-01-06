@@ -896,7 +896,7 @@ function renderTimeline(searchQuery = '') {
             const totalSlides = images.length + 1;
             mediaHtml = `
                 <div class="carousel-wrapper">
-                    <div class="carousel-indicator">1/${totalSlides}</div>
+                    <div class="carousel-indicator hidden-fade"></div>
                     <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)" onclick="openImmersiveViewById('${m.id}')">
                         <!-- Slide 1: Mini Collage -->
                         <div class="carousel-slide collage-slide">
@@ -2130,15 +2130,21 @@ window._handleCarouselScroll = (el) => {
     const container = el.parentElement;
     const indicator = container.querySelector('.carousel-indicator');
     if (indicator) {
-        const total = el.querySelectorAll('.carousel-slide').length;
-        indicator.textContent = `${index + 1}/${total}`;
-        indicator.classList.remove('hidden-fade');
+        const slides = el.querySelectorAll('.carousel-slide');
+        const totalPhotos = slides.length - 1; // Slide 1 is collage
 
-        // Reset hide timer
-        if (el._indicatorTimer) clearTimeout(el._indicatorTimer);
-        el._indicatorTimer = setTimeout(() => {
+        if (index === 0) {
             indicator.classList.add('hidden-fade');
-        }, 3000);
+        } else {
+            indicator.textContent = `${index}/${totalPhotos}`;
+            indicator.classList.remove('hidden-fade');
+
+            // Reset hide timer
+            if (el._indicatorTimer) clearTimeout(el._indicatorTimer);
+            el._indicatorTimer = setTimeout(() => {
+                indicator.classList.add('hidden-fade');
+            }, 2000);
+        }
     }
 };
 
