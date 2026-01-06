@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v107-privacy-logic';
+const CACHE_NAME = 'momentlog-v108-follow-requests';
 const ASSETS = [
     './',
     './index.html',

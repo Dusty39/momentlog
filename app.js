@@ -1398,8 +1398,8 @@ async function openProfileView(uid) {
 
             <div class="profile-actions-row">
                 ${!isOwnProfile ? `
-                    <button id="followBtn" class="follow-btn-main ${isFollowing ? 'following' : ''}">
-                        ${isFollowing ? 'Takibi Bırak' : 'Takip Et'}
+                    <button id="followBtn" class="follow-btn-main ${isFollowing ? 'following' : ''} ${userProfile.pendingFollowers?.includes(AuthService.currentUser()?.uid) ? 'pending' : ''}">
+                        ${isFollowing ? 'Takibi Bırak' : (userProfile.pendingFollowers?.includes(AuthService.currentUser()?.uid) ? 'İstek Gönderildi' : 'Takip Et')}
                     </button>
                 ` : `
                     <div class="own-profile-tools">
@@ -1949,13 +1949,21 @@ function renderNotificationsInView(notifications) {
         const unreadClass = n.isRead ? '' : 'unread';
         const timeAgo = getTimeAgo(n.createdAt);
 
+        const actionButtons = n.type === 'follow_request' ? `
+            <div class="notif-actions">
+                <button class="notif-action-btn accept" onclick="window._approveFollowRequest('${n.id}', '${n.senderUid}')">Onayla</button>
+                <button class="notif-action-btn decline" onclick="window._rejectFollowRequest('${n.id}', '${n.senderUid}')">Reddet</button>
+            </div>
+        ` : '';
+
         return `
-            <div class="notification-item ${unreadClass}">
+            <div class="notification-item ${unreadClass} ${n.type}">
                 <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}')">
                     <div class="notif-avatar">${avatar}</div>
                     <div class="notif-content">
                         <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
                         <div class="notif-time">${timeAgo}</div>
+                        ${actionButtons}
                     </div>
                 </div>
                 <button class="notif-delete-btn" onclick="window.deleteNotification('${n.id}')">×</button>
@@ -2018,9 +2026,54 @@ window.handleNotificationClick = async (notifId, momentId, senderUid) => {
 
 window.markAllNotificationsRead = async () => {
     const currentUser = AuthService.currentUser();
-    if (currentUser) {
+    if (!currentUser) return;
+    try {
         await DBService.markNotificationsAsRead(currentUser.uid);
+    } catch (e) {
+        console.error('Mark read error:', e);
     }
 };
 
+window._approveFollowRequest = async (notifId, senderUid) => {
+    try {
+        await DBService.acceptFollowRequest(senderUid);
+        await DBService.deleteNotification(notifId);
+        // Refresh notifications list if open
+        const currentUser = AuthService.currentUser();
+        if (currentUser) {
+            const listSnapshot = await db.collection('notifications')
+                .where('targetUid', '==', currentUser.uid)
+                .limit(50)
+                .get();
+            const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            renderNotificationsInView(notifications);
+        }
+    } catch (e) {
+        console.error('Approve follow request error:', e);
+        showModal('Hata', 'İstek onaylanamadı');
+    }
+};
+
+window._rejectFollowRequest = async (notifId, senderUid) => {
+    try {
+        await DBService.declineFollowRequest(senderUid);
+        await DBService.deleteNotification(notifId);
+        // Refresh notifications list if open
+        const currentUser = AuthService.currentUser();
+        if (currentUser) {
+            const listSnapshot = await db.collection('notifications')
+                .where('targetUid', '==', currentUser.uid)
+                .limit(50)
+                .get();
+            const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            renderNotificationsInView(notifications);
+        }
+    } catch (e) {
+        console.error('Reject follow request error:', e);
+        showModal('Hata', 'İstek reddedilemedi');
+    }
+};
 console.log("momentLog: Script loaded successfully v19");
+```

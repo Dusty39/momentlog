@@ -1646,6 +1646,53 @@ h1 {
     border-radius: 8px;
 }
 
+/* Follow Button States */
+.follow-btn-main.pending {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    cursor: default;
+}
+
+/* Notification Actions */
+.notif-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.notif-action-btn {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.notif-action-btn.accept {
+    background: var(--accent);
+    color: white;
+}
+
+.notif-action-btn.accept:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.notif-action-btn.decline {
+    background: var(--bg-surface-alt);
+    color: var(--text-primary);
+    border: 1px solid var(--border-subtle);
+}
+
+.notif-action-btn.decline:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
 /* Private Profile Styling */
 .private-profile-notice {
     display: flex;
