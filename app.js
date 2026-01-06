@@ -1748,6 +1748,7 @@ function openImmersiveView(moment) {
     ` : '';
 
     view.innerHTML = `
+        <button id="closeImmersive" class="close-immersive">✕</button>
         <div class="immersive-header">
             <div class="immersive-date">${formattedDate}</div>
             <div class="immersive-meta-row">
