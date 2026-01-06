@@ -399,6 +399,7 @@ function initializeSelectors() {
         moodBtn: document.getElementById('moodBtn'),
         venueInput: document.getElementById('venueInput'),
         stickerInput: document.getElementById('stickerInput'),
+        musicInput: document.getElementById('musicInput'),
     };
 }
 
@@ -618,6 +619,16 @@ function setupEventListeners() {
         addLocBtn.onclick = () => window.handleRealLocation();
     }
 
+    // Music Button
+    if (dom.musicBtn) {
+        dom.musicBtn.onclick = () => {
+            dom.musicInput.classList.toggle('hidden');
+            if (!dom.musicInput.classList.contains('hidden')) {
+                dom.musicInput.focus();
+            }
+        };
+    }
+
     // Save button
     if (dom.addBtn) {
         dom.addBtn.onclick = saveMoment;
@@ -791,6 +802,7 @@ async function saveMoment() {
             location: locationString,
             venue: venue,
             stickerText: stickerText,
+            musicText: dom.musicInput?.value?.trim() || null,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
             userId: String(currentUser.uid),
@@ -817,6 +829,10 @@ async function saveMoment() {
         }
         if (dom.stickerInput) {
             dom.stickerInput.value = '';
+        }
+        if (dom.musicInput) {
+            dom.musicInput.value = '';
+            dom.musicInput.classList.add('hidden');
         }
 
         // Reset form
@@ -919,9 +935,14 @@ function renderTimeline(searchQuery = '') {
                     </div>
                 </div >
 
-                ${m.stickerText ? `
+                ${(m.stickerText || m.musicText) ? `
                     <div class="card-label-row">
-                        <div class="mini-brush-sticker">${m.stickerText}</div>
+                        ${m.musicText ? `
+                            <div class="music-marquee-container">
+                                <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
+                            </div>
+                        ` : '<div style="flex:1;"></div>'}
+                        ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
                     </div>
                 ` : ''}
                 
@@ -1780,9 +1801,14 @@ function openImmersiveView(moment) {
             </div>
         </div>
 
-        ${moment.stickerText ? `
+        ${(moment.stickerText || moment.musicText) ? `
             <div class="immersive-label-row">
-                <div class="mini-brush-sticker">${moment.stickerText}</div>
+                ${moment.musicText ? `
+                    <div class="music-marquee-container immersive-music">
+                        <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
+                    </div>
+                ` : '<div style="flex:1;"></div>'}
+                ${moment.stickerText ? `<div class="mini-brush-sticker">${moment.stickerText}</div>` : ''}
             </div>
         ` : ''}
 

@@ -132,9 +132,8 @@
                         <input type="date" id="momentDate" max=""
                             style="position:absolute;visibility:hidden;width:0;height:0;">
 
-                        <!-- Tema -->
-                        <button id="themeBtn" class="tool-btn" title="Anı Teması"
-                            onclick="window.openThemeSelector()">🎨</button>
+                        <!-- Şarkı Ekle -->
+                        <button id="musicBtn" class="tool-btn" title="Şarkı Seç">🎵</button>
 
                         <!-- Görünürlük -->
                         <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
@@ -147,6 +146,8 @@
                         <div class="location-input-wrapper">
                             <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
                                 maxlength="25" class="sticker-input">
+                            <input type="text" id="musicInput" placeholder="Şarkı adı - Sanatçı"
+                                class="music-input hidden">
                             <input type="text" id="venueInput" placeholder="Neredesin?" class="venue-input hidden">
                             <span id="locationStatus" class="location-badge hidden"></span>
                         </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v112-carousel-snap';
+const CACHE_NAME = 'momentlog-v113-music-integration';
 const ASSETS = [
     './',
     './index.html',
