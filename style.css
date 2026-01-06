@@ -1147,6 +1147,65 @@ textarea::placeholder {
     opacity: 1;
 }
 
+/* Voice Notation & Recording */
+.record-btn.recording {
+    background: #ef4444 !important;
+    color: white !important;
+    animation: voicePulse 1.5s infinite;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes voicePulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.voice-play-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.voice-play-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.voice-play-btn.playing {
+    background: var(--accent);
+    border-color: transparent;
+    color: #000;
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.immersive-voice {
+    margin: 10px 0;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    width: fit-content;
+}
+
 @keyframes music-marquee {
     0% {
         transform: translate(0, 0);

@@ -415,6 +415,7 @@ const MusicManager = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
+    originalVolume: 1.0,
 
     async play(url, momentId) {
         if (!url) return;
@@ -437,13 +438,13 @@ const MusicManager = {
         this.pause();
         this.audio.src = url;
         this.audio.loop = true;
+        this.audio.volume = this.originalVolume;
         try {
             await this.audio.play();
             this.currentMomentId = momentId;
             this.isPlaying = true;
         } catch (e) {
             console.warn("Autoplay blocked:", e);
-            // On mobile/safari, maybe show a "Tap to play" button
         }
         this.updateUI();
     },
@@ -452,6 +453,10 @@ const MusicManager = {
         this.audio.pause();
         this.isPlaying = false;
         this.updateUI();
+    },
+
+    setVolume(val) {
+        this.audio.volume = val;
     },
 
     updateUI() {
@@ -468,8 +473,137 @@ const MusicManager = {
     }
 };
 
+// --- Voice Recorder Manager ---
+const VoiceRecorder = {
+    mediaRecorder: null,
+    audioChunks: [],
+    isRecording: false,
+    recordingTimeout: null,
+    recordedBlob: null,
+
+    async start() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            this.audioChunks = [];
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                this.audioChunks.push(event.data);
+            };
+
+            this.mediaRecorder.onstop = () => {
+                this.recordedBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                this.isRecording = false;
+                MusicManager.setVolume(MusicManager.originalVolume);
+                this.updateUI();
+                console.log("Kayıt tamamlandı, blob boyutu:", this.recordedBlob.size);
+            };
+
+            // Start recording
+            this.mediaRecorder.start();
+            this.isRecording = true;
+            MusicManager.setVolume(0.25); // Duck the music
+            this.updateUI();
+
+            // Auto-stop after 20 seconds
+            this.recordingTimeout = setTimeout(() => {
+                if (this.isRecording) this.stop();
+            }, 20000);
+
+        } catch (err) {
+            console.error("Mikrofon erişim hatası:", err);
+            showModal("Hata", "Mikrofona erişilemedi. Lütfen izinleri kontrol edin.");
+        }
+    },
+
+    stop() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            clearTimeout(this.recordingTimeout);
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+    },
+
+    toggle() {
+        if (this.isRecording) this.stop();
+        else this.start();
+    },
+
+    updateUI() {
+        const btn = document.getElementById('recordBtn');
+        if (btn) {
+            if (this.isRecording) {
+                btn.classList.add('recording');
+                btn.innerHTML = '⏹️';
+            } else {
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎤';
+            }
+        }
+    }
+};
+
 window.toggleMusic = (url, momentId) => {
     MusicManager.play(url, momentId);
+};
+
+// --- Voice Memo Playback ---
+const VoicePlayer = {
+    audio: new Audio(),
+    currentMomentId: null,
+    isPlaying: false,
+
+    async play(url, momentId) {
+        if (!url) return;
+
+        if (this.currentMomentId === momentId && this.isPlaying) {
+            this.pause();
+            return;
+        }
+
+        this.pause();
+        this.audio.src = url;
+
+        // Duck music during voice playback
+        MusicManager.setVolume(0.25);
+
+        try {
+            await this.audio.play();
+            this.currentMomentId = momentId;
+            this.isPlaying = true;
+            this.updateUI();
+
+            this.audio.onended = () => {
+                this.isPlaying = false;
+                MusicManager.setVolume(MusicManager.originalVolume);
+                this.updateUI();
+            };
+        } catch (e) { console.warn("Voice playback failed:", e); }
+    },
+
+    pause() {
+        this.audio.pause();
+        this.isPlaying = false;
+        MusicManager.setVolume(MusicManager.originalVolume);
+        this.updateUI();
+    },
+
+    updateUI() {
+        document.querySelectorAll('.voice-play-btn').forEach(btn => {
+            const mid = btn.dataset.momentId;
+            if (mid === this.currentMomentId && this.isPlaying) {
+                btn.innerHTML = '⏸️ Dinleniyor...';
+                btn.classList.add('playing');
+            } else {
+                btn.innerHTML = '🎤 Sesli Not';
+                btn.classList.remove('playing');
+            }
+        });
+    }
+};
+
+window.toggleVoiceMemo = (url, momentId) => {
+    VoicePlayer.play(url, momentId);
 };
 // --------------------
 
@@ -694,6 +828,11 @@ function setupEventListeners() {
         };
     }
 
+    // Record Button
+    if (dom.recordBtn) {
+        dom.recordBtn.onclick = () => VoiceRecorder.toggle();
+    }
+
     // Save button
     if (dom.addBtn) {
         dom.addBtn.onclick = saveMoment;
@@ -851,6 +990,25 @@ async function saveMoment() {
             hideUploadProgress();
         }
 
+        // Upload Voice Memo if exists
+        let voiceUrl = null;
+        if (VoiceRecorder.recordedBlob) {
+            console.log('Uploading voice memo...');
+            try {
+                // Convert blob to base64 for uploadMedia
+                const reader = new FileReader();
+                const base64Promise = new Promise(resolve => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(VoiceRecorder.recordedBlob);
+                });
+                const base64Data = await base64Promise;
+                voiceUrl = await DBService.uploadMedia(base64Data, 'audio');
+                console.log('Voice memo uploaded:', voiceUrl);
+            } catch (err) {
+                console.error('Voice upload error:', err);
+            }
+        }
+
         console.log('Uploaded media count:', uploadedMedia.length);
 
         // Ensure location is a simple string
@@ -868,6 +1026,7 @@ async function saveMoment() {
             stickerText: stickerText,
             musicText: dom.musicInput?.value?.trim() || null,
             musicUrl: dom.musicUrlInput?.value?.trim() || null,
+            voiceUrl: voiceUrl,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
             userId: String(currentUser.uid),
@@ -906,7 +1065,11 @@ async function saveMoment() {
 
         // Reset form
         if (dom.input) dom.input.value = '';
+        // Reset media and voice
         currentMedia = [];
+        VoiceRecorder.recordedBlob = null;
+        VoiceRecorder.updateUI();
+        renderPreview();
         if (dom.previewArea) dom.previewArea.innerHTML = '';
         isRealLocationActive = false;
 
@@ -1004,12 +1167,17 @@ function renderTimeline(searchQuery = '') {
                     </div>
                 </div >
 
-                ${(m.stickerText || m.musicText) ? `
+                ${(m.stickerText || m.musicText || m.voiceUrl) ? `
                     <div class="card-label-row">
                         ${m.musicText ? `
                             <div class="music-marquee-container">
                                 <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
                             </div>
+                        ` : ''}
+                        ${m.voiceUrl ? `
+                            <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
+                                🎤 Sesli Not
+                            </button>
                         ` : ''}
                         ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
                     </div>
@@ -1835,11 +2003,18 @@ function openImmersiveView(moment) {
             </div>
         </div>
 
-        ${(moment.musicText) ? `
+        ${(moment.musicText || moment.voiceUrl) ? `
             <div class="immersive-label-row">
-                <div class="music-marquee-container immersive-music">
-                    <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
-                </div>
+                ${moment.musicText ? `
+                    <div class="music-marquee-container immersive-music">
+                        <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
+                    </div>
+                ` : ''}
+                ${moment.voiceUrl ? `
+                    <button class="voice-play-btn immersive-voice" onclick="event.stopPropagation(); window.toggleVoiceMemo('${moment.voiceUrl}', '${moment.id}')" data-moment-id="${moment.id}">
+                        🎤 Sesli Notu Dinle
+                    </button>
+                ` : ''}
             </div>
         ` : ''}
 
