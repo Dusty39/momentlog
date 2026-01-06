@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v111-location-validation';
+const CACHE_NAME = 'momentlog-v112-carousel-snap';
 const ASSETS = [
     './',
     './index.html',

@@ -877,13 +877,15 @@ function renderTimeline(searchQuery = '') {
         let mediaHtml = '';
 
         if (images.length > 0) {
-            mediaHtml = `<div class="card-media-carousel" onclick="openImmersiveViewById('${m.id}')">`;
-
-            // Slide 1: Mini Collage + Overlaid Sticker (Forced)
-            mediaHtml += `
-                <div class="carousel-slide collage-slide">
-                    ${generateMiniCollage(m.media)}
-                </div>
+            const totalSlides = images.length + 1;
+            mediaHtml = `
+                <div class="carousel-wrapper">
+                    <div class="carousel-indicator">1/${totalSlides}</div>
+                    <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)" onclick="openImmersiveViewById('${m.id}')">
+                        <!-- Slide 1: Mini Collage -->
+                        <div class="carousel-slide collage-slide">
+                            ${generateMiniCollage(m.media)}
+                        </div>
             `;
 
             // Sequential Slides: Individual Photos
@@ -895,7 +897,9 @@ function renderTimeline(searchQuery = '') {
                 `;
             });
 
-            mediaHtml += `</div>`;
+            mediaHtml += `
+                    </div>
+                </div>`;
         }
 
         return `
@@ -2093,4 +2097,23 @@ window._rejectFollowRequest = async (notifId, senderUid) => {
         showModal('Hata', 'İstek reddedilemedi');
     }
 };
+window._handleCarouselScroll = (el) => {
+    const scrollLeft = el.scrollLeft;
+    const width = el.offsetWidth;
+    const index = Math.round(scrollLeft / width);
+    const container = el.parentElement;
+    const indicator = container.querySelector('.carousel-indicator');
+    if (indicator) {
+        const total = el.querySelectorAll('.carousel-slide').length;
+        indicator.textContent = `${index + 1}/${total}`;
+        indicator.classList.remove('hidden-fade');
+
+        // Reset hide timer
+        if (el._indicatorTimer) clearTimeout(el._indicatorTimer);
+        el._indicatorTimer = setTimeout(() => {
+            indicator.classList.add('hidden-fade');
+        }, 3000);
+    }
+};
+
 console.log("momentLog: Script loaded successfully v19");

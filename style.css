@@ -1051,6 +1051,33 @@ textarea::placeholder {
 }
 
 /* Feed Carousel & Mini Collage */
+/* Carousel Wrapper & Indicator */
+.carousel-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.carousel-indicator {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 150;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.carousel-indicator.hidden-fade {
+    opacity: 0;
+}
+
 .card-media-carousel {
     display: flex;
     overflow-x: auto;
