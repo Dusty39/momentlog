@@ -2720,14 +2720,14 @@ body.app-theme-vintage {
 .tool-group {
     display: flex !important;
     flex-direction: row !important;
-    gap: 8px !important;
-    flex-wrap: wrap !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
 }
 
 .tool-btn {
-    width: 40px !important;
-    height: 40px !important;
+    width: 38px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
