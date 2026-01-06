@@ -468,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Set initial view and load data
                 const lastView = localStorage.getItem('momentLog_lastView');
                 console.log("Setting initial view:", lastView || 'my-moments');
-                await window.setView(lastView || 'my-moments', true);
+                await window.setView(lastView || 'my-following', true);
 
                 setupNotifications();
             } else {

@@ -463,7 +463,7 @@ const DBService = {
         try {
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
-                .where('isPrivateProfile', '==', false) // Only public profiles in Explore
+                // .where('isPrivateProfile', '==', false) // Temporarily disabled for backward compatibility
                 .orderBy('createdAt', 'desc');
 
             if (lastVisible) {
