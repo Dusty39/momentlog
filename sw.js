@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v105-close-btn-fix';
+const CACHE_NAME = 'momentlog-v106-themed-stickers';
 const ASSETS = [
     './',
     './index.html',
