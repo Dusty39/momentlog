@@ -1317,6 +1317,24 @@ function fetchLocation() {
 }
 
 window.handleRealLocation = () => {
+    // Check if the selected date is in the past
+    const selectedDate = dom.momentDate?.value;
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!isRealLocationActive && selectedDate && selectedDate < today) {
+        if (dom.locationStatus) {
+            dom.locationStatus.textContent = "📍 Önce tarihi bugüne getirin";
+            dom.locationStatus.classList.remove('hidden');
+            // Auto-hide error after 3 seconds
+            setTimeout(() => {
+                if (dom.locationStatus.textContent === "📍 Önce tarihi bugüne getirin") {
+                    dom.locationStatus.classList.add('hidden');
+                }
+            }, 3000);
+        }
+        return;
+    }
+
     isRealLocationActive = !isRealLocationActive;
     const btn = document.getElementById('addLocationBtn');
 
