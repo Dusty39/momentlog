@@ -608,7 +608,7 @@ function setupEventListeners() {
         if (currentView === 'write') renderMyRecentMoments();
     };
 
-    if (homeBtn) homeBtn.onclick = () => window.setView('my-moments');
+    if (homeBtn) homeBtn.onclick = () => window.setView('my-following');
     if (exploreBtn) exploreBtn.onclick = () => window.setView('explore');
     if (headerAddBtn) headerAddBtn.onclick = () => window.setView('write');
     if (notificationsBtn) notificationsBtn.onclick = () => toggleNotificationPanel();
@@ -697,8 +697,7 @@ async function loadMoments() {
         } else if (currentView === 'my-moments') {
             result = await DBService.getMyMoments(currentLastDoc);
         } else {
-            result = await DBService.getFollowingMoments();
-            hasMore = false;
+            result = await DBService.getFollowingMoments(currentLastDoc);
         }
 
         if (result) {

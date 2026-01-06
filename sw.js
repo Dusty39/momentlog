@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v115-ui-restore';
+const CACHE_NAME = 'momentlog-v117-following-pagination';
 const ASSETS = [
     './',
     './index.html',

@@ -396,10 +396,10 @@ const DBService = {
     },
 
     // Takip Edilenlerin Anılarını Getir (Following Feed)
-    async getFollowingMoments() {
+    async getFollowingMoments(lastVisible = null) {
         try {
             const currentUser = auth.currentUser;
-            if (!currentUser) return [];
+            if (!currentUser) return { moments: [], lastVisible: null };
 
             // Get user's following list
             const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -411,7 +411,7 @@ const DBService = {
             }
 
             if (following.length === 0) {
-                return []; // No one followed yet
+                return { moments: [], lastVisible: null };
             }
 
             // Firestore 'in' query supports max 10 items, so chunk if needed
@@ -420,27 +420,41 @@ const DBService = {
                 chunks.push(following.slice(i, i + 10));
             }
 
-            let allMoments = [];
+            let allDocs = [];
             for (const chunk of chunks) {
-                const snapshot = await db.collection('moments')
+                let query = db.collection('moments')
                     .where('userId', 'in', chunk)
                     .orderBy('createdAt', 'desc')
-                    .limit(10) // Chunk bazlı limit
-                    .get();
-                allMoments = [...allMoments, ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
+                    .limit(5);
+
+                if (lastVisible) {
+                    query = query.startAfter(lastVisible);
+                }
+
+                const snapshot = await query.get();
+                allDocs = [...allDocs, ...snapshot.docs];
             }
 
-            // Sort by createdAt and limit
-            allMoments.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-            const moments = allMoments.slice(0, 5);
+            // Sort by createdAt and take the latest 5 globally
+            allDocs.sort((a, b) => {
+                const aTime = a.data().createdAt || '';
+                const bTime = b.data().createdAt || '';
+                return bTime.localeCompare(aTime);
+            });
+
+            const pagedDocs = allDocs.slice(0, 5);
+            const moments = pagedDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastDoc = pagedDocs[pagedDocs.length - 1] || null;
+
+            if (moments.length === 0) return { moments: [], lastVisible: null };
 
             // Enrich with user profiles
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
             const userProfiles = {};
             await Promise.all(userIds.map(async (uid) => {
                 try {
-                    const userDoc = await db.collection('users').doc(uid).get();
-                    if (userDoc.exists) userProfiles[uid] = userDoc.data();
+                    const profileDoc = await db.collection('users').doc(uid).get();
+                    if (profileDoc.exists) userProfiles[uid] = profileDoc.data();
                 } catch (e) { console.warn('Could not fetch user:', uid); }
             }));
 
@@ -450,7 +464,7 @@ const DBService = {
                     userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
                     userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
                 })),
-                lastVisible: null // Following pagination not fully supported yet
+                lastVisible: lastDoc
             };
         } catch (e) {
             console.error("Following Feed error:", e);
