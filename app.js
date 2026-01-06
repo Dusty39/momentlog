@@ -988,7 +988,7 @@ function renderTimeline(searchQuery = '') {
         }
 
         return `
-            <div class="moment-card" data-id="${m.id}">
+            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}">
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
@@ -1008,12 +1008,7 @@ function renderTimeline(searchQuery = '') {
                     <div class="card-label-row">
                         ${m.musicText ? `
                             <div class="music-marquee-container">
-                                ${m.musicUrl ? `
-                                    <button class="music-toggle-btn" 
-                                            onclick="event.stopPropagation(); window.toggleMusic('${m.musicUrl}', '${m.id}')" 
-                                            data-moment-id="${m.id}">▶️</button>
-                                ` : '🎵'}
-                                <div class="music-marquee-content">${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; ${m.musicText}</div>
+                                <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
                             </div>
                         ` : ''}
                         ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
@@ -1793,59 +1788,28 @@ function openImmersiveView(moment) {
     if (!view) return;
 
     // Apply theme
-    view.className = 'immersive-modal';
-    if (moment.theme) {
-        view.classList.add(`theme-${moment.theme}`);
-    }
+    view.className = `immersive-modal theme-${moment.theme || 'default'}`;
 
-    const date = new Date(moment.createdAt);
+    const date = moment.timestamp?.toDate ? moment.timestamp.toDate() : (moment.timestamp ? new Date(moment.timestamp) : new Date());
     const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Multi-photo collage logic
-    const images = moment.media?.filter(m => m.type === 'image') || [];
     let photoHtml = '';
-
-    // Dynamic collage spacing based on photo count (Aggressive suppression)
-    let collageMinHeight = '300px';
-    let collageMargin = '5px 0';
-
-    if (images.length === 1) {
-        collageMinHeight = '240px';
-        collageMargin = '0';
-    } else if (images.length === 2) {
-        collageMinHeight = '360px';
-        collageMargin = '8px 0';
-    } else if (images.length >= 3) {
-        collageMinHeight = '500px';
-        collageMargin = '12px 0';
-    }
+    const images = moment.media?.filter(m => m.type === 'image') || [];
 
     if (images.length > 0) {
-        photoHtml = `<div class="collage-container scattered count-${images.length}" style="min-height: ${collageMinHeight}; margin: ${collageMargin};">`;
+        photoHtml = `<div class="collage-container scattered count-${images.length}">`;
         images.forEach((img, idx) => {
-            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 4);
-            // Spreading logic: calculate rough positions to reduce overlap
+            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
             let top = 0, left = 0;
-            if (images.length === 1) {
-                top = 5; left = 12;
-            } else if (images.length === 2) {
-                top = idx === 0 ? 2 : 45;
-                left = idx === 0 ? 5 : 20;
-            } else if (images.length === 3) {
-                const positions = [
-                    { t: 2, l: 15 },
-                    { t: 35, l: 5 },
-                    { t: 60, l: 25 }
-                ];
-                top = positions[idx].t;
-                left = positions[idx].l;
-            } else { // 4 photos
-                const positions = [
-                    { t: 0, l: 20 },
-                    { t: 25, l: 0 },
-                    { t: 50, l: 25 },
-                    { t: 75, l: 5 }
-                ];
+
+            const positions = [
+                { t: 15, l: 20 },
+                { t: 40, l: 45 },
+                { t: 10, l: 55 },
+                { t: 55, l: 15 }
+            ];
+
+            if (idx < positions.length) {
                 top = positions[idx].t;
                 left = positions[idx].l;
             }
@@ -1859,12 +1823,6 @@ function openImmersiveView(moment) {
         photoHtml += `</div>`;
     }
 
-    const stickerHtml = moment.stickerText ? `
-        <div class="brush-sticker-wrapper">
-            <div class="brush-sticker">${moment.stickerText}</div>
-        </div>
-    ` : '';
-
     view.innerHTML = `
         <div class="immersive-header">
             <div class="header-main-row">
@@ -1877,25 +1835,18 @@ function openImmersiveView(moment) {
             </div>
         </div>
 
-        ${(moment.stickerText || moment.musicText) ? `
+        ${(moment.musicText) ? `
             <div class="immersive-label-row">
-                ${moment.musicText ? `
-                    <div class="music-marquee-container immersive-music">
-                        ${moment.musicUrl ? `
-                            <button class="music-toggle-btn" 
-                                    onclick="event.stopPropagation(); window.toggleMusic('${moment.musicUrl}', '${moment.id}')" 
-                                    data-moment-id="${moment.id}">▶️</button>
-                        ` : '🎵'}
-                        <div class="music-marquee-content">${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; ${moment.musicText}</div>
-                    </div>
-                ` : ''}
-                ${moment.stickerText ? `<div class="mini-brush-sticker">${moment.stickerText}</div>` : ''}
+                <div class="music-marquee-container immersive-music">
+                    <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
+                </div>
             </div>
         ` : ''}
 
         <div class="immersive-content">
             ${photoHtml}
             <div class="immersive-text interspersed-text">${moment.text || ''}</div>
+            ${moment.stickerText ? `<div class="brush-sticker-wrapper"><div class="brush-sticker">${moment.stickerText}</div></div>` : ''}
         </div>
 
         <div class="immersive-actions-bar">
@@ -1954,7 +1905,6 @@ async function openImmersiveViewById(id) {
         showModal('Hata', 'Anı bulunamadı veya görüntüleme izniniz yok.');
     }
 }
-
 window.openImmersiveViewById = openImmersiveViewById;
 
 // --- Comments ---
