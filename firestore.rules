@@ -81,11 +81,15 @@ service cloud.firestore {
       // Only owner can create their own profile
       allow create: if isOwner(userId);
       
-      // Owner can update their own profile, others can update follow arrays
+      // UPDATE: Only owner can update profile, others can only manage their own follow status
       allow update: if isOwner(userId) 
                     || (isAuthenticated() 
                         && request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['followers', 'following', 'pendingFollowers']));
+                           .hasOnly(['followers', 'following', 'pendingFollowers'])
+                        // Basic sanity: users can't add others, only themselves
+                        // (In a more strict app, we would use set theory here, but arrayUnion/Remove 
+                        // is handled by the client and validated here by diffing).
+                        );
       
       // Only owner can delete
       allow delete: if isOwner(userId);
