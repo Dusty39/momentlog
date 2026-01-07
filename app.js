@@ -1320,9 +1320,7 @@ function renderMyRecentMoments() {
                 <div class="swipe-action-delete" onclick="window.handleSwipeDelete('${m.id}')">
                     <span>Sil</span>
                 </div>
-                <div class="compact-moment-item" 
-                     onclick="openImmersiveViewById('${m.id}')">
-                    <div class="mini-time-sticker">${formattedTime}</div>
+                <div class="compact-moment-item">
                     <div class="compact-img-wrapper"
                          ontouchstart="window.handleSwipeStart(event)"
                          ontouchmove="window.handleSwipeMove(event)"
@@ -1332,7 +1330,7 @@ function renderMyRecentMoments() {
                         </div>
                     </div>
                     <div class="compact-info">
-                        <div class="compact-date">${formattedDate}</div>
+                        <div class="compact-date">${formattedDate} • ${formattedTime}</div>
                         ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
                         ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
                     </div>
