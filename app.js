@@ -665,8 +665,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderMyRecentMoments();
 
                 // Set initial view and load data
-                const lastView = localStorage.getItem('momentLog_lastView');
-                console.log("Setting initial view:", lastView || 'my-moments');
+                let lastView = localStorage.getItem('momentLog_lastView');
+
+                // Safety: On init, if last view was profile or notifications, 
+                // go back home because we don't store UID/context for these.
+                if (lastView === 'profile' || lastView === 'notifications') {
+                    lastView = 'my-following';
+                }
+
+                console.log("Setting initial view:", lastView || 'my-following');
                 await window.setView(lastView || 'my-following', true);
 
                 setupNotifications();

@@ -1665,45 +1665,7 @@ textarea::placeholder {
     --accent-glow: rgba(245, 158, 11, 0.3) !important;
 }
 
-/* Profile View - Full screen fixed */
-#profileView {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-main);
-    z-index: 2000;
-    overflow: hidden;
-}
-
-#profileContent {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-    position: relative;
-}
-
-/* Close button */
-#closeProfile {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* Profile View Styles Removed (Moved to .profile-page flow) */
 
 /* Profile header compact */
 .profile-header-simple {
