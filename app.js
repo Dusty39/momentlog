@@ -1770,7 +1770,7 @@ async function openProfileView(uid) {
                             <button onclick="applyAppTheme('light'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'light' ? 'active' : ''}" title="Açık">☀️</button>
                             <button onclick="applyAppTheme('vintage'); openProfileView('${uid}');" class="theme-icon-btn ${currentAppTheme === 'vintage' ? 'active' : ''}" title="Vintage">📜</button>
                         </div>
-                        <button onclick="window.handleLogout()" class="profile-tool-btn danger" title="Çıkış Yap">🚪</button>
+                        <button onclick="window.handleLogout()" class="profile-tool-btn danger" title="Çıkış Yap">📤</button>
                     </div>
                 `}
             </div>
@@ -1856,7 +1856,8 @@ window.viewFullSizePhoto = (url) => {
 
 // --- Logout Handler ---
 window.handleLogout = async () => {
-    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+    const confirmed = await showModal('Çıkış', 'Çıkış yapmak istediğinize emin misiniz?', true);
+    if (confirmed) {
         try {
             await AuthService.signOut();
             const view = document.getElementById('profileView');

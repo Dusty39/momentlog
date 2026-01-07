@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v136-recent-refine';
+const CACHE_NAME = 'momentlog-v137-logout-v2';
 const ASSETS = [
     './',
     './index.html',
