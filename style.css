@@ -1259,18 +1259,78 @@ textarea::placeholder {
     right: 0;
     bottom: 0;
     pointer-events: none;
-    /* Let clicks pass to photos below */
     padding: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    /* Center the stack vertically in the overlay area */
     z-index: 100;
+}
+
+.collage-stickers-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    /* Sola yapışık */
 }
 
 .collage-sticker {
     pointer-events: auto;
-    /* Stickers themselves can be interactive */
+    width: fit-content;
+    white-space: nowrap;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Collage Music Marquee */
+.collage-music-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    height: 30px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 110;
+}
+
+.collage-music-marquee {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: #fff;
+    font-weight: 500;
+    animation: collage-marquee 15s linear infinite;
+    padding-left: 100%;
+}
+
+@keyframes collage-marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.collage-voice-indicator {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .mini-img-wrapper {

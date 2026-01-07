@@ -640,6 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
+        setupAutoplayObserver();
         console.log("momentLog: UI Initialized Successfully v19");
     } catch (e) {
         console.error("Initialization Error:", e);
@@ -934,6 +935,36 @@ function setupInfiniteScroll() {
     observer.observe(sentinel);
 }
 
+// --- Autoplay Music on Scroll ---
+function setupAutoplayObserver() {
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.6 // Card must be 60% visible
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const card = entry.target;
+                const momentId = card.dataset.id;
+                // Find moment data to get musicUrl
+                const moment = moments.find(m => m.id === momentId);
+                if (moment && moment.musicUrl) {
+                    console.log("Autoplay music for card:", momentId);
+                    window.toggleMusic(moment.musicUrl, momentId);
+                }
+            }
+        });
+    }, options);
+
+    // Initial observation of cards
+    document.querySelectorAll('.moment-card').forEach(card => observer.observe(card));
+
+    // Also observe new cards when they are rendered
+    window._autoplayObserver = observer;
+}
+
 // --- App Theme System ---
 function applyAppTheme(theme) {
     document.body.classList.remove('app-theme-light', 'app-theme-vintage');
@@ -1210,13 +1241,26 @@ function renderTimeline(searchQuery = '') {
                 <div class="carousel-wrapper">
                     <div class="carousel-indicator hidden-fade"></div>
                     <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)">
-                        <!-- Slide 1: Mini Collage (Interactive & Stickered) -->
+                        <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
                             ${generateMiniCollage(m.media)}
-                            <!-- Stickers strictly inside the collage slide -->
+                            
+                            <!-- Music Marquee inside Collage (Top) -->
+                            ${m.musicText ? `
+                                <div class="collage-music-wrapper">
+                                    <div class="collage-music-marquee">
+                                        🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <!-- Stickers strictly inside the collage slide (Stacked Left) -->
                             <div class="collage-stickers-overlay">
-                                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
-                                <div class="mini-time-sticker inline-sticker collage-sticker">${formattedTime}</div>
+                                <div class="collage-stickers-stack">
+                                    ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
+                                    <div class="mini-time-sticker inline-sticker collage-sticker">${formattedTime}</div>
+                                    ${m.voiceUrl ? `<div class="collage-voice-indicator">🎤 Ses Kaydı</div>` : ''}
+                                </div>
                             </div>
                         </div>
             `;
@@ -1256,12 +1300,7 @@ function renderTimeline(searchQuery = '') {
                     </div>
                 </div>
 
-                <!-- 2. Müzik Grubu -->
-                ${m.musicText ? `
-                    <div class="music-marquee-container" style="margin: 8px 0;">
-                        <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
-                    </div>
-                ` : ''}
+                <!-- 2. Müzik Grubu (Artık Kolaj İçinde) -->
 
                 <!-- 3 & 4. Etiketler (Artık Kolaj İçinde) -->
                 ${m.voiceUrl ? `
