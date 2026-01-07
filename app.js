@@ -1786,7 +1786,7 @@ async function openProfileView(uid) {
                         ${momentsList.length > 0 ? momentsList.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
-                    return '<div class="grid-item" onclick="openImmersiveViewById(\'' + m.id + '\')">' +
+                    return '<div class="grid-item">' +
                         (imgSrc ? '<img src="' + imgSrc + '">' : '<div class="text-placeholder">📝</div>') +
                         '</div>';
                 }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
@@ -2205,7 +2205,8 @@ window.handleNotificationClick = async (notifId, momentId, senderUid) => {
     document.body.style.overflow = '';
 
     if (momentId) {
-        window.openImmersiveViewById(momentId);
+        // window.openImmersiveViewById(momentId); // Legacy
+        setView('my-following'); // Redirect to feed for now
     } else if (senderUid) {
         openProfileView(senderUid);
     }
