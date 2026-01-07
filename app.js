@@ -1190,7 +1190,7 @@ function renderTimeline(searchQuery = '') {
             mediaHtml = `
                 <div class="carousel-wrapper">
                     <div class="carousel-indicator hidden-fade"></div>
-                    <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)" onclick="openImmersiveViewById('${m.id}')">
+                    <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)">
                         <!-- Slide 1: Mini Collage -->
                         <div class="carousel-slide collage-slide">
                             ${generateMiniCollage(m.media)}
@@ -1258,7 +1258,7 @@ function renderTimeline(searchQuery = '') {
                 <!-- 5. Medya -->
                 ${mediaHtml}
                 
-                ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}
+                ${m.text ? `<div class="card-content">${m.text}</div>` : ''}
                 
                 <div class="card-actions">
                     <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${m.id}')">
@@ -2013,145 +2013,6 @@ window.toggleLike = async (id) => {
         console.error('Like error:', e);
     }
 };
-
-// --- Immersive View ---
-window.openImmersiveViewById = async (momentId) => {
-    const moment = moments.find(m => m.id === momentId);
-    if (!moment) {
-        try {
-            const fetchedMoment = await DBService.getMomentById(momentId);
-            if (fetchedMoment) {
-                openImmersiveView(fetchedMoment);
-            }
-        } catch (e) {
-            console.error("Moment bulunamadı:", e);
-        }
-        return;
-    }
-    openImmersiveView(moment);
-};
-
-function openImmersiveView(moment) {
-    const view = dom.immersiveView;
-    if (!view) return;
-
-    // Apply theme
-    view.className = `immersive-modal theme-${moment.theme || 'default'}`;
-
-    const date = moment.timestamp?.toDate ? moment.timestamp.toDate() : (moment.timestamp ? new Date(moment.timestamp) : (moment.createdAt ? new Date(moment.createdAt) : new Date()));
-    const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-
-    let photoHtml = '';
-    const images = moment.media?.filter(m => m.type === 'image') || [];
-
-    if (images.length > 0) {
-        // Dynamic height based on images - simplified for clean layout
-        const collageHeight = images.length === 1 ? '350px' : (images.length === 2 ? '500px' : '650px');
-        photoHtml = `
-            <div class="mini-time-sticker" style="position: relative; top: 0; left: 0; margin-bottom: 25px;">${formattedTime}</div>
-            <div class="collage-container scattered count-${images.length}" style="min-height: ${collageHeight}; margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 45px; padding-bottom: 30px;">`;
-        images.forEach((img, idx) => {
-            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 5 + 2); // Reduced rotation for cleaner look
-            photoHtml += `
-                <div class="img-wrapper" style="position: relative; transform: rotate(${rotation}deg); width: 85%; max-width: 400px; margin: 0 auto;">
-                    <img src="${img.url || img.data}" class="immersive-img" style="width: 100%; height: auto; display: block;">
-                </div>
-            `;
-        });
-        photoHtml += `</div>`;
-    }
-
-    view.innerHTML = `
-        <div class="immersive-header">
-            <div class="header-main-row">
-                <div class="immersive-date">${formattedDate}</div>
-                <button id="closeImmersive" class="close-immersive">✕</button>
-            </div>
-            <div class="immersive-meta-row">
-                <span class="immersive-user">@${moment.userDisplayName || 'anonim'}</span>
-                ${moment.location ? `<span class="immersive-location">📍 ${moment.location}</span>` : ''}
-            </div>
-        </div>
-
-        ${(moment.musicText || moment.voiceUrl) ? `
-            <div class="immersive-label-row">
-                ${moment.musicText ? `
-                    <div class="music-marquee-container immersive-music">
-                        <div class="music-marquee-content">🎵 ${moment.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${moment.musicText}</div>
-                    </div>
-                ` : ''}
-                ${moment.voiceUrl ? `
-                    <button class="voice-play-btn immersive-voice" onclick="event.stopPropagation(); window.toggleVoiceMemo('${moment.voiceUrl}', '${moment.id}')" data-moment-id="${moment.id}">
-                        🎤 Sesli Notu Dinle
-                    </button>
-                ` : ''}
-            </div>
-        ` : ''}
-
-        <div class="immersive-content">
-            ${photoHtml}
-            <div class="immersive-text interspersed-text">${moment.text || ''}</div>
-            ${moment.stickerText ? `<div class="brush-sticker-wrapper"><div class="brush-sticker">${moment.stickerText}</div></div>` : ''}
-        </div>
-
-        <div class="immersive-actions-bar">
-            <div class="actions-row">
-                <button class="action-btn" onclick="window.toggleLike('${moment.id}')">
-                    ❤️ <span class="count">${moment.likes?.length || 0}</span>
-                </button>
-                <button class="action-btn" onclick="window.__toggleImmersiveComments()">
-                    💬 <span class="count">${moment.commentsCount || 0}</span>
-                </button>
-            </div>
-            <div id="commentsSectionImmersive" class="comments-section-immersive hidden">
-                <div id="commentsList" class="comments-list-immersive"></div>
-                <div class="comment-input-row">
-                    <input type="text" id="commentInput" placeholder="Düşüncelerini paylaş...">
-                    <button onclick="window.submitComment('${moment.id}')">Gönder</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    view.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    document.getElementById('closeImmersive').onclick = () => {
-        view.classList.add('hidden');
-        document.body.style.overflow = '';
-        MusicManager.pause();
-    };
-
-    window.__toggleImmersiveComments = () => {
-        const section = document.getElementById('commentsSectionImmersive');
-        if (section) section.classList.toggle('hidden');
-    };
-
-    if (moment.musicUrl) {
-        MusicManager.play(moment.musicUrl, moment.id);
-    }
-
-    loadComments(moment.id);
-}
-
-// Function to fetch and open immersive view by ID (for grid/deep links)
-async function openImmersiveViewById(id) {
-    // First check if it's in our current memory
-    let moment = moments.find(m => m.id === id) || myPrivateMoments.find(m => m.id === id);
-
-    if (!moment) {
-        // Fetch from DB if not in memory
-        moment = await DBService.getMomentById(id);
-    }
-
-    if (moment) {
-        openImmersiveView(moment);
-    } else {
-        showModal('Hata', 'Anı bulunamadı veya görüntüleme izniniz yok.');
-    }
-}
-window.openImmersiveViewById = openImmersiveViewById;
 
 // --- Comments ---
 async function loadComments(momentId, expanded = false) {
