@@ -1238,6 +1238,8 @@ textarea::placeholder {
     flex: 0 0 100%;
     width: 100%;
     height: 100%;
+    position: relative;
+    /* Anchor for stickers */
     scroll-snap-align: start;
     display: flex;
     align-items: center;
@@ -1246,18 +1248,61 @@ textarea::placeholder {
     overflow: hidden;
 }
 
-.carousel-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.collage-slide {
+    background: var(--bg-surface);
+}
+
+.collage-stickers-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    /* Let clicks pass to photos below */
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+.collage-sticker {
+    pointer-events: auto;
+    /* Stickers themselves can be interactive */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.mini-img-wrapper {
+    position: absolute;
+    width: 50%;
+    aspect-ratio: 4/5;
+    background: white;
+    padding: 6px 6px 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.mini-img-wrapper:active {
+    transform: scale(1.05) !important;
+}
+
+.mini-img-wrapper img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 2px;
 }
 
 .carousel-slide img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 12px;
 }
+
+
 
 /* Mini Collage inside Carousel Slide 1 */
 .mini-collage {

@@ -130,7 +130,9 @@ function generateMiniCollage(media) {
         }
 
         html += `
-            <div class="mini-img-wrapper" style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%;">
+            <div class="mini-img-wrapper" 
+                 style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%; z-index: ${idx + 1};"
+                 onclick="window.bringPhotoToFront(event)">
                 <img src="${img.url || img.data}">
             </div>
         `;
@@ -138,6 +140,14 @@ function generateMiniCollage(media) {
     html += `</div>`;
     return html;
 }
+
+window.bringPhotoToFront = (event) => {
+    const wrapper = event.currentTarget;
+    const collage = wrapper.parentElement;
+    const allWrappers = collage.querySelectorAll('.mini-img-wrapper');
+    allWrappers.forEach(w => w.style.zIndex = '1');
+    wrapper.style.zIndex = '10';
+};
 
 // --- Profile Edit Functions ---
 let editPhotoData = null;
@@ -1200,9 +1210,14 @@ function renderTimeline(searchQuery = '') {
                 <div class="carousel-wrapper">
                     <div class="carousel-indicator hidden-fade"></div>
                     <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)">
-                        <!-- Slide 1: Mini Collage -->
+                        <!-- Slide 1: Mini Collage (Interactive & Stickered) -->
                         <div class="carousel-slide collage-slide">
                             ${generateMiniCollage(m.media)}
+                            <!-- Stickers strictly inside the collage slide -->
+                            <div class="collage-stickers-overlay">
+                                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
+                                <div class="mini-time-sticker inline-sticker collage-sticker">${formattedTime}</div>
+                            </div>
                         </div>
             `;
 
@@ -1248,23 +1263,16 @@ function renderTimeline(searchQuery = '') {
                     </div>
                 ` : ''}
 
-                <!-- 3 & 4. Etiketler (Manşet Sağda, Saat Solda) -->
-                <div class="card-labels-stack">
-                    ${m.stickerText ? `
-                        <div style="display: flex; justify-content: flex-end; width: 100%;">
-                            <div class="mini-brush-sticker">${m.stickerText}</div>
-                        </div>
-                    ` : ''}
-                    <div style="display: flex; justify-content: flex-start; width: 100%;">
-                        <div class="mini-time-sticker inline-sticker">${formattedTime}</div>
-                    </div>
-                    ${m.voiceUrl ? `
+                <!-- 3 & 4. Etiketler (Artık Kolaj İçinde) -->
+                ${m.voiceUrl ? `
+                    <div class="card-labels-stack">
                         <div style="display: flex; justify-content: flex-start; width: 100%;">
                             <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
                                 🎤 Sesli Not
                             </button>
                         </div>
-                    ` : ''}
+                    </div>
+                ` : ''}
                 </div>
                 
                 <!-- 5. Medya -->
