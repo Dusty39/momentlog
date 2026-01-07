@@ -902,7 +902,7 @@ textarea::placeholder {
     width: 70%;
     /* Slightly smaller for less crowding */
     max-width: 280px;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
     background: white;
     padding: 10px 10px 50px 10px;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
@@ -1336,7 +1336,7 @@ textarea::placeholder {
 .carousel-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 4 / 5;
     /* Uniform Portrait Sizing */
     overflow: hidden;
     border-radius: 12px;
