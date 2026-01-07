@@ -1670,7 +1670,7 @@ textarea::placeholder {
 /* Profile header compact */
 .profile-header-simple {
     flex-shrink: 0;
-    padding: 48px 16px 12px;
+    padding: 12px 16px;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -2109,7 +2109,7 @@ h1 {
 
 /* Profile Header */
 .profile-header-simple {
-    padding: 60px 20px 16px;
+    padding: 12px 20px 16px;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -2313,26 +2313,26 @@ h1 {
 
 /* Notification View */
 .noti-header {
-    padding: 20px;
+    padding: 0 12px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: none;
 }
 
 .noti-list-content {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 4px 12px;
 }
 
 .notification-item {
     display: flex;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 12px;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     background: var(--bg-surface);
 }
 
@@ -3423,9 +3423,9 @@ body.app-theme-vintage {
 }
 
 .notif-clear-all {
-    padding: 12px;
-    border-bottom: 1px solid var(--border-subtle);
-    text-align: center;
+    padding: 6px;
+    border-bottom: none;
+    text-align: right;
 }
 
 .clear-all-btn {
