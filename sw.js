@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v128-layout-standard';
+const CACHE_NAME = 'momentlog-v129-page-migration';
 const ASSETS = [
     './',
     './index.html',

@@ -2130,41 +2130,20 @@ h1 {
     color: var(--text-secondary);
 }
 
-/* Profile View - Full Screen */
-.profile-view {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+.profile-page,
+.noti-page {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
     background: var(--bg-main);
-    z-index: 2000;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    min-height: 80vh;
 }
 
-.profile-view.hidden {
+.profile-page.hidden-mode,
+.noti-page.hidden-mode {
     display: none !important;
 }
 
-.profile-view .close-btn {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 /* Profile Header */
 .profile-header-simple {

@@ -178,30 +178,28 @@
             <div id="dashboardFooter" class="dashboard-footer hidden-mode">
                 Created with ✨ by <span class="designer-name">Serhat Aykış</span>
             </div>
+
+            <!-- Profile View (Moved inside main) -->
+            <div id="profileView" class="profile-page hidden-mode">
+                <div id="profileContent">
+                    <!-- Profile HTML injected here -->
+                </div>
+            </div>
+
+            <!-- Notification View (Moved inside main) -->
+            <div id="notiView" class="noti-page hidden-mode">
+                <div class="noti-header">
+                    <h2>Bildirimler</h2>
+                </div>
+                <div id="notiContent" class="noti-list-content">
+                    <div class="loading">Yükleniyor...</div>
+                </div>
+            </div>
         </main>
 
         <!-- Immersive View -->
         <div id="immersiveView" class="immersive-modal hidden">
             <!-- Content will be injected via JS -->
-        </div>
-
-        <!-- Profile View -->
-        <div id="profileView" class="profile-view hidden">
-            <button class="close-btn" id="closeProfile">×</button>
-            <div id="profileContent">
-                <!-- Profile HTML injected here -->
-            </div>
-        </div>
-
-        <!-- Notification View -->
-        <div id="notiView" class="profile-view hidden">
-            <div class="noti-header">
-                <h2>Bildirimler</h2>
-                <button id="closeNoti" class="close-btn">×</button>
-            </div>
-            <div id="notiContent" class="noti-list-content">
-                <div class="loading">Yükleniyor...</div>
-            </div>
         </div>
     </div>
 

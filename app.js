@@ -779,25 +779,72 @@ function setupEventListeners() {
             exploreBtn?.classList.add('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
+            notificationsBtn?.classList.remove('active');
+            profileBtn?.classList.remove('active');
+
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            document.getElementById('profileView')?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
         } else if (currentView === 'write') {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
             headerAddBtn?.classList.add('active');
+            notificationsBtn?.classList.remove('active');
+            profileBtn?.classList.remove('active');
+
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
+            document.getElementById('profileView')?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
-        } else {
+        } else if (currentView === 'notifications') {
             exploreBtn?.classList.remove('active');
-            homeBtn?.classList.add('active');
+            homeBtn?.classList.remove('active');
             headerAddBtn?.classList.remove('active');
+            notificationsBtn?.classList.add('active');
+            profileBtn?.classList.remove('active');
+
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.timeline?.classList.add('hidden-mode');
+            document.getElementById('profileView')?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.remove('hidden-mode');
+
+            // Mark as read naturally
+            renderNotificationsInView(window._notifications || []);
+            const currentUser = AuthService.currentUser();
+            if (currentUser) DBService.markNotificationsAsRead(currentUser.uid);
+        } else if (currentView === 'profile') {
+            exploreBtn?.classList.remove('active');
+            homeBtn?.classList.remove('active');
+            headerAddBtn?.classList.remove('active');
+            notificationsBtn?.classList.remove('active');
+            profileBtn?.classList.add('active');
+
+            inputSectionBase?.classList.add('hidden-mode');
+            dashboardFooter?.classList.add('hidden-mode');
+            myRecentMoments?.classList.add('hidden-mode');
+            dom.timeline?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.add('hidden-mode');
+            document.getElementById('profileView')?.classList.remove('hidden-mode');
+        } else {
+            // Home / Following View
+            exploreBtn?.classList.remove('active');
+            homeBtn?.classList.add('active');
+            headerAddBtn?.classList.remove('active');
+            notificationsBtn?.classList.remove('active');
+            profileBtn?.classList.remove('active');
+
+            inputSectionBase?.classList.add('hidden-mode');
+            dashboardFooter?.classList.add('hidden-mode');
+            myRecentMoments?.classList.add('hidden-mode');
+            document.getElementById('profileView')?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
         }
 
@@ -809,7 +856,11 @@ function setupEventListeners() {
     if (homeBtn) homeBtn.onclick = () => window.setView('my-following');
     if (exploreBtn) exploreBtn.onclick = () => window.setView('explore');
     if (headerAddBtn) headerAddBtn.onclick = () => window.setView('write');
-    if (notificationsBtn) notificationsBtn.onclick = () => toggleNotificationPanel();
+    if (notificationsBtn) notificationsBtn.onclick = () => window.setView('notifications');
+    if (profileBtn) profileBtn.onclick = () => {
+        const currentUser = AuthService.currentUser();
+        if (currentUser) window.openProfileView(currentUser.uid);
+    };
 
     // Add Location Button
     const addLocBtn = document.getElementById('addLocationBtn');
@@ -1636,13 +1687,14 @@ window.handleRealLocation = () => {
 async function openProfileView(uid) {
     const view = document.getElementById('profileView');
     const content = document.getElementById('profileContent');
-    const closeBtn = document.getElementById('closeProfile');
 
     if (!view || !content) return;
 
+    // Switch view first to show the container
+    await window.setView('profile');
+
     content.innerHTML = '<div class="loading" style="padding: 40px; text-align: center;">Yükleniyor...</div>';
-    view.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = '';
     window._currentProfileUid = uid;
 
     try {
@@ -2189,30 +2241,7 @@ function setupNotifications() {
     });
 }
 
-function toggleNotificationPanel() {
-    const view = document.getElementById('notiView');
-    const closeBtn = document.getElementById('closeNoti');
-
-    if (view) {
-        view.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-
-        renderNotificationsInView(window._notifications || []);
-
-        // Mark all as read when panel opens
-        const currentUser = AuthService.currentUser();
-        if (currentUser) {
-            DBService.markNotificationsAsRead(currentUser.uid);
-        }
-
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                view.classList.add('hidden');
-                document.body.style.overflow = '';
-            };
-        }
-    }
-}
+// Notification logic is now handled in setView('notifications')
 
 function renderNotificationsInView(notifications) {
     const list = document.getElementById('notiContent');
