@@ -788,12 +788,23 @@ textarea::placeholder {
 }
 
 .immersive-content {
-    max-width: 600px;
-    margin: 0 auto;
+    flex: 1;
+    overflow-y: auto;
+    /* Smooth scroll for content */
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    padding-bottom: 100px;
+    align-items: center;
+    width: 100%;
+    gap: 20px;
+    padding: 20px 0 80px;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+.immersive-content::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
 }
 
 /* Venue Sticker */
@@ -829,18 +840,18 @@ textarea::placeholder {
     /* Absolute children */
 }
 
-.collage-container.scattered .immersive-content {
-    flex: 1;
+/* Interspersed Text Styles */
+
+.interspersed-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    max-width: 90%;
+    text-align: center;
+    color: var(--text-primary);
+    margin: 20px auto;
+    z-index: 20;
     position: relative;
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Theme-Specific Frames & Styling */

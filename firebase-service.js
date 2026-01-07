@@ -263,7 +263,7 @@ const DBService = {
             userDisplayName: user.displayName || 'İsimsiz',
             userPhotoURL: data.userPhotoURL || user.photoURL || '👤',
             likes: [],
-            createdAt: data.createdAt || Date.now()
+            createdAt: data.createdAt || new Date().toISOString()
         };
 
         return db.collection('moments').add(momentData);
@@ -437,9 +437,11 @@ const DBService = {
 
             // Sort by createdAt and take the latest 5 globally
             allDocs.sort((a, b) => {
-                const aTime = a.data().createdAt || '';
-                const bTime = b.data().createdAt || '';
-                return bTime.localeCompare(aTime);
+                const aTime = a.data().createdAt || 0;
+                const bTime = b.data().createdAt || 0;
+                const aVal = typeof aTime === 'string' ? new Date(aTime).getTime() : aTime;
+                const bVal = typeof bTime === 'string' ? new Date(bTime).getTime() : bTime;
+                return bVal - aVal;
             });
 
             const pagedDocs = allDocs.slice(0, 5);

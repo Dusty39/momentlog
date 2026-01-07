@@ -1114,7 +1114,10 @@ function renderTimeline(searchQuery = '') {
     // Full card view for all tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
         const date = new Date(m.createdAt);
-        const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const formattedDate = date.toLocaleDateString('tr-TR', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
         const locationText = m.location ? ` • ${m.location}` : '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
@@ -1235,7 +1238,10 @@ function renderMyRecentMoments() {
 
     list.innerHTML = myMoments.map(m => {
         const date = new Date(m.createdAt);
-        const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const formattedDate = date.toLocaleDateString('tr-TR', {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
         const firstImg = m.media?.find(med => med.type === 'image');
         const imgSrc = firstImg?.url || firstImg?.data || '';
 
@@ -1958,14 +1964,19 @@ function openImmersiveView(moment) {
     // Apply theme
     view.className = `immersive-modal theme-${moment.theme || 'default'}`;
 
-    const date = moment.timestamp?.toDate ? moment.timestamp.toDate() : (moment.timestamp ? new Date(moment.timestamp) : new Date());
-    const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const date = moment.timestamp?.toDate ? moment.timestamp.toDate() : (moment.timestamp ? new Date(moment.timestamp) : (moment.createdAt ? new Date(moment.createdAt) : new Date()));
+    const formattedDate = date.toLocaleDateString('tr-TR', {
+        day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
 
     let photoHtml = '';
     const images = moment.media?.filter(m => m.type === 'image') || [];
 
     if (images.length > 0) {
-        photoHtml = `<div class="collage-container scattered count-${images.length}">`;
+        // Dynamic height based on images
+        const collageHeight = images.length === 1 ? '300px' : (images.length === 2 ? '400px' : '500px');
+        photoHtml = `<div class="collage-container scattered count-${images.length}" style="min-height: ${collageHeight}; margin-top: 20px;">`;
         images.forEach((img, idx) => {
             const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
             let top = 0, left = 0;
