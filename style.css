@@ -66,11 +66,11 @@ body {
 
 /* Header */
 header {
-    padding: 16px 0;
+    padding: 12px 0 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
     width: 100%;
 }
 
@@ -2313,11 +2313,10 @@ h1 {
 
 /* Notification View */
 .noti-header {
-    padding: 0 12px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    border-bottom: none;
+    padding: 0;
+    height: 0;
+    overflow: hidden;
+    display: none;
 }
 
 .noti-list-content {
@@ -3423,9 +3422,9 @@ body.app-theme-vintage {
 }
 
 .notif-clear-all {
-    padding: 6px;
+    padding: 4px;
     border-bottom: none;
-    text-align: right;
+    text-align: center;
 }
 
 .clear-all-btn {
