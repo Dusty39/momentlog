@@ -2531,10 +2531,34 @@ h1 {
     color: var(--text-primary);
 }
 
-.verified-badge {
+.verified-location-badge {
     color: var(--accent);
-    font-size: 0.7rem;
+    font-size: 0.8rem;
+    margin-left: 6px;
+    display: inline-flex;
+    align-items: center;
+    font-weight: bold;
+    text-shadow: 0 0 5px var(--accent-glow);
+}
+
+.early-user-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFD700;
+    /* Gold/Yellow */
+    color: #000;
+    font-size: 0.6rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
     margin-left: 4px;
+    transform: rotate(-10deg);
+    font-weight: bold;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    /* Brush stroke effect using clip-path */
+    clip-path: polygon(5% 0%, 95% 5%, 100% 90%, 10% 100%, 0% 80%);
 }
 
 .date {

@@ -330,7 +330,8 @@ const DBService = {
                 moments: moments.map(m => ({
                     ...m,
                     userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
+                    isEarlyUser: profile?.isEarlyUser || false
                 })),
                 lastVisible: lastDoc
             };
@@ -369,7 +370,8 @@ const DBService = {
                 moments: moments.map(m => ({
                     ...m,
                     userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
+                    isEarlyUser: profile?.isEarlyUser || false
                 })),
                 lastVisible: lastDoc
             };
@@ -464,7 +466,8 @@ const DBService = {
                 moments: moments.map(m => ({
                     ...m,
                     userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
+                    userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤',
+                    isEarlyUser: userProfiles[m.userId]?.isEarlyUser || false
                 })),
                 lastVisible: lastDoc
             };
@@ -515,7 +518,9 @@ const DBService = {
                     return {
                         ...m,
                         userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                        userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                        userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
+                    isEarlyUser: profile?.isEarlyUser || false,
+                        isEarlyUser: profile?.isEarlyUser || false
                     };
                 }),
                 lastVisible: lastDoc

@@ -1094,7 +1094,16 @@ async function saveMoment() {
             isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
-            createdAt: dateInput ? new Date(dateInput).toISOString() : new Date().toISOString()
+            createdAt: (() => {
+                const now = new Date();
+                if (dateInput) {
+                    const selected = new Date(dateInput);
+                    // Set current hours/mins/secs to the selected date
+                    selected.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+                    return selected.toISOString();
+                }
+                return now.toISOString();
+            })()
         };
 
         if (isRealLocationActive && locationString) {
@@ -1220,10 +1229,13 @@ function renderTimeline(searchQuery = '') {
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
                         <div class="user-details">
-                            <span class="username">${m.userDisplayName || 'Anonim'}</span>
+                            <span class="username">
+                                ${m.userDisplayName || 'Anonim'}
+                                ${m.isEarlyUser ? '<span class="early-user-badge">✓</span>' : ''}
+                            </span>
                             <div class="meta-info">
                                 <span class="date">${formattedDate}${locationText}</span>
-                                ${m.verifiedLocation ? '<span class="verified-badge">✓</span>' : ''}
+                                ${m.verifiedLocation ? '<span class="verified-location-badge" title="Doğrulanmış Konum">📍✓</span>' : ''}
                             </div>
                         </div>
                     </div>
