@@ -1155,13 +1155,13 @@ function renderTimeline(searchQuery = '') {
 
         return `
             <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}">
-                <div class="mini-time-sticker">${formattedTime}</div>
-                <div class="carousel-wrapper">
+                <!-- 1. Header (Kullanıcı Bilgisi) -->
+                <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
-                        <div class="user-details" onclick="openProfileView('${m.userId}')">
+                        <div class="user-details">
                             <span class="username">${m.userDisplayName || 'Anonim'}</span>
                             <div class="meta-info">
                                 <span class="date">${formattedDate}${locationText}</span>
@@ -1169,24 +1169,35 @@ function renderTimeline(searchQuery = '') {
                             </div>
                         </div>
                     </div>
-                </div >
+                </div>
 
-                ${(m.stickerText || m.musicText || m.voiceUrl) ? `
-                    <div class="card-label-row">
-                        ${m.musicText ? `
-                            <div class="music-marquee-container">
-                                <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
-                            </div>
-                        ` : ''}
-                        ${m.voiceUrl ? `
+                <!-- 2. Müzik Grubu -->
+                ${m.musicText ? `
+                    <div class="music-marquee-container" style="margin: 8px 0;">
+                        <div class="music-marquee-content">🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}</div>
+                    </div>
+                ` : ''}
+
+                <!-- 3 & 4. Etiketler (Manşet Sağda, Saat Solda) -->
+                <div class="card-labels-stack">
+                    ${m.stickerText ? `
+                        <div style="display: flex; justify-content: flex-end; width: 100%;">
+                            <div class="mini-brush-sticker">${m.stickerText}</div>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: flex-start; width: 100%;">
+                        <div class="mini-time-sticker inline-sticker">${formattedTime}</div>
+                    </div>
+                    ${m.voiceUrl ? `
+                        <div style="display: flex; justify-content: flex-start; width: 100%;">
                             <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
                                 🎤 Sesli Not
                             </button>
-                        ` : ''}
-                        ${m.stickerText ? `<div class="mini-brush-sticker">${m.stickerText}</div>` : ''}
-                    </div>
-                ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
                 
+                <!-- 5. Medya -->
                 ${mediaHtml}
                 
                 ${m.text ? `<div class="card-content" onclick="openImmersiveViewById('${m.id}')">${m.text.substring(0, 150)}${m.text.length > 150 ? '...' : ''}</div>` : ''}

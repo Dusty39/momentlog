@@ -902,7 +902,7 @@ textarea::placeholder {
     width: 70%;
     /* Slightly smaller for less crowding */
     max-width: 280px;
-    aspect-ratio: 4/5;
+    aspect-ratio: 4 / 3;
     background: white;
     padding: 10px 10px 50px 10px;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
@@ -1127,6 +1127,21 @@ textarea::placeholder {
 }
 
 /* Music Marquee Styling */
+.card-labels-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 0 12px;
+}
+
+.mini-time-sticker.inline-sticker {
+    position: static !important;
+    transform: rotate(-2deg) !important;
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
 .card-label-row,
 .immersive-label-row {
     display: flex;
@@ -1321,7 +1336,7 @@ textarea::placeholder {
 .carousel-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 3;
     /* Uniform Portrait Sizing */
     overflow: hidden;
     border-radius: 12px;
