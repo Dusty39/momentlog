@@ -1115,9 +1115,9 @@ function renderTimeline(searchQuery = '') {
     dom.timeline.innerHTML = filteredMoments.map(m => {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+            day: 'numeric', month: 'short', year: 'numeric'
         });
+        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const locationText = m.location ? ` • ${m.location}` : '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
@@ -1155,7 +1155,8 @@ function renderTimeline(searchQuery = '') {
 
         return `
             <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}">
-                <div class="card-header">
+                <div class="mini-time-sticker">${formattedTime}</div>
+                <div class="carousel-wrapper">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
@@ -1239,9 +1240,9 @@ function renderMyRecentMoments() {
     list.innerHTML = myMoments.map(m => {
         const date = new Date(m.createdAt);
         const formattedDate = date.toLocaleDateString('tr-TR', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
+            day: 'numeric', month: 'short', year: 'numeric'
         });
+        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const firstImg = m.media?.find(med => med.type === 'image');
         const imgSrc = firstImg?.url || firstImg?.data || '';
 
@@ -1251,12 +1252,15 @@ function renderMyRecentMoments() {
                     <span>Sil</span>
                 </div>
                 <div class="compact-moment-item" 
-                     onclick="openImmersiveViewById('${m.id}')"
-                     ontouchstart="window.handleSwipeStart(event)"
-                     ontouchmove="window.handleSwipeMove(event)"
-                     ontouchend="window.handleSwipeEnd(event)">
-                    <div class="compact-thumb">
-                        ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+                     onclick="openImmersiveViewById('${m.id}')">
+                    <div class="mini-time-sticker">${formattedTime}</div>
+                    <div class="compact-img-wrapper"
+                         ontouchstart="window.handleSwipeStart(event)"
+                         ontouchmove="window.handleSwipeMove(event)"
+                         ontouchend="window.handleSwipeEnd(event)">
+                        <div class="compact-thumb">
+                            ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
+                        </div>
                     </div>
                     <div class="compact-info">
                         <div class="compact-date">${formattedDate}</div>
@@ -1965,37 +1969,23 @@ function openImmersiveView(moment) {
     view.className = `immersive-modal theme-${moment.theme || 'default'}`;
 
     const date = moment.timestamp?.toDate ? moment.timestamp.toDate() : (moment.timestamp ? new Date(moment.timestamp) : (moment.createdAt ? new Date(moment.createdAt) : new Date()));
-    const formattedDate = date.toLocaleDateString('tr-TR', {
-        day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
+    const formattedDate = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
     let photoHtml = '';
     const images = moment.media?.filter(m => m.type === 'image') || [];
 
     if (images.length > 0) {
-        // Dynamic height based on images
-        const collageHeight = images.length === 1 ? '300px' : (images.length === 2 ? '400px' : '500px');
-        photoHtml = `<div class="collage-container scattered count-${images.length}" style="min-height: ${collageHeight}; margin-top: 20px;">`;
+        // Dynamic height based on images - simplified for clean layout
+        const collageHeight = images.length === 1 ? '350px' : (images.length === 2 ? '500px' : '650px');
+        photoHtml = `
+            <div class="mini-time-sticker" style="position: relative; top: 0; left: 0; margin-bottom: 25px;">${formattedTime}</div>
+            <div class="collage-container scattered count-${images.length}" style="min-height: ${collageHeight}; margin-top: 20px; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 45px; padding-bottom: 30px;">`;
         images.forEach((img, idx) => {
-            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
-            let top = 0, left = 0;
-
-            const positions = [
-                { t: 15, l: 20 },
-                { t: 40, l: 45 },
-                { t: 10, l: 55 },
-                { t: 55, l: 15 }
-            ];
-
-            if (idx < positions.length) {
-                top = positions[idx].t;
-                left = positions[idx].l;
-            }
-
+            const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 5 + 2); // Reduced rotation for cleaner look
             photoHtml += `
-                <div class="img-wrapper" style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%;">
-                    <img src="${img.url || img.data}" class="immersive-img">
+                <div class="img-wrapper" style="position: relative; transform: rotate(${rotation}deg); width: 85%; max-width: 400px; margin: 0 auto;">
+                    <img src="${img.url || img.data}" class="immersive-img" style="width: 100%; height: auto; display: block;">
                 </div>
             `;
         });

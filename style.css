@@ -845,13 +845,16 @@ textarea::placeholder {
 .interspersed-text {
     font-size: 1.2rem;
     line-height: 1.6;
-    max-width: 90%;
+    max-width: 85%;
     text-align: center;
     color: var(--text-primary);
-    margin: 20px auto;
+    margin: 40px auto;
     z-index: 20;
     position: relative;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
 }
 
 /* Theme-Specific Frames & Styling */
@@ -1030,6 +1033,46 @@ textarea::placeholder {
     /* Adjust to overlap or be tight */
     position: relative;
     z-index: 100;
+}
+
+.mini-time-sticker {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 200;
+    padding: 3px 12px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 0.65rem;
+    font-weight: 900;
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+    transform: rotate(-3deg);
+    clip-path: polygon(5% 0%, 100% 5%, 95% 100%, 0% 95%);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-subtle);
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.theme-neon .mini-time-sticker {
+    background: #ff00ff;
+    color: #fff;
+    border: none;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+.theme-vintage .mini-time-sticker {
+    background: #f4e9d5;
+    color: #5d4037;
+    border: 1px solid #d4a373;
+}
+
+.theme-polaroid .mini-time-sticker {
+    background: #fff;
+    color: #222;
+    border: 1px solid #ddd;
+    font-family: 'Permanent Marker', cursive;
 }
 
 .immersive-label-row {
