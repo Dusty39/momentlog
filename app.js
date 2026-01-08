@@ -438,13 +438,18 @@ const MusicManager = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
-    originalVolume: 0.8,
     fadeInterval: null,
+    isAutoplayAllowed: true, // New flag: Global control for autoplay
 
-    async play(url, momentId, skipFade = false) {
+    async play(url, momentId, skipFade = false, isManual = false) {
         if (!url) {
             this.fadeOut();
             return;
+        }
+
+        // If manual play, re-enable autoplay for future scrolls
+        if (isManual) {
+            this.isAutoplayAllowed = true;
         }
 
         // --- Toggle Logic ---
@@ -514,6 +519,7 @@ const MusicManager = {
     },
 
     pause() {
+        this.isAutoplayAllowed = false; // Disable autoplay when manually paused
         this.fadeOut();
     },
 
@@ -682,7 +688,7 @@ const VoiceRecorder = {
 };
 
 window.toggleMusic = (url, momentId) => {
-    MusicManager.play(url, momentId);
+    MusicManager.play(url, momentId, false, true); // Mark as manual interaction
 };
 
 window.handleCardClick = (e, momentId, musicUrl) => {
@@ -1123,9 +1129,12 @@ function setupAutoplayObserver() {
 
             if (entry.isIntersecting) {
                 if (moment && moment.musicUrl) {
+                    // Respect the global autoplay flag
+                    if (!MusicManager.isAutoplayAllowed) return;
+
                     // Start if not already playing or if different song
                     if (MusicManager.currentMomentId !== momentId || !MusicManager.isPlaying) {
-                        MusicManager.play(moment.musicUrl, momentId);
+                        MusicManager.play(moment.musicUrl, momentId, false, false); // auto-play
                     }
                 } else {
                     // Visible card has no music, fade out current if it was this one or global
