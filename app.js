@@ -549,13 +549,15 @@ async function fetchMusicMetadata(url) {
         const data = await response.json();
 
         if (data && data.title) {
-            let title = data.title;
-            // Clean title
-            title = title.replace(' | Spotify', '').replace(' - song by ', ' - ');
+            // Initial suggestion from Spotify
+            let spotifyTitle = data.title.replace(' | Spotify', '').replace(' - song by ', ' - ');
+            if (data.author_name && !spotifyTitle.includes(data.author_name)) {
+                spotifyTitle = `${spotifyTitle} - ${data.author_name}`;
+            }
 
-            // 2. Search Deezer for the 30s preview (JSONP to bypass CORS)
-            const searchTerms = title.split(' - ');
-            const query = searchTerms.length > 1 ? `${searchTerms[0]} ${searchTerms[1]}` : title;
+            // 2. Search Deezer for the 30s preview and precise naming
+            const searchTerms = spotifyTitle.split(' - ');
+            const query = searchTerms.length > 1 ? `${searchTerms[0]} ${searchTerms[1]}` : spotifyTitle;
 
             return new Promise((resolve) => {
                 const callbackName = 'deezerCallback_' + Math.floor(Math.random() * 1000000);
@@ -563,13 +565,18 @@ async function fetchMusicMetadata(url) {
                     delete window[callbackName];
                     const s = document.getElementById(callbackName);
                     if (s) s.remove();
+
                     if (res.data && res.data.length > 0) {
+                        const track = res.data[0];
+                        // Prefer Deezer for the visual label (cleaner format)
+                        const finalLabel = `${track.title} - ${track.artist.name}`;
                         resolve({
-                            title: title,
-                            previewUrl: res.data[0].preview
+                            title: finalLabel,
+                            previewUrl: track.preview
                         });
                     } else {
-                        resolve({ title: title, previewUrl: null });
+                        // Fallback to Spotify's refined title
+                        resolve({ title: spotifyTitle, previewUrl: null });
                     }
                 };
                 const script = document.createElement('script');
@@ -577,7 +584,7 @@ async function fetchMusicMetadata(url) {
                 script.src = `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1&output=jsonp&callback=${callbackName}`;
                 document.body.appendChild(script);
                 // Timeout after 5s
-                setTimeout(() => { if (window[callbackName]) resolve({ title: title, previewUrl: null }); }, 5000);
+                setTimeout(() => { if (window[callbackName]) resolve({ title: spotifyTitle, previewUrl: null }); }, 5000);
             });
         }
     } catch (err) {

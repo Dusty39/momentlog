@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v156-audio-fade';
+const CACHE_NAME = 'momentlog-v157-music-fix';
 const ASSETS = [
     './',
     './index.html',
