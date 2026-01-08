@@ -473,15 +473,15 @@ const MusicManager = {
             }
         }
 
-        // New track or resuming different
+        // New track
         console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
-        this.audio.load();
         this.audio.loop = true;
         this.currentMomentId = momentId;
 
         try {
+            // Some browsers require interaction, so we try play() and only update state on success
             await this.audio.play();
             this.isPlaying = true;
             if (!skipFade) this.fadeIn();
