@@ -885,7 +885,11 @@ function setupEventListeners() {
             // Mark as read naturally
             renderNotificationsInView(window._notifications || []);
             const currentUser = AuthService.currentUser();
-            if (currentUser) DBService.markNotificationsAsRead(currentUser.uid);
+            if (currentUser) {
+                DBService.markNotificationsAsRead(currentUser.uid);
+                const badge = document.getElementById('notifBadge');
+                if (badge) badge.classList.add('hidden');
+            }
         } else if (currentView === 'profile') {
             exploreBtn?.classList.remove('active');
             homeBtn?.classList.remove('active');
@@ -2350,13 +2354,36 @@ function getTimeAgo(dateStr) {
 }
 
 window.handleNotificationClick = async (notifId, momentId, senderUid) => {
-    const view = document.getElementById('notiView');
-    if (view) view.classList.add('hidden');
-    document.body.style.overflow = '';
+    // 1. Mark as read immediately for UX
+    const notif = (window._notifications || []).find(n => n.id === notifId);
+    if (notif) notif.isRead = true;
+    renderNotificationsInView(window._notifications || []);
+    DBService.markNotificationsAsRead(AuthService.currentUser()?.uid);
 
     if (momentId) {
-        // window.openImmersiveViewById(momentId); // Legacy
-        setView('my-following'); // Redirect to feed for now
+        // Go to feed
+        await setView('home');
+
+        // Wait for rendering and scroll
+        const scrollToId = () => {
+            const el = document.querySelector(`.moment-card[data-id="${momentId}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('moment-highlight');
+                setTimeout(() => el.classList.remove('moment-highlight'), 3000);
+                return true;
+            }
+            return false;
+        };
+
+        // Try immediate, then retry as loading happens
+        if (!scrollToId()) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (scrollToId() || attempts > 20) clearInterval(interval);
+            }, 500);
+        }
     } else if (senderUid) {
         openProfileView(senderUid);
     }
