@@ -1605,6 +1605,9 @@ function renderTimeline(searchQuery = '') {
                     <button class="action-btn" onclick="window.toggleComments('${m.id}')">
                         💬 ${m.commentsCount || 0}
                     </button>
+                    <button class="action-btn" onclick="window.handleShare(event, '${m.id}', '${m.text ? m.text.replace(/'/g, "\\'").replace(/\n/g, " ") : ""}')">
+                        🔗 Paylaş
+                    </button>
                     <div class="action-spacer"></div>
                     ${isOwner ? `
                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
@@ -2690,4 +2693,26 @@ window._handleCarouselScroll = (el) => {
     }
 };
 
-console.log("momentLog: Script loaded successfully v19");
+window.handleShare = async (e, momentId, text) => {
+    e.stopPropagation();
+    const shareData = {
+        title: 'MomentLog Anısı',
+        text: text || 'Harika bir anıya bak!',
+        url: window.location.origin // Dynamic app URL
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            // Fallback for desktop: Copy to clipboard
+            const shareUrl = `${window.location.origin}`;
+            await navigator.clipboard.writeText(shareUrl);
+            showModal('Bağlantı Kopyalandı', 'Uygulama bağlantısı panoya kopyalandı! 🔗');
+        }
+    } catch (err) {
+        console.warn('Share failed:', err);
+    }
+};
+
+console.log("momentLog: Script loaded successfully v20");
