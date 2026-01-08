@@ -1265,15 +1265,21 @@ async function saveMoment() {
             if (dom.previewArea) dom.previewArea.innerHTML = '';
             isRealLocationActive = false;
 
-            // IMPORTANT: Reset global moments state to force a fresh reload from the top
+            // IMPORTANT: Reset global moments state and FORCE refresh
             moments = [];
-            myPrivateMoments = []; // Clear this too so it re-fetches own moments
+            myPrivateMoments = [];
             currentLastDoc = null;
             hasMore = true;
+            isLoadingNextPage = false; // Force unlock guard
+
+            if (dom.timeline) dom.timeline.innerHTML = '';
 
             await loadMoments();
             renderTimeline();
             renderMyRecentMoments();
+
+            // Re-setup autoplay for the new card
+            setupAutoplayObserver();
 
             showModal('Başarılı', 'Anınız kaydedildi! ✨');
         } catch (refreshErr) {
@@ -1741,8 +1747,12 @@ window.addComment = async (momentId) => {
 
     try {
         await DBService.addComment(momentId, { text });
+        // Update local state to show +1 comment immediately
+        const m = moments.find(mom => mom.id === momentId);
+        if (m) m.commentsCount = (m.commentsCount || 0) + 1;
+
         await loadInlineComments(momentId);
-        await loadMoments();
+        // We don't necessarily need to reload everything, just render the counts
         renderTimeline();
     } catch (e) {
         showModal('Hata', 'Yorum eklenemedi: ' + e.message);
