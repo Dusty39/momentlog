@@ -2679,24 +2679,38 @@ h1 {
     text-shadow: 0 0 5px var(--accent-glow);
 }
 
-.early-user-badge {
+.verified-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #FFD700;
-    /* Gold/Yellow */
+    background: #FFD200;
+    /* Vibrant Yellow */
     color: #000;
-    font-size: 0.6rem;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    margin-left: 4px;
-    transform: rotate(-10deg);
-    font-weight: bold;
-    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    margin-left: 6px;
+    font-weight: 800;
+    transform: rotate(-3deg);
     position: relative;
-    /* Brush stroke effect using clip-path */
-    clip-path: polygon(5% 0%, 95% 5%, 100% 90%, 10% 100%, 0% 80%);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    /* Brush stroke effect */
+    clip-path: polygon(2% 15%, 95% 5%, 98% 85%, 5% 95%, 0% 50%);
+    user-select: none;
+    line-height: 1;
+    min-width: 16px;
+    height: 16px;
+    vertical-align: middle;
+}
+
+.verified-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .date {

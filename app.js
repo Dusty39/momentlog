@@ -1492,7 +1492,7 @@ function renderTimeline(searchQuery = '') {
                         <div class="user-details">
                             <span class="username">
                                 ${m.userDisplayName || 'Anonim'}
-                                ${m.isEarlyUser ? '<span class="early-user-badge">✓</span>' : ''}
+                                ${m.isVerified ? '<span class="verified-badge">✓</span>' : ''}
                             </span>
                             <div class="meta-info">
                                 <span class="date">${formattedDate}${locationText}</span>
@@ -2001,7 +2001,10 @@ async function openProfileView(uid) {
                 `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
                 </div>
                 <div class="profile-info-minimal">
-                    <h2>${userProfile.displayName || 'İsimsiz'}</h2>
+                    <h2>
+                        ${userProfile.displayName || 'İsimsiz'}
+                        ${userProfile.isVerified ? '<span class="verified-badge">✓</span>' : ''}
+                    </h2>
                     <p class="profile-username">@${userProfile.username || 'kullanici'}</p>
                     <p class="profile-bio">${userProfile.bio || ''}</p>
                 </div>

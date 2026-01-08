@@ -90,6 +90,7 @@ const DBService = {
         if (updateData.username) dataToSync.userDisplayName = updateData.username;
         else if (updateData.displayName) dataToSync.userDisplayName = updateData.displayName;
         if (updateData.photoURL) dataToSync.userPhotoURL = updateData.photoURL;
+        if (updateData.isVerified !== undefined) dataToSync.isVerified = updateData.isVerified;
 
         if (Object.keys(dataToSync).length === 0) return;
 
@@ -519,7 +520,7 @@ const DBService = {
                         ...m,
                         userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
                         userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
-                    isEarlyUser: profile?.isEarlyUser || false,
+                        isEarlyUser: profile?.isEarlyUser || false,
                         isEarlyUser: profile?.isEarlyUser || false
                     };
                 }),
@@ -722,8 +723,23 @@ const DBService = {
                 transaction.delete(db.collection('usernames').doc(oldUsername.toLowerCase()));
             }
 
+            // Logic for Early Verified Badge: First 20 Google Users
+            let isVerified = userDoc.data()?.isVerified || false;
+
+            if (!isVerified) {
+                const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+                const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
+                if (isGoogleUser && verifiedSnap.size < 20) {
+                    isVerified = true;
+                }
+            }
+
             transaction.set(usernameRef, { uid: uid });
-            transaction.update(userRef, { username: newUsername });
+            transaction.update(userRef, {
+                username: newUsername,
+                isVerified: isVerified
+            });
+            return isVerified;
         });
     },
 
