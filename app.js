@@ -618,9 +618,9 @@ window.toggleMusic = (url, momentId) => {
 };
 
 window.handleCardClick = (e, momentId, musicUrl) => {
-    // Prevent triggering if clicking on buttons or interactive elements
+    // Prevent triggering if clicking on buttons, interactive elements, or collage photos
     const interactiveTags = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'LABEL'];
-    if (interactiveTags.includes(e.target.tagName) || e.target.closest('.user-info') || e.target.closest('.card-actions')) {
+    if (interactiveTags.includes(e.target.tagName) || e.target.closest('.user-info') || e.target.closest('.card-actions') || e.target.closest('.mini-img-wrapper')) {
         return;
     }
 

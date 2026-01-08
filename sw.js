@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v153-delete-ux';
+const CACHE_NAME = 'momentlog-v154-interaction-fix';
 const ASSETS = [
     './',
     './index.html',
