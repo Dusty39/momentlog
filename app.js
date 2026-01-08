@@ -350,7 +350,7 @@ function debounce(func, wait) {
 
 
 // --- Custom Modal Helper ---
-function showModal(title, message, isConfirm = false) {
+function showModal(title, message, isConfirm = false, duration = 0) {
     return new Promise((resolve) => {
         const modal = document.getElementById('customModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -369,9 +369,12 @@ function showModal(title, message, isConfirm = false) {
         modal.classList.remove('hidden');
         cancelBtn.style.display = isConfirm ? 'block' : 'none';
 
+        let autoCloseTimer = null;
+
         const handleConfirm = () => { cleanup(); resolve(true); };
         const handleCancel = () => { cleanup(); resolve(false); };
         const cleanup = () => {
+            if (autoCloseTimer) clearTimeout(autoCloseTimer);
             confirmBtn.removeEventListener('click', handleConfirm);
             cancelBtn.removeEventListener('click', handleCancel);
             modal.classList.add('hidden');
@@ -379,6 +382,10 @@ function showModal(title, message, isConfirm = false) {
 
         confirmBtn.addEventListener('click', handleConfirm);
         cancelBtn.addEventListener('click', handleCancel);
+
+        if (duration > 0 && !isConfirm) {
+            autoCloseTimer = setTimeout(handleConfirm, duration);
+        }
     });
 }
 
@@ -1313,11 +1320,13 @@ async function saveMoment() {
             // Re-setup autoplay for the new card
             setupAutoplayObserver();
 
-            showModal('Başarılı', 'Anınız kaydedildi! ✨');
+            // SUCCESS UX: Show auto-closing modal then reload to be 100% sure
+            await showModal('Başarılı', 'Anınız kaydedildi! ✨', false, 2000);
+            location.reload();
         } catch (refreshErr) {
             console.warn("Kayıt başarılı ancak arayüz yenilenirken hata oluştu:", refreshErr);
-            // Don't show "Hata" modal to user if it's just a refresh glitch
-            showModal('Başarılı', 'Anınız kaydedildi! (Liste yenilenirken bir sorun oluştu, lütfen sayfayı yenileyin)');
+            // Even if silent error, reload is better
+            location.reload();
         }
     } catch (e) {
         console.error("Genel Kaydetme Hatası:", e);
