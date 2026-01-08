@@ -31,8 +31,8 @@ let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 
-// --- Image Compression for Fallback ---
-async function compressImage(dataUrl, quality = 0.3, maxWidth = 500) {
+// --- Image Compression for Fallback (Full HD Ready) ---
+async function compressImage(dataUrl, quality = 0.75, maxWidth = 1080) {
     return new Promise((resolve) => {
         const timeout = setTimeout(() => {
             console.warn("Compression timed out");
@@ -1284,7 +1284,7 @@ async function saveMoment() {
                     } else {
                         // Fallback: if Storage fails, try to save compressed base64
                         console.log('Storage failed, using compressed data URL');
-                        const compressedData = await compressImage(m.data, 0.3, 500);
+                        const compressedData = await compressImage(m.data, 0.75, 1080);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }
@@ -1293,7 +1293,7 @@ async function saveMoment() {
                     console.error('Media upload error:', uploadErr);
                     // Fallback on error too
                     try {
-                        const compressedData = await compressImage(m.data, 0.3, 500);
+                        const compressedData = await compressImage(m.data, 0.75, 1080);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }
