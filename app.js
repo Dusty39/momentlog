@@ -439,6 +439,7 @@ const MusicManager = {
     currentMomentId: null,
     isPlaying: false,
     fadeInterval: null,
+    originalVolume: 0.8,
     isAutoplayAllowed: true, // New flag: Global control for autoplay
 
     async play(url, momentId, skipFade = false, isManual = false) {
@@ -477,6 +478,7 @@ const MusicManager = {
         console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
+        this.audio.load(); // Explicit load for better cross-browser experience
         this.audio.loop = true;
         this.currentMomentId = momentId;
 
