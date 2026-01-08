@@ -31,8 +31,8 @@ let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 
-// --- Image Compression for Fallback (Full HD Ready) ---
-async function compressImage(dataUrl, quality = 0.75, maxWidth = 1080) {
+// --- Image Compression for Fallback (WebP 2K Ready) ---
+async function compressImage(dataUrl, quality = 0.85, maxWidth = 1440) {
     return new Promise((resolve) => {
         const timeout = setTimeout(() => {
             console.warn("Compression timed out");
@@ -55,9 +55,13 @@ async function compressImage(dataUrl, quality = 0.75, maxWidth = 1080) {
             canvas.height = height;
 
             const ctx = canvas.getContext('2d');
+            // High quality smoothing for professional results
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
 
-            const compressedData = canvas.toDataURL('image/jpeg', quality);
+            // WebP provides much better quality/size ratio than JPEG
+            const compressedData = canvas.toDataURL('image/webp', quality);
             resolve(compressedData);
         };
         img.onerror = () => {
@@ -1299,9 +1303,9 @@ async function saveMoment() {
                     if (url) {
                         uploadedMedia.push({ type: m.type || 'image', url: url });
                     } else {
-                        // Fallback: if Storage fails, try to save compressed base64
+                        // Fallback: if Storage fails, try to save compressed base64 (Ultra HD WebP)
                         console.log('Storage failed, using compressed data URL');
-                        const compressedData = await compressImage(m.data, 0.75, 1080);
+                        const compressedData = await compressImage(m.data, 0.85, 1440);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }
@@ -1310,7 +1314,7 @@ async function saveMoment() {
                     console.error('Media upload error:', uploadErr);
                     // Fallback on error too
                     try {
-                        const compressedData = await compressImage(m.data, 0.75, 1080);
+                        const compressedData = await compressImage(m.data, 0.85, 1440);
                         if (compressedData) {
                             uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                         }
