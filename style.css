@@ -1306,8 +1306,16 @@ textarea::placeholder {
     font-size: 0.75rem;
     color: #fff;
     font-weight: 500;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.collage-music-marquee.has-scroll {
     animation: collage-marquee 15s linear infinite;
     padding-left: 100%;
+    width: auto;
+    justify-content: flex-start;
 }
 
 @keyframes collage-marquee {

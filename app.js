@@ -483,6 +483,55 @@ const MusicManager = {
     }
 };
 
+// --- Music Metadata & Preview Fetcher ---
+async function fetchMusicMetadata(url) {
+    if (!url || (!url.includes('spotify.com') && !url.includes('open.spotify.com'))) return null;
+
+    try {
+        // 1. Spotify oEmbed to get title/artist
+        const spotifyOembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+        const response = await fetch(spotifyOembedUrl);
+        if (!response.ok) return null;
+        const data = await response.json();
+
+        if (data && data.title) {
+            let title = data.title;
+            // Clean title
+            title = title.replace(' | Spotify', '').replace(' - song by ', ' - ');
+
+            // 2. Search Deezer for the 30s preview (JSONP to bypass CORS)
+            const searchTerms = title.split(' - ');
+            const query = searchTerms.length > 1 ? `${searchTerms[0]} ${searchTerms[1]}` : title;
+
+            return new Promise((resolve) => {
+                const callbackName = 'deezerCallback_' + Math.floor(Math.random() * 1000000);
+                window[callbackName] = (res) => {
+                    delete window[callbackName];
+                    const s = document.getElementById(callbackName);
+                    if (s) s.remove();
+                    if (res.data && res.data.length > 0) {
+                        resolve({
+                            title: title,
+                            previewUrl: res.data[0].preview
+                        });
+                    } else {
+                        resolve({ title: title, previewUrl: null });
+                    }
+                };
+                const script = document.createElement('script');
+                script.id = callbackName;
+                script.src = `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1&output=jsonp&callback=${callbackName}`;
+                document.body.appendChild(script);
+                // Timeout after 5s
+                setTimeout(() => { if (window[callbackName]) resolve({ title: title, previewUrl: null }); }, 5000);
+            });
+        }
+    } catch (err) {
+        console.error("Music metadata fetch failed:", err);
+    }
+    return null;
+}
+
 // --- Voice Recorder Manager ---
 const VoiceRecorder = {
     mediaRecorder: null,
@@ -914,6 +963,33 @@ function setupEventListeners() {
             renderTimeline(query);
         });
     }
+
+    // Music URL Input Listener
+    if (dom.musicUrlInput) {
+        dom.musicUrlInput.oninput = debounce(async (e) => {
+            const url = e.target.value.trim();
+            if (url.includes('spotify.com')) {
+                const status = document.createElement('div');
+                status.id = 'music-loading-status';
+                status.style.cssText = 'font-size: 10px; color: var(--accent); margin-top: 5px;';
+                status.textContent = '🎵 Spotify bilgileri çekiliyor...';
+                dom.musicUrlInput.after(status);
+
+                const data = await fetchMusicMetadata(url);
+                status.remove();
+
+                if (data) {
+                    if (dom.musicInput) {
+                        dom.musicInput.classList.remove('hidden');
+                        dom.musicInput.value = data.title;
+                    }
+                    if (data.previewUrl) {
+                        dom.musicUrlInput.dataset.previewUrl = data.previewUrl;
+                    }
+                }
+            }
+        }, 800);
+    }
 }
 
 // --- Infinite Scroll ---
@@ -1124,7 +1200,7 @@ async function saveMoment() {
             venue: venue,
             stickerText: stickerText,
             musicText: dom.musicInput?.value?.trim() || null,
-            musicUrl: dom.musicUrlInput?.value?.trim() || null,
+            musicUrl: dom.musicUrlInput?.dataset?.previewUrl || dom.musicUrlInput?.value?.trim() || null,
             voiceUrl: voiceUrl,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
@@ -1174,6 +1250,7 @@ async function saveMoment() {
             if (dom.musicUrlInput) {
                 dom.musicUrlInput.value = '';
                 dom.musicUrlInput.classList.add('hidden');
+                delete dom.musicUrlInput.dataset.previewUrl;
             }
 
             // Reset media and voice
@@ -1262,8 +1339,8 @@ function renderTimeline(searchQuery = '') {
                             <!-- Music Marquee inside Collage (Top) -->
                             ${m.musicText ? `
                                 <div class="collage-music-wrapper">
-                                    <div class="collage-music-marquee">
-                                        🎵 ${m.musicText} &nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}
+                                    <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
+                                        🎵 ${m.musicText} ${m.musicText.length > 25 ? `&nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}` : ''}
                                     </div>
                                 </div>
                             ` : ''}
