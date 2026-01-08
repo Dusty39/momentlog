@@ -1623,13 +1623,13 @@ function renderMyRecentMoments() {
         return `
             <div class="swipe-item-wrapper">
                 <div class="swipe-action-delete" onclick="window.handleSwipeDelete('${m.id}')">
-                    <span>Sil</span>
+                    <span>✕</span>
                 </div>
-                <div class="compact-moment-item">
-                    <div class="compact-img-wrapper"
-                         ontouchstart="window.handleSwipeStart(event)"
-                         ontouchmove="window.handleSwipeMove(event)"
-                         ontouchend="window.handleSwipeEnd(event)">
+                <div class="compact-moment-item"
+                     ontouchstart="window.handleSwipeStart(event)"
+                     ontouchmove="window.handleSwipeMove(event)"
+                     ontouchend="window.handleSwipeEnd(event)">
+                    <div class="compact-img-wrapper">
                         <div class="compact-thumb">
                             ${imgSrc ? `<img src="${imgSrc}">` : '<div class="no-thumb">📝</div>'}
                         </div>
@@ -1677,13 +1677,13 @@ window.handleSwipeMove = (e) => {
 
 window.handleSwipeEnd = (e) => {
     if (!swipingElement) return;
-    swipingElement.style.transition = '';
+    swipingElement.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     const currentX = e.changedTouches[0].clientX;
     const diff = currentX - swipeStartX;
     const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
 
-    if (diff < -50) {
-        swipingElement.style.transform = 'translateX(-80px)';
+    if (diff < -40) {
+        swipingElement.style.transform = 'translateX(-70px)';
         if (btn) btn.style.opacity = '1';
     } else {
         swipingElement.style.transform = 'translateX(0)';
@@ -1693,26 +1693,28 @@ window.handleSwipeEnd = (e) => {
 };
 
 window.handleSwipeDelete = async (id) => {
-    if (confirm('Bu anıyı silmek istediğinizden emin misiniz?')) {
+    const confirmed = await showModal('Emin misiniz?', 'Bu anıyı silmek istediğinizden emin misiniz?', true);
+    if (confirmed) {
         try {
             await DBService.deleteMoment(id);
-            // Update local state and re-render
+            // Dynamic UI update: remove from local caches
             myPrivateMoments = myPrivateMoments.filter(m => m.id !== id);
             moments = moments.filter(m => m.id !== id);
+
+            // Re-render compact list immediately
             renderMyRecentMoments();
-            // Also refresh main timeline if needed
-            if (typeof loadMoments === 'function') {
-                loadMoments().then(() => renderTimeline());
-            }
+
+            // Re-render main timeline if visible
+            renderTimeline();
+
+            await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
         } catch (e) {
             console.error("Delete error:", e);
-            alert("Silme işlemi sırasında hata oluştu.");
+            showModal('Hata', 'Silme işlemi sırasında hata oluştu.');
         }
     } else {
-        // Reset all swipe positions
-        document.querySelectorAll('.compact-moment-item').forEach(el => {
-            el.style.transform = 'translateX(0)';
-        });
+        // Reset swipe position if cancelled
+        renderMyRecentMoments();
     }
 };
 
