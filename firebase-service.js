@@ -63,12 +63,21 @@ const DBService = {
                     photoURL: user.photoURL || '👤',
                     bio: 'Merhaba, ben momentLog kullanıyorum!',
                     username: null,
+                    isVerified: false, // Default
                     isPrivateProfile: false,
                     followers: [],
                     following: [],
                     pendingFollowers: [],
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
+
+                // Proactive Check for Google Users (Early Adopters)
+                const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+                const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
+                if (isGoogleUser && verifiedSnap.size < 20) {
+                    newUser.isVerified = true;
+                }
+
                 await docRef.set(newUser);
                 return newUser;
             }

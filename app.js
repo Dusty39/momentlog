@@ -291,32 +291,45 @@ window.saveProfileChanges = async () => {
             bio: bio
         };
 
+        let isVerifiedNow = false;
         if (username && username !== originalUsername.toLowerCase()) {
-            await DBService.changeUsername(currentUser.uid, username);
-            // After changing username, avoid updating it again in updateUserProfile
+            isVerifiedNow = await DBService.changeUsername(currentUser.uid, username);
         } else {
-            // Only update display name and bio if username didn't change
-            // or if it changed, we update those too in the next step
+            // Check existing profile status to keep it during sync
+            const currentProfile = await DBService.getUserProfile(currentUser.uid);
+            isVerifiedNow = currentProfile?.isVerified || false;
         }
 
         if (photoURL) {
             updateData.photoURL = photoURL;
         }
 
+        // Add verified status to sync data so moments get updated too
+        updateData.isVerified = isVerifiedNow;
+
         await DBService.updateUserProfile(currentUser.uid, updateData);
 
-        // Update Firebase Auth profile - ONLY displayName to avoid "Photo url too long" error
-        // Current Firebase Auth photoURL has a 2048 char limit, our Base64 is much longer.
+        // Update Firebase Auth profile
         try {
             await AuthService.updateProfile({
                 displayName: updateData.displayName
             });
         } catch (authError) {
-            console.warn("Auth profile update (displayName) failed, continuing:", authError);
+            console.warn("Auth profile update failed:", authError);
         }
 
-        // Sync older moments with new profile data
+        // Sync ALL moments with new profile data and VERIFIED status
         await DBService.syncUserMoments(currentUser.uid, updateData);
+
+        // Success: Close and refresh
+        await showModal('Başarılı', 'Profilin güncellendi! ✨', false, 2000);
+
+        // Refresh local views
+        if (window._currentProfileUid === currentUser.uid) {
+            window.openProfileView(currentUser.uid);
+        }
+        closeModalInApp('editProfileModal');
+        location.reload(); // Hard reload to ensure timeline stickers and badges are fully synced
 
         // Update header profile photo if changed
         if (photoURL && dom.profileBtn) {
