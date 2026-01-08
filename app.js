@@ -610,6 +610,19 @@ window.toggleMusic = (url, momentId) => {
     MusicManager.play(url, momentId);
 };
 
+window.handleCardClick = (e, momentId, musicUrl) => {
+    // Prevent triggering if clicking on buttons or interactive elements
+    const interactiveTags = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'LABEL'];
+    if (interactiveTags.includes(e.target.tagName) || e.target.closest('.user-info') || e.target.closest('.card-actions')) {
+        return;
+    }
+
+    if (musicUrl) {
+        console.log(`[CardClick] Triggering music for ${momentId}`);
+        window.toggleMusic(musicUrl, momentId);
+    }
+};
+
 // --- Voice Memo Playback ---
 const VoicePlayer = {
     audio: new Audio(),
@@ -1053,7 +1066,10 @@ function setupAutoplayObserver() {
         console.log("[Audio] System unlocked by user interaction");
         MusicManager.audio.play().then(() => {
             MusicManager.audio.pause();
-        }).catch(() => { });
+            MusicManager.isUnlocked = true;
+        }).catch((err) => {
+            console.warn("[Audio] Unlock failed:", err);
+        });
         document.removeEventListener('click', unlockAudio);
         document.removeEventListener('touchstart', unlockAudio);
     };
@@ -1398,7 +1414,7 @@ function renderTimeline(searchQuery = '') {
         }
 
         return `
-            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}">
+            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}" onclick="window.handleCardClick(event, '${m.id}', '${m.musicUrl || ''}')">
                 <!-- 1. Header (Kullanıcı Bilgisi) -->
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
