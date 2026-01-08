@@ -781,11 +781,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check last view
     console.log("momentLog: DOM Loaded v19");
 
-    if (dom.momentDate) {
-        const today = new Date().toISOString().split('T')[0];
-        dom.momentDate.max = today;
-        dom.momentDate.value = today;
-    }
+    const refreshTodayDate = () => {
+        if (dom.momentDate) {
+            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+            dom.momentDate.max = today;
+            // Only set value if it's currently empty or was previously set to an old "today"
+            if (!dom.momentDate.value || dom.momentDate.value === dom.momentDate._lastToday) {
+                dom.momentDate.value = today;
+                dom.momentDate._lastToday = today;
+            }
+        }
+    };
+
+    refreshTodayDate();
+    // Refresh date when user interacts with date button or focuses
+    document.getElementById('dateBtn')?.addEventListener('click', refreshTodayDate);
+    dom.momentDate?.addEventListener('focus', refreshTodayDate);
 
     // Always start with akış (my-moments) view - no persistence
     currentView = 'my-moments';
@@ -1354,16 +1365,8 @@ async function saveMoment() {
             isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
-            createdAt: (() => {
-                const now = new Date();
-                if (dateInput) {
-                    const selected = new Date(dateInput);
-                    // Set current hours/mins/secs to the selected date
-                    selected.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
-                    return selected.toISOString();
-                }
-                return now.toISOString();
-            })()
+            momentDate: dateInput || null, // The user-selected date
+            createdAt: new Date().toISOString() // ACTUAL UPLOAD TIME for absolute sorting
         };
 
         if (isRealLocationActive && locationString) {
@@ -1479,7 +1482,10 @@ function renderTimeline(searchQuery = '') {
 
     // Full card view for all tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
-        const date = new Date(m.createdAt);
+        // Use momentDate (user selected) for display, fallback to createdAt (system date)
+        const dateString = m.momentDate || m.createdAt;
+        const date = new Date(dateString);
+
         const formattedDate = date.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
