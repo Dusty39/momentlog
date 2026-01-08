@@ -939,7 +939,7 @@ textarea::placeholder {
 
 .mini-brush-sticker {
     display: inline-block;
-    padding: 4px 20px;
+    padding: 3px 12px;
     background: var(--accent);
     color: white;
     font-size: 0.75rem;
@@ -1254,16 +1254,17 @@ textarea::placeholder {
 
 .collage-stickers-overlay {
     position: absolute;
-    top: 0;
+    top: 40px;
+    /* Below music marquee */
     left: 0;
     right: 0;
     bottom: 0;
     pointer-events: none;
-    padding: 15px;
+    padding: 10px 15px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    /* Center the stack vertically in the overlay area */
+    justify-content: flex-start;
+    /* Move to top */
     z-index: 100;
 }
 
