@@ -441,19 +441,26 @@ const MusicManager = {
             return;
         }
 
-        // If same song, check if playing
+        // --- Toggle Logic ---
         if (this.currentMomentId === momentId) {
-            if (this.isPlaying) return;
-            try {
-                this.audio.play();
-                this.isPlaying = true;
-                if (!skipFade) this.fadeIn();
-            } catch (e) { }
-            this.updateUI();
-            return;
+            if (this.isPlaying) {
+                console.log(`[MusicManager] Toggling OFF for ${momentId}`);
+                this.pause();
+                return;
+            } else {
+                console.log(`[MusicManager] Toggling ON for ${momentId}`);
+                try {
+                    await this.audio.play();
+                    this.isPlaying = true;
+                    if (!skipFade) this.fadeIn();
+                } catch (e) { }
+                this.updateUI();
+                return;
+            }
         }
 
         // New track or resuming different
+        console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
         this.audio.load();
@@ -1094,7 +1101,7 @@ function setupAutoplayObserver() {
     const options = {
         root: null,
         rootMargin: '0px',
-        threshold: 0.4 // Lower threshold for faster trigger
+        threshold: 0.5 // Trigger when half of the card is visible/hidden
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -1105,24 +1112,32 @@ function setupAutoplayObserver() {
 
             if (entry.isIntersecting) {
                 if (moment && moment.musicUrl) {
+                    // Start if not already playing or if different song
                     if (MusicManager.currentMomentId !== momentId || !MusicManager.isPlaying) {
                         MusicManager.play(moment.musicUrl, momentId);
                     }
                 } else {
-                    // Moment has no music, fade out current
+                    // Visible card has no music, fade out current if it was this one or global
                     MusicManager.fadeOut();
                 }
             } else {
-                // Scrolled out
-                if (MusicManager.currentMomentId === momentId) {
+                // Scrolled out: If the card leaving is the one currently playing, fade out
+                if (MusicManager.currentMomentId === momentId && MusicManager.isPlaying) {
+                    console.log(`[Observer] Card ${momentId} scrolled out, fading out.`);
                     MusicManager.fadeOut();
                 }
             }
         });
     }, options);
 
-    // Initial observation of cards
-    document.querySelectorAll('.moment-card').forEach(card => observer.observe(card));
+    // Initial and periodic observe check
+    const observeAll = () => {
+        document.querySelectorAll('.moment-card').forEach(card => observer.observe(card));
+    };
+    observeAll();
+
+    // Check frequently if feed is rendered
+    setInterval(observeAll, 3000);
 
     // Also observe new cards when they are rendered
     window._autoplayObserver = observer;
