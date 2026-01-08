@@ -1845,7 +1845,7 @@ window.toggleComments = async (momentId) => {
     }
 };
 
-async function loadInlineComments(momentId) {
+async function loadInlineComments(momentId, expanded = false) {
     const list = document.getElementById(`commentsList-${momentId}`);
     if (!list) return;
 
@@ -1860,7 +1860,24 @@ async function loadInlineComments(momentId) {
             return;
         }
 
-        list.innerHTML = comments.map(c => {
+        // Sort by likes count (descending)
+        comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+
+        let displayComments = comments;
+        let showMoreBtn = '';
+
+        if (!expanded && comments.length > 3) {
+            displayComments = comments.slice(0, 3);
+            showMoreBtn = `
+                <div class="show-more-comments-wrapper" style="padding: 10px; text-align: center;">
+                    <button class="show-more-comments-btn" onclick="loadInlineComments('${momentId}', true)" style="background: none; border: none; color: var(--accent-gold); font-size: 0.85rem; cursor: pointer;">
+                        Tüm yorumları gör (${comments.length})
+                    </button>
+                </div>
+            `;
+        }
+
+        list.innerHTML = displayComments.map(c => {
             const isOwner = currentUser?.uid === c.userId;
             const isLiked = c.likes?.includes(currentUser?.uid);
             const likeCount = c.likes?.length || 0;
@@ -1880,7 +1897,7 @@ async function loadInlineComments(momentId) {
                     </div>
                 </div>
             `;
-        }).join('');
+        }).join('') + showMoreBtn;
     } catch (e) {
         list.innerHTML = '<div class="error">Yorumlar yüklenemedi</div>';
     }
@@ -1889,7 +1906,10 @@ async function loadInlineComments(momentId) {
 window.toggleCommentLike = async (momentId, commentId) => {
     try {
         await DBService.toggleCommentLike(momentId, commentId);
-        await loadInlineComments(momentId);
+        // Determine if we should refresh as expanded or not based on current view
+        const list = document.getElementById(`commentsList-${momentId}`);
+        const isCurrentlyExpanded = list && list.querySelectorAll('.comment-item').length > 3;
+        await loadInlineComments(momentId, isCurrentlyExpanded);
     } catch (e) {
         console.error('Comment like error:', e);
     }
@@ -2351,6 +2371,9 @@ async function loadComments(momentId, expanded = false) {
             return;
         }
 
+        // Sort by likes count (descending)
+        comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+
         let displayComments = comments;
         let showMoreBtn = '';
 
@@ -2469,7 +2492,7 @@ function renderNotificationsInView(notifications) {
 
         return `
             <div class="notification-item ${unreadClass} ${n.type}">
-                <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}')">
+                <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}', '${n.type}')">
                     <div class="notif-avatar">${avatar}</div>
                     <div class="notif-content">
                         <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
@@ -2523,7 +2546,7 @@ function getTimeAgo(dateStr) {
     return `${Math.floor(diff / 86400)} gün önce`;
 }
 
-window.handleNotificationClick = async (notifId, momentId, senderUid) => {
+window.handleNotificationClick = async (notifId, momentId, senderUid, type) => {
     // 1. Mark as read immediately for UX
     const notif = (window._notifications || []).find(n => n.id === notifId);
     if (notif) notif.isRead = true;
@@ -2551,8 +2574,18 @@ window.handleNotificationClick = async (notifId, momentId, senderUid) => {
             let attempts = 0;
             const interval = setInterval(() => {
                 attempts++;
-                if (scrollToId() || attempts > 20) clearInterval(interval);
+                const found = scrollToId();
+                if (found || attempts > 20) {
+                    clearInterval(interval);
+                    if (found && type === 'comment') {
+                        setTimeout(() => window.toggleComments(momentId), 500);
+                    }
+                }
             }, 500);
+        } else {
+            if (type === 'comment') {
+                setTimeout(() => window.toggleComments(momentId), 500);
+            }
         }
     } else if (senderUid) {
         openProfileView(senderUid);
