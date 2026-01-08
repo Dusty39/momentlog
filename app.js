@@ -9,7 +9,8 @@ window.onerror = function (msg, url, line) {
     return false;
 };
 
-console.log("momentLog: Script loading v19...");
+console.log("momentLog: Script loading v164...");
+console.log("DEBUG: v164 - closeModallnApp typo is GONE.");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
@@ -335,10 +336,8 @@ window.saveProfileChanges = async () => {
         await DBService.syncUserMoments(currentUser.uid, updateData);
 
         // Success: Close and refresh
-        await showModal('Başarılı', 'Profilin güncellendi! ✨', false, 2000);
-
-        // Refresh local views
         window.closeEditProfileModal();
+        await showModal('Başarılı', 'Profilin güncellendi! ✨', false, 1500);
         location.reload();
     } catch (e) {
         console.error('Profile update error:', e);

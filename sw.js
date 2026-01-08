@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v163-profile-fix';
+const CACHE_NAME = 'momentlog-v164-force-refresh';
 const ASSETS = [
     './',
     './index.html',
