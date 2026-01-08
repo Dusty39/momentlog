@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v165-swipe-redesign';
+const CACHE_NAME = 'momentlog-v166-music-order';
 const ASSETS = [
     './',
     './index.html',

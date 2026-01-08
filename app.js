@@ -563,9 +563,14 @@ async function fetchMusicMetadata(url) {
 
         if (data && data.title) {
             // Initial suggestion from Spotify
-            let spotifyTitle = data.title.replace(' | Spotify', '').replace(' - song by ', ' - ');
-            if (data.author_name && !spotifyTitle.includes(data.author_name)) {
-                spotifyTitle = `${spotifyTitle} - ${data.author_name}`;
+            let spotifyTitle = data.title.replace(' | Spotify', '');
+            const author = data.author_name || '';
+            const songName = spotifyTitle.replace(`${author} - `, '').replace(` - ${author}`, '').replace(' - song by ', '');
+
+            if (author) {
+                spotifyTitle = `${author} - ${songName}`;
+            } else {
+                spotifyTitle = songName;
             }
 
             // 2. Search Deezer for the 30s preview and precise naming
@@ -581,8 +586,8 @@ async function fetchMusicMetadata(url) {
 
                     if (res.data && res.data.length > 0) {
                         const track = res.data[0];
-                        // Prefer Deezer for the visual label (cleaner format)
-                        const finalLabel = `${track.title} - ${track.artist.name}`;
+                        // Prefer Deezer for the visual label (cleaner format) - NOW: Artist - Title
+                        const finalLabel = `${track.artist.name} - ${track.title}`;
                         resolve({
                             title: finalLabel,
                             previewUrl: track.preview
