@@ -306,11 +306,15 @@ window.saveProfileChanges = async () => {
             if (!isVerifiedNow) {
                 const isGoogleUser = currentUser.providerData.some(p => p.providerId === 'google.com');
                 const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
+                // ONLY granted if user is Google user and less than 20 verified users exist
                 if (isGoogleUser && verifiedSnap.size < 20) {
                     isVerifiedNow = true;
                     // Update the flag on user profile
                     await DBService.updateUserProfile(currentUser.uid, { isVerified: true });
                 }
+            } else {
+                // IMPORTANT: If they were already verified, ENSURE it stays true
+                isVerifiedNow = true;
             }
         }
 
@@ -1365,6 +1369,8 @@ async function saveMoment() {
             isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
+            isVerified: Boolean(userProfile?.isVerified),
+            isEarlyUser: Boolean(userProfile?.isEarlyUser),
             momentDate: dateInput || null, // The user-selected date
             createdAt: new Date().toISOString() // ACTUAL UPLOAD TIME for absolute sorting
         };

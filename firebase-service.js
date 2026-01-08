@@ -484,6 +484,7 @@ const DBService = {
                     ...m,
                     userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
                     userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤',
+                    isVerified: userProfiles[m.userId]?.isVerified || false,
                     isEarlyUser: userProfiles[m.userId]?.isEarlyUser || false
                 })),
                 lastVisible: lastDoc
