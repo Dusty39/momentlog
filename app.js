@@ -1151,43 +1151,57 @@ async function saveMoment() {
             momentData.verifiedLocation = true;
         }
 
-        await DBService.createMoment(momentData);
-
-        // Reset inputs
-        if (dom.input) dom.input.value = '';
-        if (dom.venueInput) {
-            dom.venueInput.value = '';
-            dom.venueInput.classList.add('hidden');
-        }
-        if (dom.stickerInput) {
-            dom.stickerInput.value = '';
-        }
-        if (dom.musicInput) {
-            dom.musicInput.value = '';
-            dom.musicInput.classList.add('hidden');
-        }
-        if (dom.musicUrlInput) {
-            dom.musicUrlInput.value = '';
-            dom.musicUrlInput.classList.add('hidden');
+        try {
+            await DBService.createMoment(momentData);
+        } catch (saveErr) {
+            console.error("Kritik Kaydetme Hatası:", saveErr);
+            throw new Error("Anı veritabanına yazılamadı: " + saveErr.message);
         }
 
-        // Reset form
-        if (dom.input) dom.input.value = '';
-        // Reset media and voice
-        currentMedia = [];
-        VoiceRecorder.recordedBlob = null;
-        VoiceRecorder.updateUI();
-        renderPreview();
-        if (dom.previewArea) dom.previewArea.innerHTML = '';
-        isRealLocationActive = false;
+        // --- SUCCESS PATH: Reset and Refresh UI ---
+        try {
+            // Reset inputs
+            if (dom.input) dom.input.value = '';
+            if (dom.venueInput) {
+                dom.venueInput.value = '';
+                dom.venueInput.classList.add('hidden');
+            }
+            if (dom.stickerInput) dom.stickerInput.value = '';
+            if (dom.musicInput) {
+                dom.musicInput.value = '';
+                dom.musicInput.classList.add('hidden');
+            }
+            if (dom.musicUrlInput) {
+                dom.musicUrlInput.value = '';
+                dom.musicUrlInput.classList.add('hidden');
+            }
 
-        await loadMoments();
-        renderTimeline();
-        renderMyRecentMoments();
+            // Reset media and voice
+            currentMedia = [];
+            VoiceRecorder.recordedBlob = null;
+            VoiceRecorder.updateUI();
+            renderPreview();
+            if (dom.previewArea) dom.previewArea.innerHTML = '';
+            isRealLocationActive = false;
 
-        showModal('Başarılı', 'Anınız kaydedildi! ✨');
+            // IMPORTANT: Reset global moments state to force a fresh reload from the top
+            moments = [];
+            myPrivateMoments = []; // Clear this too so it re-fetches own moments
+            currentLastDoc = null;
+            hasMore = true;
+
+            await loadMoments();
+            renderTimeline();
+            renderMyRecentMoments();
+
+            showModal('Başarılı', 'Anınız kaydedildi! ✨');
+        } catch (refreshErr) {
+            console.warn("Kayıt başarılı ancak arayüz yenilenirken hata oluştu:", refreshErr);
+            // Don't show "Hata" modal to user if it's just a refresh glitch
+            showModal('Başarılı', 'Anınız kaydedildi! (Liste yenilenirken bir sorun oluştu, lütfen sayfayı yenileyin)');
+        }
     } catch (e) {
-        console.error("Kaydetme hatası:", e);
+        console.error("Genel Kaydetme Hatası:", e);
         showModal('Hata', 'Anı kaydedilemedi: ' + e.message);
     } finally {
         if (saveBtn) {
