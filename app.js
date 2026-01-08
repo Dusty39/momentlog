@@ -1332,6 +1332,14 @@ function renderTimeline(searchQuery = '') {
         const isLiked = m.likes?.includes(currentUser?.uid);
         const isOwner = currentUser?.uid === m.userId;
 
+        // Stickers Generator (Always Split: Time Left, Headline Right)
+        const stickersHtml = `
+            <div class="collage-stickers-overlay">
+                <div class="mini-time-sticker collage-sticker">${formattedTime}</div>
+                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
+            </div>
+        `;
+
         // Media Carousel Logic
         const images = m.media?.filter(med => med.type === 'image') || [];
         let mediaHtml = '';
@@ -1355,14 +1363,7 @@ function renderTimeline(searchQuery = '') {
                                 </div>
                             ` : ''}
 
-                            <!-- Stickers strictly inside the collage slide (Stacked Left) -->
-                            <div class="collage-stickers-overlay">
-                                <div class="collage-stickers-stack">
-                                    ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
-                                    <div class="mini-time-sticker inline-sticker collage-sticker">${formattedTime}</div>
-                                    ${m.voiceUrl ? `<div class="collage-voice-indicator">🎤 Ses Kaydı</div>` : ''}
-                                </div>
-                            </div>
+                            ${stickersHtml}
                         </div>
             `;
 
@@ -1403,17 +1404,20 @@ function renderTimeline(searchQuery = '') {
 
                 <!-- 2. Müzik Grubu (Artık Kolaj İçinde) -->
 
-                <!-- 3 & 4. Etiketler (Artık Kolaj İçinde) -->
-                ${m.voiceUrl ? `
-                    <div class="card-labels-stack">
-                        <div style="display: flex; justify-content: flex-start; width: 100%;">
-                            <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
-                                🎤 Sesli Not
-                            </button>
-                        </div>
+                <!-- 2 & 3 & 4. Stickers & Labels -->
+                ${images.length === 0 ? `
+                    <div class="text-moment-stickers-wrapper">
+                        ${stickersHtml}
                     </div>
                 ` : ''}
-                </div>
+
+                ${m.voiceUrl && images.length === 0 ? `
+                    <div class="card-labels-stack" style="margin-top: 10px;">
+                        <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
+                            🎤 Sesli Not
+                        </button>
+                    </div>
+                ` : ''}
                 
                 <!-- 5. Medya -->
                 ${mediaHtml}

@@ -1255,25 +1255,35 @@ textarea::placeholder {
 .collage-stickers-overlay {
     position: absolute;
     top: 40px;
-    /* Below music marquee */
     left: 0;
     right: 0;
-    bottom: 0;
     pointer-events: none;
     padding: 10px 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    /* Move to top */
     z-index: 100;
 }
 
-.collage-stickers-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-    /* Sola yapışık */
+.collage-stickers-overlay .mini-time-sticker {
+    position: absolute;
+    left: 15px;
+    top: 10px;
+}
+
+.collage-stickers-overlay .mini-brush-sticker {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+}
+
+.text-moment-stickers-wrapper {
+    position: relative;
+    width: 100%;
+    height: 60px;
+    /* Space for stickers */
+    margin-bottom: 10px;
+}
+
+.text-moment-stickers-wrapper .collage-stickers-overlay {
+    top: 0;
 }
 
 .collage-sticker {
