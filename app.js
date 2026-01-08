@@ -436,17 +436,20 @@ const MusicManager = {
                 this.pause();
             } else {
                 try {
+                    console.log(`[MusicManager] Resuming for ${momentId}`);
                     await this.audio.play();
                     this.isPlaying = true;
-                } catch (e) { console.warn("Playback failed:", e); }
+                } catch (e) { console.warn("[MusicManager] Resume failed:", e); }
             }
             this.updateUI();
             return;
         }
 
         // Different song
+        console.log(`[MusicManager] Playing new track for ${momentId}: ${url}`);
         this.pause();
         this.audio.src = url;
+        this.audio.load(); // Explicit load
         this.audio.loop = true;
         this.audio.volume = this.originalVolume;
         try {
@@ -454,7 +457,8 @@ const MusicManager = {
             this.currentMomentId = momentId;
             this.isPlaying = true;
         } catch (e) {
-            console.warn("Autoplay blocked:", e);
+            console.warn("[MusicManager] Autoplay blocked or failed:", e);
+            // Browser might need interaction, but we have unlocker now
         }
         this.updateUI();
     },
@@ -939,13 +943,13 @@ function setupEventListeners() {
         addLocBtn.onclick = () => window.handleRealLocation();
     }
 
-    // Music Button
+    // Music Button (Simplified: Only Link Input)
     if (dom.musicBtn) {
         dom.musicBtn.onclick = () => {
-            dom.musicInput.classList.toggle('hidden');
+            // Keep musicInput hidden, only show/hide UrlInput
             dom.musicUrlInput.classList.toggle('hidden');
-            if (!dom.musicInput.classList.contains('hidden')) {
-                dom.musicInput.focus();
+            if (!dom.musicUrlInput.classList.contains('hidden')) {
+                dom.musicUrlInput.focus();
             }
         };
     }
@@ -1020,7 +1024,7 @@ function setupAutoplayObserver() {
     const options = {
         root: null,
         rootMargin: '0px',
-        threshold: 0.6 // Card must be 60% visible
+        threshold: 0.4 // Lower threshold for faster trigger
     };
 
     const observer = new IntersectionObserver((entries) => {
@@ -1043,6 +1047,18 @@ function setupAutoplayObserver() {
 
     // Also observe new cards when they are rendered
     window._autoplayObserver = observer;
+
+    // Audio Unlocker: Browser policy bypass
+    const unlockAudio = () => {
+        console.log("[Audio] System unlocked by user interaction");
+        MusicManager.audio.play().then(() => {
+            MusicManager.audio.pause();
+        }).catch(() => { });
+        document.removeEventListener('click', unlockAudio);
+        document.removeEventListener('touchstart', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
 }
 
 // --- App Theme System ---
