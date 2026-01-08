@@ -432,52 +432,95 @@ const MusicManager = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
-    originalVolume: 1.0,
+    originalVolume: 0.8,
+    fadeInterval: null,
 
-    async play(url, momentId) {
-        if (!url) return;
+    async play(url, momentId, skipFade = false) {
+        if (!url) {
+            this.fadeOut();
+            return;
+        }
 
-        // If same song, toggle
+        // If same song, check if playing
         if (this.currentMomentId === momentId) {
-            if (this.isPlaying) {
-                this.pause();
-            } else {
-                try {
-                    console.log(`[MusicManager] Resuming for ${momentId}`);
-                    await this.audio.play();
-                    this.isPlaying = true;
-                } catch (e) { console.warn("[MusicManager] Resume failed:", e); }
-            }
+            if (this.isPlaying) return;
+            try {
+                this.audio.play();
+                this.isPlaying = true;
+                if (!skipFade) this.fadeIn();
+            } catch (e) { }
             this.updateUI();
             return;
         }
 
-        // Different song
-        console.log(`[MusicManager] Playing new track for ${momentId}: ${url}`);
-        this.pause();
+        // New track or resuming different
+        this.stop(true);
         this.audio.src = url;
-        this.audio.load(); // Explicit load
+        this.audio.load();
         this.audio.loop = true;
-        this.audio.volume = this.originalVolume;
+        this.currentMomentId = momentId;
+        this.isPlaying = true;
+
         try {
             await this.audio.play();
-            this.currentMomentId = momentId;
-            this.isPlaying = true;
+            if (!skipFade) this.fadeIn();
         } catch (e) {
-            console.warn("[MusicManager] Autoplay blocked or failed:", e);
-            // Browser might need interaction, but we have unlocker now
+            console.warn("[MusicManager] Play failed:", e);
         }
         this.updateUI();
     },
 
+    fadeIn(duration = 1000) {
+        clearInterval(this.fadeInterval);
+        this.audio.volume = 0;
+        const step = this.originalVolume / (duration / 50);
+        this.fadeInterval = setInterval(() => {
+            if (this.audio.volume + step >= this.originalVolume) {
+                this.audio.volume = this.originalVolume;
+                clearInterval(this.fadeInterval);
+            } else {
+                this.audio.volume += step;
+            }
+        }, 50);
+    },
+
+    fadeOut(duration = 1000, stopAfter = true) {
+        if (!this.isPlaying && this.audio.volume === 0) return;
+        clearInterval(this.fadeInterval);
+        const startVol = this.audio.volume;
+        const step = startVol / (duration / 50);
+        this.fadeInterval = setInterval(() => {
+            if (this.audio.volume - step <= 0) {
+                this.audio.volume = 0;
+                clearInterval(this.fadeInterval);
+                if (stopAfter) this.stop(true);
+            } else {
+                this.audio.volume -= step;
+            }
+        }, 50);
+    },
+
     pause() {
-        this.audio.pause();
-        this.isPlaying = false;
-        this.updateUI();
+        this.fadeOut();
+    },
+
+    stop(immediate = false) {
+        if (immediate) {
+            clearInterval(this.fadeInterval);
+            this.audio.pause();
+            this.isPlaying = false;
+            this.audio.volume = 0;
+            this.updateUI();
+        } else {
+            this.fadeOut();
+        }
     },
 
     setVolume(val) {
-        this.audio.volume = val;
+        this.originalVolume = val;
+        if (this.isPlaying && !this.fadeInterval) {
+            this.audio.volume = val;
+        }
     },
 
     updateUI() {
@@ -1049,14 +1092,23 @@ function setupAutoplayObserver() {
 
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
+            const card = entry.target;
+            const momentId = card.dataset.id;
+            const moment = moments.find(m => m.id === momentId);
+
             if (entry.isIntersecting) {
-                const card = entry.target;
-                const momentId = card.dataset.id;
-                // Find moment data to get musicUrl
-                const moment = moments.find(m => m.id === momentId);
                 if (moment && moment.musicUrl) {
-                    console.log("Autoplay music for card:", momentId);
-                    window.toggleMusic(moment.musicUrl, momentId);
+                    if (MusicManager.currentMomentId !== momentId || !MusicManager.isPlaying) {
+                        MusicManager.play(moment.musicUrl, momentId);
+                    }
+                } else {
+                    // Moment has no music, fade out current
+                    MusicManager.fadeOut();
+                }
+            } else {
+                // Scrolled out
+                if (MusicManager.currentMomentId === momentId) {
+                    MusicManager.fadeOut();
                 }
             }
         });
