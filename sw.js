@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v179-share-icon';
+const CACHE_NAME = 'momentlog-v180-journal-view';
 const ASSETS = [
     './',
     './index.html',

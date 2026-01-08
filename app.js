@@ -1026,6 +1026,21 @@ function setupEventListeners() {
             dom.timeline?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.remove('hidden-mode');
+        } else if (currentView === 'my-moments') {
+            // Personal Journal View
+            if (titleEl) titleEl.textContent = "Günlüğüm";
+            exploreBtn?.classList.remove('active');
+            homeBtn?.classList.remove('active');
+            headerAddBtn?.classList.remove('active');
+            notificationsBtn?.classList.remove('active');
+            profileBtn?.classList.remove('active');
+
+            inputSectionBase?.classList.add('hidden-mode');
+            dashboardFooter?.classList.add('hidden-mode');
+            myRecentMoments?.classList.add('hidden-mode');
+            document.getElementById('profileView')?.classList.add('hidden-mode');
+            document.getElementById('notiView')?.classList.add('hidden-mode');
+            dom.timeline?.classList.remove('hidden-mode');
         } else {
             // Home / Following View
             exploreBtn?.classList.remove('active');
@@ -1661,6 +1676,7 @@ function renderMyRecentMoments() {
                     <span>✕</span>
                 </div>
                 <div class="compact-moment-item"
+                     onclick="window.setView('my-moments')"
                      ontouchstart="window.handleSwipeStart(event)"
                      ontouchmove="window.handleSwipeMove(event)"
                      ontouchend="window.handleSwipeEnd(event)">
