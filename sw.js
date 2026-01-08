@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v160-badge-sync';
+const CACHE_NAME = 'momentlog-v161-verified-fix';
 const ASSETS = [
     './',
     './index.html',

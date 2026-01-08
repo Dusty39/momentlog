@@ -292,19 +292,32 @@ window.saveProfileChanges = async () => {
         };
 
         let isVerifiedNow = false;
+
         if (username && username !== originalUsername.toLowerCase()) {
             isVerifiedNow = await DBService.changeUsername(currentUser.uid, username);
         } else {
-            // Check existing profile status to keep it during sync
+            // Force fetch latest profile to see if user is verified
             const currentProfile = await DBService.getUserProfile(currentUser.uid);
+
+            // Check if user is eligible for verification even without username change
             isVerifiedNow = currentProfile?.isVerified || false;
+
+            if (!isVerifiedNow) {
+                const isGoogleUser = currentUser.providerData.some(p => p.providerId === 'google.com');
+                const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
+                if (isGoogleUser && verifiedSnap.size < 20) {
+                    isVerifiedNow = true;
+                    // Update the flag on user profile
+                    await DBService.updateUserProfile(currentUser.uid, { isVerified: true });
+                }
+            }
         }
 
         if (photoURL) {
             updateData.photoURL = photoURL;
         }
 
-        // Add verified status to sync data so moments get updated too
+        // Always sync the verification status to all moments
         updateData.isVerified = isVerifiedNow;
 
         await DBService.updateUserProfile(currentUser.uid, updateData);
