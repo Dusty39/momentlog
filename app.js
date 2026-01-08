@@ -106,24 +106,24 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 25; left = 20;
+            top = 20; left = 25; // Centered
         } else if (images.length === 2) {
-            top = idx === 0 ? 20 : 50;
-            left = idx === 0 ? 5 : 35;
+            top = idx === 0 ? 15 : 45;
+            left = idx === 0 ? 10 : 40;
         } else if (images.length === 3) {
             const positions = [
-                { t: 20, l: 20 },
-                { t: 45, l: 5 },
-                { t: 70, l: 35 }
+                { t: 10, l: 25 },
+                { t: 40, l: 10 },
+                { t: 55, l: 40 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else { // 4 photos
             const positions = [
-                { t: 15, l: 30 },
-                { t: 35, l: 5 },
-                { t: 55, l: 40 },
-                { t: 75, l: 10 }
+                { t: 10, l: 10 },
+                { t: 10, l: 40 },
+                { t: 50, l: 10 },
+                { t: 50, l: 40 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
