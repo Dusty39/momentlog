@@ -1437,9 +1437,25 @@ async function saveMoment() {
 function renderTimeline(searchQuery = '') {
     if (!dom.timeline) return;
 
-    let filteredMoments = moments;
+    // 1. Remove duplicates by ID
+    const uniqueMap = new Map();
+    moments.forEach(m => uniqueMap.set(m.id, m));
+    let sortedMoments = Array.from(uniqueMap.values());
+
+    // 2. Sort by createdAt DESC (Robust)
+    sortedMoments.sort((a, b) => {
+        const getVal = (v) => {
+            if (!v) return 0;
+            if (typeof v === 'string') return new Date(v).getTime();
+            if (v.seconds) return v.seconds * 1000;
+            return Number(v);
+        };
+        return getVal(b.createdAt) - getVal(a.createdAt);
+    });
+
+    let filteredMoments = sortedMoments;
     if (searchQuery) {
-        filteredMoments = moments.filter(m =>
+        filteredMoments = sortedMoments.filter(m =>
             m.text?.toLowerCase().includes(searchQuery) ||
             m.location?.toLowerCase().includes(searchQuery)
         );

@@ -71,11 +71,12 @@ const DBService = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // Proactive Check for Google Users (Early Adopters)
+                // Auto-verify first 20 Google users
                 const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
                 const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
                 if (isGoogleUser && verifiedSnap.size < 20) {
                     newUser.isVerified = true;
+                    console.log("[DBService] New Google User is Verified!");
                 }
 
                 await docRef.set(newUser);
@@ -447,13 +448,19 @@ const DBService = {
                 allDocs = [...allDocs, ...snapshot.docs];
             }
 
-            // Sort by createdAt and take the latest 5 globally
+            // Sort by createdAt and take the latest 5 globally - Robust handling for mixed types
             allDocs.sort((a, b) => {
-                const aTime = a.data().createdAt || 0;
-                const bTime = b.data().createdAt || 0;
-                const aVal = typeof aTime === 'string' ? new Date(aTime).getTime() : aTime;
-                const bVal = typeof bTime === 'string' ? new Date(bTime).getTime() : bTime;
-                return bVal - aVal;
+                const aTime = a.data().createdAt;
+                const bTime = b.data().createdAt;
+
+                const getVal = (v) => {
+                    if (!v) return 0;
+                    if (typeof v === 'string') return new Date(v).getTime();
+                    if (v.seconds) return v.seconds * 1000;
+                    return Number(v);
+                };
+
+                return getVal(bTime) - getVal(aTime);
             });
 
             const pagedDocs = allDocs.slice(0, 5);
@@ -529,7 +536,7 @@ const DBService = {
                         ...m,
                         userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
                         userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
-                        isEarlyUser: profile?.isEarlyUser || false,
+                        isVerified: profile?.isVerified || false,
                         isEarlyUser: profile?.isEarlyUser || false
                     };
                 }),
@@ -737,9 +744,11 @@ const DBService = {
 
             if (!isVerified) {
                 const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+                // Check current verified count
                 const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
                 if (isGoogleUser && verifiedSnap.size < 20) {
                     isVerified = true;
+                    console.log("[DBService] Granting Early Verifier Badge!");
                 }
             }
 
