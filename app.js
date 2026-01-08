@@ -338,27 +338,8 @@ window.saveProfileChanges = async () => {
         await showModal('Başarılı', 'Profilin güncellendi! ✨', false, 2000);
 
         // Refresh local views
-        if (window._currentProfileUid === currentUser.uid) {
-            window.openProfileView(currentUser.uid);
-        }
-        closeModalInApp('editProfileModal');
-        location.reload(); // Hard reload to ensure timeline stickers and badges are fully synced
-
-        // Update header profile photo if changed
-        if (photoURL && dom.profileBtn) {
-            const img = dom.profileBtn.querySelector('img') || document.createElement('img');
-            img.src = photoURL;
-            if (!dom.profileBtn.querySelector('img')) {
-                dom.profileBtn.innerHTML = '';
-                dom.profileBtn.appendChild(img);
-            }
-            dom.profileBtn.classList.add('has-avatar');
-        }
-
         window.closeEditProfileModal();
-        showModal('Başarılı', 'Profiliniz güncellendi!');
-        openProfileView(currentUser.uid);
-
+        location.reload();
     } catch (e) {
         console.error('Profile update error:', e);
         showModal('Hata', 'Profil güncellenemedi: ' + e.message);
