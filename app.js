@@ -1697,9 +1697,9 @@ window.deleteMomentConfirm = async (momentId) => {
     if (confirmed) {
         try {
             await DBService.deleteMoment(momentId);
-            await loadMoments();
-            renderTimeline();
-            showModal('Silindi', 'Anı başarıyla silindi.');
+            // SUCCESS UX: Show auto-closing modal then reload
+            await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
+            location.reload();
         } catch (e) {
             console.error('Delete error:', e);
             showModal('Hata', 'Anı silinemedi: ' + e.message);
