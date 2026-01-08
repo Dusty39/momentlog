@@ -464,7 +464,10 @@ const MusicManager = {
                     await this.audio.play();
                     this.isPlaying = true;
                     if (!skipFade) this.fadeIn();
-                } catch (e) { }
+                } catch (e) {
+                    console.warn("[MusicManager] Resume failed:", e);
+                    this.isPlaying = false;
+                }
                 this.updateUI();
                 return;
             }
@@ -477,13 +480,14 @@ const MusicManager = {
         this.audio.load();
         this.audio.loop = true;
         this.currentMomentId = momentId;
-        this.isPlaying = true;
 
         try {
             await this.audio.play();
+            this.isPlaying = true;
             if (!skipFade) this.fadeIn();
         } catch (e) {
             console.warn("[MusicManager] Play failed:", e);
+            this.isPlaying = false;
         }
         this.updateUI();
     },
