@@ -458,11 +458,16 @@ const DBService = {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.limit(5).get();
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            const snapshot = await query.get();
+            const user = auth.currentUser;
 
-            // Enrich moments with fresh user profile data
-            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Filter out current user's moments and limit to 5
+            const moments = snapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(m => !user || m.userId !== user.uid)
+                .slice(0, 5);
+
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
             // Get unique user IDs
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
