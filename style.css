@@ -2886,8 +2886,6 @@ body.app-theme-vintage h1 {
 }
 
 .date {
-    margin-left: auto !important;
-    text-align: right !important;
     white-space: nowrap !important;
 }
 
