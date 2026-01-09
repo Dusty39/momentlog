@@ -111,7 +111,7 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 20; left = 25; // Centered
+            top = 5; left = 7.5; // Centered for the new 85% width
         } else if (images.length === 2) {
             top = idx === 0 ? 15 : 45;
             left = idx === 0 ? 10 : 40;
