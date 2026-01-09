@@ -1265,7 +1265,7 @@ textarea::placeholder {
 .collage-stickers-overlay .mini-time-sticker {
     position: absolute;
     left: 15px;
-    top: 15px;
+    top: 10px;
     /* Fixed & Higher */
     transform: rotate(0deg) !important;
     /* Never rotated */
@@ -1274,7 +1274,7 @@ textarea::placeholder {
 .collage-stickers-overlay .mini-brush-sticker {
     position: absolute;
     right: 15px;
-    top: 22px;
+    top: 30px;
     /* Slightly lower than time */
     transform: rotate(3deg) !important;
     /* Slanted/Yamuk */
