@@ -842,10 +842,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = userProfile?.username || user.displayName || 'Kullanıcı';
                 }
 
-                // Load initial sidebar data
-                const res = await DBService.getMyMoments();
-                myPrivateMoments = res.moments || [];
-                renderMyRecentMoments();
+                // Set initial view and load data
+                if (userProfile) {
+                    // Default post visibility matches profile privacy
+                    // Profile Private (true) -> isPublicState false
+                    // Profile Public (false) -> isPublicState true
+                    isPublicState = !userProfile.isPrivateProfile;
+                    window.updateVisibilityUI();
+                }
 
                 // Set initial view and load data
                 let lastView = localStorage.getItem('momentLog_lastView');
@@ -923,21 +927,25 @@ function setupEventListeners() {
         };
     }
 
-    // Visibility toggle
+    // Visibility toggle helper
+    window.updateVisibilityUI = () => {
+        const visibleIcon = document.getElementById('visibleIcon');
+        const privateIcon = document.getElementById('privateIcon');
+        if (isPublicState) {
+            visibleIcon?.classList.remove('hidden');
+            privateIcon?.classList.add('hidden');
+            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
+        } else {
+            visibleIcon?.classList.add('hidden');
+            privateIcon?.classList.remove('hidden');
+            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
+        }
+    };
+
     if (dom.visibilityToggle) {
         dom.visibilityToggle.onclick = () => {
             isPublicState = !isPublicState;
-            const visibleIcon = document.getElementById('visibleIcon');
-            const privateIcon = document.getElementById('privateIcon');
-            if (isPublicState) {
-                visibleIcon?.classList.remove('hidden');
-                privateIcon?.classList.add('hidden');
-                dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
-            } else {
-                visibleIcon?.classList.add('hidden');
-                privateIcon?.classList.remove('hidden');
-                dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
-            }
+            window.updateVisibilityUI();
         };
     }
 

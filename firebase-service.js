@@ -500,7 +500,7 @@ const DBService = {
         try {
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
-                // .where('isPrivateProfile', '==', false) // Temporarily disabled for backward compatibility
+                .where('isPrivateProfile', '==', false)
                 .orderBy('createdAt', 'desc');
 
             if (lastVisible) {
