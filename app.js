@@ -111,7 +111,7 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 10; left = 10; // Slightly lower and centered for 80% width
+            top = 18; left = 10; // Lowered to prevent sticker collision
         } else if (images.length === 2) {
             top = idx === 0 ? 15 : 45;
             left = idx === 0 ? 10 : 40;
