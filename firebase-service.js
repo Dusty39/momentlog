@@ -437,6 +437,7 @@ const DBService = {
             for (const chunk of chunks) {
                 let query = db.collection('moments')
                     .where('userId', 'in', chunk)
+                    .where('isPublic', '==', true)
                     .orderBy('createdAt', 'desc')
                     .limit(5);
 
