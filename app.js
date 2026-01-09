@@ -14,7 +14,7 @@ console.log("DEBUG: v164 - closeModallnApp typo is GONE.");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 3;
 
 let moments = [];
 let currentMedia = [];
@@ -32,7 +32,7 @@ let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 
 // --- Image Compression for Fallback (WebP 2K Ready) ---
-async function compressImage(dataUrl, quality = 0.85, maxWidth = 1440) {
+async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
     return new Promise((resolve) => {
         const timeout = setTimeout(() => {
             console.warn("Compression timed out");
@@ -1321,17 +1321,11 @@ async function saveMoment() {
                 const m = mediaToUpload[i];
                 console.log('Uploading media', i + 1, 'type:', m.type);
                 try {
-                    const url = await DBService.uploadMedia(m.data, m.type || 'image');
-                    console.log('Upload result:', url ? 'success' : 'failed');
-                    if (url) {
-                        uploadedMedia.push({ type: m.type || 'image', url: url });
-                    } else {
-                        // Fallback: if Storage fails, try to save compressed base64 (Ultra HD WebP)
-                        console.log('Storage failed, using compressed data URL');
-                        const compressedData = await compressImage(m.data, 0.85, 1440);
-                        if (compressedData) {
-                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
-                        }
+                    // Priority: Compressed Base64 (WebP) to stay under 1MB Firestore limit
+                    console.log('Optimizing image for Firestore...');
+                    const compressedData = await compressImage(m.data, 0.65, 1080);
+                    if (compressedData) {
+                        uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);

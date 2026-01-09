@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v188-sticker-fix';
+const CACHE_NAME = 'momentlog-v189-optimized-base64';
 const ASSETS = [
     './',
     './index.html',
