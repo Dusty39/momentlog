@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v192-media-offset';
+const CACHE_NAME = 'momentlog-v193-sticker-tilt';
 const ASSETS = [
     './',
     './index.html',

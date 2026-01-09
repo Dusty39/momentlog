@@ -1276,7 +1276,7 @@ textarea::placeholder {
     right: 15px;
     top: 30px;
     /* Slightly lower than time */
-    transform: rotate(3deg) !important;
+    transform: rotate(-3deg) !important;
     /* Slanted/Yamuk */
 }
 
