@@ -161,7 +161,7 @@ h1 {
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-card);
-    padding: 24px;
+    padding: 20px;
     margin-bottom: 24px;
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
     position: relative;
@@ -209,7 +209,7 @@ h1 {
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    margin-top: 20px;
+    margin-top: 12px;
     /* Spacer from top */
 }
 
@@ -223,9 +223,21 @@ h1 {
     width: 100%;
 }
 
-.sticker-input:focus {
+.sticker-input:focus,
+.music-url-input:focus {
     border-color: var(--accent);
     outline: none;
+}
+
+.music-url-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    width: 100%;
+    margin-top: 8px;
 }
 
 .input-section:focus-within {

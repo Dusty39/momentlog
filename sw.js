@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v193-sticker-tilt';
+const CACHE_NAME = 'momentlog-v194-input-polish';
 const ASSETS = [
     './',
     './index.html',
