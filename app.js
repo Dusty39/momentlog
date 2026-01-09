@@ -1507,14 +1507,15 @@ function renderTimeline(searchQuery = '') {
 
     // Full card view for all tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
-        // Use momentDate (user selected) for display, fallback to createdAt (system date)
-        const dateString = m.momentDate || m.createdAt;
-        const date = new Date(dateString);
+        // Date: user selected momentDate OR createdAt
+        const displayDate = new Date(m.momentDate || m.createdAt);
+        // Time: ALWAYS use createdAt for actual capture time (to avoid 00:00/03:00 reset)
+        const displayTime = new Date(m.createdAt || m.momentDate);
 
-        const formattedDate = date.toLocaleDateString('tr-TR', {
+        const formattedDate = displayDate.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
-        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const locationText = m.location ? ` • ${m.location}` : '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
@@ -1662,11 +1663,13 @@ function renderMyRecentMoments() {
     }
 
     list.innerHTML = myMoments.map(m => {
-        const date = new Date(m.createdAt);
-        const formattedDate = date.toLocaleDateString('tr-TR', {
+        const displayDate = new Date(m.momentDate || m.createdAt);
+        const displayTime = new Date(m.createdAt || m.momentDate);
+
+        const formattedDate = displayDate.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
-        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const firstImg = m.media?.find(med => med.type === 'image');
         const imgSrc = firstImg?.url || firstImg?.data || '';
 
