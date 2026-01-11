@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v200-search-ui-refinement';
+const CACHE_NAME = 'momentlog-v201-profile-nav-fix';
 const ASSETS = [
     './',
     './index.html',
