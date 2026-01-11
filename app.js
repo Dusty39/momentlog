@@ -1549,7 +1549,7 @@ function renderTimeline(searchQuery = '') {
                             ${m.musicText ? `
                                 <div class="collage-music-wrapper">
                                     <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
-                                        🎵 ${m.musicText} ${m.musicText.length > 25 ? `&nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}` : ''}
+                                        🎵 ${m.musicText}
                                     </div>
                                 </div>
                             ` : ''}

@@ -1320,29 +1320,30 @@ textarea::placeholder {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(4px);
+    background: var(--bg-surface);
     height: 30px;
     display: flex;
     align-items: center;
     overflow: hidden;
     z-index: 110;
+    padding: 0 15px;
 }
 
 .collage-music-marquee {
     white-space: nowrap;
     font-size: 0.75rem;
-    color: #fff;
+    color: var(--text-secondary);
     font-weight: 500;
-    display: flex;
-    justify-content: center;
+    display: block;
     width: 100%;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .collage-music-marquee.has-scroll {
-    animation: collage-marquee 15s linear infinite;
-    padding-left: 100%;
-    width: auto;
+    /* Animation removed as requested */
+    width: 100%;
     justify-content: flex-start;
 }
 
