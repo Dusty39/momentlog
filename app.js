@@ -558,7 +558,8 @@ const MusicManager = {
 
     updateUI() {
         document.querySelectorAll('.music-toggle-btn').forEach(btn => {
-            const mid = btn.dataset.momentId;
+            const card = btn.closest('.moment-card');
+            const mid = card ? card.dataset.id : btn.dataset.momentId;
             if (mid === this.currentMomentId && this.isPlaying) {
                 btn.innerHTML = '⏸️';
                 btn.classList.add('playing');
@@ -569,6 +570,14 @@ const MusicManager = {
         });
     }
 };
+
+// --- Background Audio Control ---
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && MusicManager.isPlaying) {
+        console.log('[Visibility] Page hidden, pausing music');
+        MusicManager.pause();
+    }
+});
 
 // --- Music Metadata & Preview Fetcher ---
 async function fetchMusicMetadata(url) {
