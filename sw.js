@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v201-profile-nav-fix';
+const CACHE_NAME = 'momentlog-v202-search-icon-removal';
 const ASSETS = [
     './',
     './index.html',
