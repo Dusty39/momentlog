@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v198-save-ux-optimization';
+const CACHE_NAME = 'momentlog-v199-carousel-snap-fix';
 const ASSETS = [
     './',
     './index.html',
