@@ -3949,3 +3949,19 @@ body.app-theme-vintage {
         transform: translateY(0);
     }
 }
+
+.highlight-moment {
+    animation: highlightFade 2s ease-out;
+}
+
+@keyframes highlightFade {
+    0% {
+        box-shadow: 0 0 20px var(--accent);
+        transform: scale(1.02);
+    }
+
+    100% {
+        box-shadow: none;
+        transform: scale(1);
+    }
+}

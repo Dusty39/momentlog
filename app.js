@@ -958,7 +958,7 @@ function setupEventListeners() {
     const dashboardFooter = document.getElementById('dashboardFooter');
     const myRecentMoments = document.getElementById('myRecentMoments');
 
-    window.setView = async (viewName, force = false) => {
+    window.setView = async (viewName, force = false, scrollId = null) => {
         if (!force && currentView === viewName) return;
 
         currentView = viewName;
@@ -1068,6 +1068,18 @@ function setupEventListeners() {
         await loadMoments();
         renderTimeline();
         if (currentView === 'write') renderMyRecentMoments();
+
+        // Scroll to specific moment if ID provided
+        if (scrollId && (currentView === 'my-moments' || currentView === 'my-following' || currentView === 'explore')) {
+            setTimeout(() => {
+                const target = document.querySelector(`.moment-card[data-id="${scrollId}"]`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    target.classList.add('highlight-moment');
+                    setTimeout(() => target.classList.remove('highlight-moment'), 2000);
+                }
+            }, 300);
+        }
     };
 
     if (homeBtn) homeBtn.onclick = () => window.setView('my-following');
@@ -1681,7 +1693,7 @@ function renderMyRecentMoments() {
                     <span>✕</span>
                 </div>
                 <div class="compact-moment-item"
-                     onclick="window.setView('my-moments')"
+                     onclick="window.setView('my-moments', false, '${m.id}')"
                      ontouchstart="window.handleSwipeStart(event)"
                      ontouchmove="window.handleSwipeMove(event)"
                      ontouchend="window.handleSwipeEnd(event)">
@@ -2176,7 +2188,7 @@ async function openProfileView(uid) {
                         ${momentsList.length > 0 ? momentsList.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
-                    return '<div class="grid-item" onclick="window.setView(\'my-moments\')">' +
+                    return '<div class="grid-item" onclick="window.setView(\'my-moments\', false, \'' + m.id + '\')">' +
                         (imgSrc ? '<img src="' + imgSrc + '">' : '<div class="text-placeholder">📝</div>') +
                         '</div>';
                 }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
