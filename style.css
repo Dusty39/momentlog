@@ -3986,21 +3986,18 @@ body.app-theme-vintage {
     border-radius: 12px;
     display: flex;
     align-items: center;
-    padding: 8px 15px;
+    padding: 6px 15px;
     gap: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-.search-icon {
-    font-size: 1rem;
-    opacity: 0.7;
-}
+/* .search-icon removed from HTML */
 
 #exploreSearchInput {
     background: transparent;
     border: none;
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     flex: 1;
     outline: none;
     width: 100%;
