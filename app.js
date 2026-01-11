@@ -1925,9 +1925,17 @@ window.deleteMomentConfirm = async (momentId) => {
     if (confirmed) {
         try {
             await DBService.deleteMoment(momentId);
-            // SUCCESS UX: Show auto-closing modal then reload
+
+            // Dynamic UI update: remove from local caches
+            moments = moments.filter(m => m.id !== momentId);
+            myPrivateMoments = myPrivateMoments.filter(m => m.id !== momentId);
+
+            // Re-render
+            renderTimeline();
+            renderMyRecentMoments();
+
+            // SUCCESS UX: Show auto-closing modal
             await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
-            location.reload();
         } catch (e) {
             console.error('Delete error:', e);
             showModal('Hata', 'Anı silinemedi: ' + e.message);
@@ -1939,8 +1947,24 @@ window.deleteMomentConfirm = async (momentId) => {
 window.toggleMomentVisibility = async (momentId, makePublic) => {
     try {
         await DBService.setMomentVisibility(momentId, makePublic);
-        await loadMoments();
+
+        // Update local state
+        const updateState = (list) => {
+            const m = list.find(item => item.id === momentId);
+            if (m) m.isPublic = makePublic;
+        };
+        updateState(moments);
+        updateState(myPrivateMoments);
+
+        // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
+        if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
+            moments = moments.filter(m => m.id !== momentId);
+        }
+
+        // Re-render
         renderTimeline();
+        renderMyRecentMoments();
+
         showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
     } catch (e) {
         console.error('Visibility error:', e);
