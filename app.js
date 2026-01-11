@@ -432,6 +432,9 @@ function initializeSelectors() {
         stickerInput: document.getElementById('stickerInput'),
         musicInput: document.getElementById('musicInput'),
         musicUrlInput: document.getElementById('musicUrlInput'),
+        exploreSearchWrapper: document.getElementById('exploreSearchWrapper'),
+        exploreSearchInput: document.getElementById('exploreSearchInput'),
+        clearSearchBtn: document.getElementById('clearSearchBtn'),
     };
 }
 
@@ -992,6 +995,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.exploreSearchWrapper?.classList.remove('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
@@ -1005,6 +1009,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
+            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
@@ -1018,6 +1023,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.remove('hidden-mode');
@@ -1040,6 +1046,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.remove('hidden-mode');
@@ -1055,6 +1062,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
@@ -1069,6 +1077,7 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
+            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
@@ -1095,6 +1104,25 @@ function setupEventListeners() {
     if (exploreBtn) exploreBtn.onclick = () => window.setView('explore');
     if (headerAddBtn) headerAddBtn.onclick = () => window.setView('write');
     if (notificationsBtn) notificationsBtn.onclick = () => window.setView('notifications');
+
+    // Explore Search Listeners
+    if (dom.exploreSearchInput) {
+        dom.exploreSearchInput.oninput = (e) => {
+            const val = e.target.value.trim();
+            if (dom.clearSearchBtn) {
+                dom.clearSearchBtn.classList.toggle('hidden', val === '');
+            }
+            renderTimeline(val);
+        };
+    }
+
+    if (dom.clearSearchBtn) {
+        dom.clearSearchBtn.onclick = () => {
+            if (dom.exploreSearchInput) dom.exploreSearchInput.value = '';
+            dom.clearSearchBtn.classList.add('hidden');
+            renderTimeline();
+        };
+    }
     if (profileBtn) profileBtn.onclick = () => {
         const currentUser = AuthService.currentUser();
         if (currentUser) window.openProfileView(currentUser.uid);
@@ -1512,10 +1540,31 @@ function renderTimeline(searchQuery = '') {
 
     let filteredMoments = sortedMoments;
     if (searchQuery) {
-        filteredMoments = sortedMoments.filter(m =>
-            m.text?.toLowerCase().includes(searchQuery) ||
-            m.location?.toLowerCase().includes(searchQuery)
-        );
+        const query = searchQuery.toLowerCase().trim();
+
+        if (query.startsWith('#')) {
+            // Hashtag Search
+            const tag = query.substring(1);
+            filteredMoments = sortedMoments.filter(m =>
+                (m.text && m.text.toLowerCase().includes('#' + tag)) ||
+                (m.stickerText && m.stickerText.toLowerCase().includes('#' + tag))
+            );
+        } else if (query.startsWith('@')) {
+            // User Search
+            const username = query.substring(1);
+            filteredMoments = sortedMoments.filter(m =>
+                (m.userDisplayName && m.userDisplayName.toLowerCase().includes(username))
+            );
+        } else {
+            // General Search (Location, Text, User, Sticker)
+            filteredMoments = sortedMoments.filter(m =>
+                m.text?.toLowerCase().includes(query) ||
+                m.location?.toLowerCase().includes(query) ||
+                m.venue?.toLowerCase().includes(query) ||
+                m.userDisplayName?.toLowerCase().includes(query) ||
+                m.stickerText?.toLowerCase().includes(query)
+            );
+        }
     }
 
     if (filteredMoments.length === 0) {
