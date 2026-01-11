@@ -1499,13 +1499,12 @@ async function saveMoment() {
             // Re-setup autoplay for the new card
             setupAutoplayObserver();
 
-            // SUCCESS UX: Show auto-closing modal then reload to be 100% sure
-            await showModal('Başarılı', 'Anınız kaydedildi! ✨', false, 2000);
-            location.reload();
+            // SUCCESS UX: Show auto-closing modal then switch view
+            await showModal('Başarılı', 'Anınız kaydedildi! ✨', false, 1500);
+            window.setView('my-moments');
         } catch (refreshErr) {
             console.warn("Kayıt başarılı ancak arayüz yenilenirken hata oluştu:", refreshErr);
-            // Even if silent error, reload is better
-            location.reload();
+            window.setView('my-moments');
         }
     } catch (e) {
         console.error("Genel Kaydetme Hatası:", e);
