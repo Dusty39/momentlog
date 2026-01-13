@@ -1720,7 +1720,7 @@ function renderTimeline(searchQuery = '') {
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
-                            ${m.userPhotoURL && m.userPhotoURL.startsWith('http') ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
+                            ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
                         <div class="user-meta">
                             <div class="user-name-row">
@@ -1835,8 +1835,8 @@ function renderMyRecentMoments() {
                     </div>
                     <div class="compact-info">
                         <div class="compact-date">${formattedDate} • ${formattedTime}</div>
-                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
-                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                        ${m.location ? `<div class="compact-location">📍 ${escapeHTML(m.location)}</div>` : ''}
+                        ${m.text ? `<div class="compact-text">${escapeHTML(m.text.substring(0, 60))}${m.text.length > 60 ? '...' : ''}</div>` : ''}
                     </div>
                     <div class="compact-stats">
                         <span>❤️ ${m.likes?.length || 0}</span>
@@ -2691,7 +2691,7 @@ function renderNotificationsInView(notifications) {
             'follow': 'seni takip etti',
             'follow_request': 'takip isteği gönderdi'
         };
-        const avatar = n.senderPhoto?.startsWith('http') ? `<img src="${n.senderPhoto}">` : '👤';
+        const avatar = (n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:')) ? `<img src="${n.senderPhoto}">` : (n.senderPhoto || '👤');
         const unreadClass = n.isRead ? '' : 'unread';
         const timeAgo = getTimeAgo(n.createdAt);
 
