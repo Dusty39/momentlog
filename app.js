@@ -714,9 +714,7 @@ const VoiceRecorder = {
     updateTimerUI() {
         const timerDom = document.getElementById('recordingTimer');
         if (timerDom) {
-            const mins = Math.floor(this.seconds / 60);
-            const secs = this.seconds % 60;
-            timerDom.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            timerDom.textContent = this.seconds;
         }
     },
 
@@ -781,6 +779,10 @@ const VoiceRecorder = {
 
 window.toggleMusic = (url, momentId, voiceUrl) => {
     MusicManager.play(url, momentId, false, true, voiceUrl); // Mark as manual interaction
+};
+
+window.toggleVoiceMemo = (url, momentId) => {
+    VoicePlayer.play(url, momentId);
 };
 
 window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
