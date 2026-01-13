@@ -220,7 +220,8 @@ const DBService = {
 
     // Dosya Yükle (Storage) - Disabled for cost saving, using optimized Base64
     uploadMedia: async (fileData, type) => {
-        return null;
+        // Firebase Storage yerine döküman içine base64 olarak gömüyoruz (maliyet ve basitlik için)
+        return fileData;
     },
     // Anı Ekle
     async addMoment(data) {
