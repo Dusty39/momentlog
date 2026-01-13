@@ -757,21 +757,31 @@ const VoiceRecorder = {
         this.updateUI();
     },
 
-    toggle() {
-        if (this.isRecording) this.stop();
-        else this.start();
+    async toggle() {
+        if (this.isRecording) {
+            await this.stop();
+        } else if (this.recordedBlob) {
+            const confirmed = await showModal("Kaydı Sil", "Mevcut ses kaydını silmek istiyor musunuz?", true);
+            if (confirmed) {
+                this.recordedBlob = null;
+                this.audioChunks = [];
+                this.updateUI();
+            }
+        } else {
+            await this.start();
+        }
     },
 
     updateUI() {
         const btn = document.getElementById('recordBtn');
         if (btn) {
+            btn.classList.toggle('recording', this.isRecording);
+            btn.classList.toggle('active', !!this.recordedBlob);
+
             if (this.isRecording) {
-                btn.classList.add('recording');
                 btn.innerHTML = '⏹️';
             } else {
-                btn.classList.remove('recording');
-                btn.innerHTML = '🎤';
-                if (this.recordedBlob) btn.innerHTML = '✅';
+                btn.innerHTML = this.recordedBlob ? '✅' : '🎤';
             }
         }
     }
@@ -824,6 +834,7 @@ const VoicePlayer = {
         this.playTimeout = setTimeout(async () => {
             try {
                 this.playTimeout = null;
+                this.audio.load(); // Ensure it's ready
                 await this.audio.play();
                 this.isPlaying = true;
                 // Duck music during voice playback
@@ -1689,13 +1700,14 @@ function renderTimeline(searchQuery = '') {
                             ${generateMiniCollage(m.media)}
                             
                             <!-- Music Marquee inside Collage (Top) -->
-                            ${m.musicText ? `
+                            ${(m.musicText || m.voiceUrl) ? `
                                 <div class="collage-music-wrapper">
-                                    <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
-                                        🎵 ${escapeHTML(m.musicText)}
+                                    <div class="collage-music-marquee ${(m.musicText && m.musicText.length > 25) ? 'has-scroll' : ''}">
+                                        ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
                                     </div>
                                     ${m.voiceUrl ? `<div class="voice-indicator-icon" title="Ses Kaydı Mevcut">🎙️</div>` : ''}
                                 </div>
+                                ${m.voiceUrl ? `<div class="voice-visualizer-wave"></div>` : ''}
                             ` : ''}
 
                             ${stickersHtml}
