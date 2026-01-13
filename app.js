@@ -656,12 +656,14 @@ const VoiceRecorder = {
     recordingInterval: null,
     recordedBlob: null,
     seconds: 0,
-    maxSeconds: 24,
+    maxSeconds: 16,
 
     async start() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
+            this.mediaRecorder = new MediaRecorder(stream, {
+                audioBitsPerSecond: 24000 // 24kbps for voice efficiency
+            });
             this.audioChunks = [];
             this.seconds = this.maxSeconds; // Start from max
 
@@ -1534,6 +1536,13 @@ async function saveMoment() {
             momentDate: dateInput || null, // The user-selected date
             createdAt: new Date().toISOString() // ACTUAL UPLOAD TIME for absolute sorting
         };
+
+        // SIZE GUARD: Firestore limit is 1MB. 
+        // Estimate size using JSON stringification
+        const estimatedSize = JSON.stringify(momentData).length;
+        if (estimatedSize > 1000000) { // Slightly under 1MB to be safe
+            throw new Error("Bu anı çok büyük (1MB sınırını aşıyor). Lütfen görsel sayısını veya kalitesini azaltın.");
+        }
 
         if (isRealLocationActive && locationString) {
             momentData.verifiedLocation = true;
