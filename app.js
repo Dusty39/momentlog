@@ -1427,7 +1427,12 @@ async function saveMoment() {
     const text = dom.input?.value?.trim();
     const dateInput = dom.momentDate?.value;
 
-    if (!text && currentMedia.length === 0) {
+    // AUTO-STOP recording if user clicks Save while recording
+    if (VoiceRecorder.isRecording) {
+        await VoiceRecorder.stop(true); // Stop without confirmation
+    }
+
+    if (!text && currentMedia.length === 0 && !VoiceRecorder.recordedBlob) {
         showModal('Boş Anı', 'Lütfen bir metin girin veya medya ekleyin.');
         return;
     }
@@ -1761,6 +1766,13 @@ function renderTimeline(searchQuery = '') {
 
                 ${m.voiceUrl && images.length === 0 ? `
                     <div class="card-labels-stack" style="margin-top: 10px;">
+                        <div class="collage-music-wrapper" style="position: relative; margin-bottom: 5px; background: rgba(var(--accent-rgb), 0.1);">
+                             <div class="collage-music-marquee">
+                                ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
+                             </div>
+                             <div class="voice-indicator-icon">🎙️</div>
+                        </div>
+                        <div class="voice-visualizer-wave" style="margin-bottom: 10px;"></div>
                         <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
                             🎤 Sesli Not
                         </button>
