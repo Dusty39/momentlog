@@ -24,7 +24,7 @@ let currentMood = '😊';
 let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
-const MAX_AUDIO_SECONDS = 30;
+const MAX_AUDIO_SECONDS = 24;
 let myPrivateMoments = []; // Separate cache for own moments to ensure individual visibility
 let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
@@ -656,7 +656,7 @@ const VoiceRecorder = {
     recordingInterval: null,
     recordedBlob: null,
     seconds: 0,
-    maxSeconds: 30,
+    maxSeconds: 24,
 
     async start() {
         try {
@@ -799,11 +799,12 @@ const VoicePlayer = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
+    playTimeout: null,
 
     async play(url, momentId) {
         if (!url) return;
 
-        if (this.currentMomentId === momentId && this.isPlaying) {
+        if (this.currentMomentId === momentId && (this.isPlaying || this.playTimeout)) {
             this.stop();
             return;
         }
@@ -813,14 +814,25 @@ const VoicePlayer = {
         this.currentMomentId = momentId;
 
         this.audio.volume = 1.0;
-        this.audio.onplay = () => {
-            this.isPlaying = true;
-            // Duck music during voice playback
-            if (MusicManager.isPlaying) {
-                MusicManager.audio.volume = 0.25;
+
+        // 3 seconds delay if music is playing
+        const delay = MusicManager.isPlaying ? 3000 : 0;
+
+        this.playTimeout = setTimeout(async () => {
+            try {
+                this.playTimeout = null;
+                await this.audio.play();
+                this.isPlaying = true;
+                // Duck music during voice playback
+                if (MusicManager.isPlaying) {
+                    MusicManager.audio.volume = 0.25;
+                }
+                this.updateVoiceIcons(true);
+            } catch (e) {
+                console.warn("Voice play failed:", e);
+                this.isPlaying = false;
             }
-            this.updateVoiceIcons(true);
-        };
+        }, delay);
 
         this.audio.onended = () => {
             this.isPlaying = false;
@@ -830,15 +842,13 @@ const VoicePlayer = {
             }
             this.updateVoiceIcons(false);
         };
-
-        try {
-            await this.audio.play();
-        } catch (e) {
-            console.warn("Voice play failed:", e);
-        }
     },
 
     stop() {
+        if (this.playTimeout) {
+            clearTimeout(this.playTimeout);
+            this.playTimeout = null;
+        }
         this.audio.pause();
         this.audio.currentTime = 0;
         this.isPlaying = false;
