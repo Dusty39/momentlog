@@ -88,14 +88,15 @@ service cloud.firestore {
       allow update: if isOwner(userId) 
                     || (isAuthenticated() 
                         && request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['followers', 'following', 'pendingFollowers'])
-                        // Basic sanity: users can't add others, only themselves
-                        // (In a more strict app, we would use set theory here, but arrayUnion/Remove 
-                        // is handled by the client and validated here by diffing).
-                        );
+                           .hasOnly(['followers', 'following', 'pendingFollowers']));
       
       // Only owner can delete
       allow delete: if isOwner(userId);
+
+      // PRIVATE DATA SUB-COLLECTION (Sensitive Info)
+      match /private/config {
+        allow read, write: if isOwner(userId);
+      }
       
       // =============================================
       // FOLLOWERS SUB-COLLECTION
