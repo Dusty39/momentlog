@@ -122,6 +122,7 @@
 
                         <!-- Ses Kaydı -->
                         <button id="recordBtn" class="tool-btn" title="Ses Kaydı">🎤</button>
+                        <span id="recordingTimer" class="recording-timer hidden">00:00</span>
 
                         <!-- Konum -->
                         <button id="addLocationBtn" class="tool-btn" title="Gerçek Konum Ekle">📍</button>
@@ -173,8 +174,8 @@
             <!-- Explore Search -->
             <div id="exploreSearchWrapper" class="explore-search-wrapper hidden-mode">
                 <div class="search-input-container">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="exploreSearchInput" placeholder="Kullanıcı (@), Konum veya Etiket (#) ara..." autocomplete="off">
+                    <input type="text" id="exploreSearchInput" placeholder="Kullanıcı (@), Konum veya Etiket (#)..."
+                        autocomplete="off">
                     <button id="clearSearchBtn" class="clear-search-btn hidden">✕</button>
                 </div>
             </div>

@@ -453,8 +453,16 @@ const MusicManager = {
     originalVolume: 0.8,
     isAutoplayAllowed: true, // New flag: Global control for autoplay
 
-    async play(url, momentId, skipFade = false, isManual = false) {
-        if (!url) {
+    async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
+        if (!url && !voiceUrl) {
+            this.fadeOut();
+            if (VoicePlayer.isPlaying) VoicePlayer.stop();
+            return;
+        }
+
+        // Handle voice only moments (if any)
+        if (!url && voiceUrl) {
+            VoicePlayer.play(voiceUrl, momentId);
             this.fadeOut();
             return;
         }
@@ -469,6 +477,7 @@ const MusicManager = {
             if (this.isPlaying) {
                 console.log(`[MusicManager] Toggling OFF for ${momentId}`);
                 this.pause();
+                VoicePlayer.stop();
                 return;
             } else {
                 console.log(`[MusicManager] Toggling ON for ${momentId}`);
@@ -476,6 +485,7 @@ const MusicManager = {
                     await this.audio.play();
                     this.isPlaying = true;
                     if (!skipFade) this.fadeIn();
+                    if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
                 } catch (e) {
                     console.warn("[MusicManager] Resume failed:", e);
                     this.isPlaying = false;
@@ -489,15 +499,15 @@ const MusicManager = {
         console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
-        this.audio.load(); // Explicit load for better cross-browser experience
+        this.audio.load();
         this.audio.loop = true;
         this.currentMomentId = momentId;
 
         try {
-            // Some browsers require interaction, so we try play() and only update state on success
             await this.audio.play();
             this.isPlaying = true;
             if (!skipFade) this.fadeIn();
+            if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
         } catch (e) {
             console.warn("[MusicManager] Play failed:", e);
             this.isPlaying = false;
@@ -648,37 +658,37 @@ const VoiceRecorder = {
     mediaRecorder: null,
     audioChunks: [],
     isRecording: false,
-    recordingTimeout: null,
+    recordingInterval: null,
     recordedBlob: null,
+    seconds: 0,
+    maxSeconds: 30,
 
     async start() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream);
             this.audioChunks = [];
+            this.seconds = 0;
 
             this.mediaRecorder.ondataavailable = (event) => {
                 this.audioChunks.push(event.data);
             };
 
             this.mediaRecorder.onstop = () => {
-                this.recordedBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
                 this.isRecording = false;
-                MusicManager.setVolume(MusicManager.originalVolume);
+                this.stopTimer();
                 this.updateUI();
-                console.log("Kayıt tamamlandı, blob boyutu:", this.recordedBlob.size);
+
+                // We handle the blob in the stop logic after confirmation
+                this.tempBlob = blob;
             };
 
-            // Start recording
             this.mediaRecorder.start();
             this.isRecording = true;
-            MusicManager.setVolume(0.25); // Duck the music
+            this.startTimer();
+            MusicManager.setVolume(0.25);
             this.updateUI();
-
-            // Auto-stop after 20 seconds
-            this.recordingTimeout = setTimeout(() => {
-                if (this.isRecording) this.stop();
-            }, 20000);
 
         } catch (err) {
             console.error("Mikrofon erişim hatası:", err);
@@ -686,12 +696,71 @@ const VoiceRecorder = {
         }
     },
 
-    stop() {
-        if (this.mediaRecorder && this.isRecording) {
-            this.mediaRecorder.stop();
-            clearTimeout(this.recordingTimeout);
-            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+    startTimer() {
+        const timerDom = document.getElementById('recordingTimer');
+        if (timerDom) timerDom.classList.remove('hidden');
+
+        this.recordingInterval = setInterval(() => {
+            this.seconds++;
+            this.updateTimerUI();
+            if (this.seconds >= this.maxSeconds) {
+                this.stop(true); // Auto stop
+            }
+        }, 1000);
+    },
+
+    stopTimer() {
+        clearInterval(this.recordingInterval);
+        const timerDom = document.getElementById('recordingTimer');
+        if (timerDom) timerDom.classList.add('hidden');
+    },
+
+    updateTimerUI() {
+        const timerDom = document.getElementById('recordingTimer');
+        if (timerDom) {
+            const mins = Math.floor(this.seconds / 60);
+            const secs = this.seconds % 60;
+            timerDom.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
+    },
+
+    async stop(auto = false) {
+        if (!this.mediaRecorder || !this.isRecording) return;
+
+        if (!auto) {
+            const confirmed = await showModal("Ses Kaydı", "Ses kaydını tamamlayıp anıya eklemek istiyor musunuz?", true);
+            if (!confirmed) {
+                // Cancel recording
+                this.mediaRecorder.onstop = null; // Ignore current stop
+                this.mediaRecorder.stop();
+                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                this.isRecording = false;
+                this.stopTimer();
+                MusicManager.setVolume(MusicManager.originalVolume);
+                this.audioChunks = [];
+                this.recordedBlob = null;
+                this.updateUI();
+                return;
+            }
+        }
+
+        this.mediaRecorder.stop();
+        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+
+        // Wait for onstop to finish (using promise approach for cleaner flow)
+        await new Promise(resolve => {
+            const originalOnStop = this.mediaRecorder.onstop;
+            this.mediaRecorder.onstop = () => {
+                if (originalOnStop) originalOnStop();
+                this.recordedBlob = this.tempBlob;
+                resolve();
+            };
+            if (this.mediaRecorder.state === 'inactive') resolve();
+        });
+
+        MusicManager.setVolume(MusicManager.originalVolume);
+        showModal("Tamam", "Ses kaydı hazır.");
+        this.updateUI();
     },
 
     toggle() {
@@ -708,25 +777,26 @@ const VoiceRecorder = {
             } else {
                 btn.classList.remove('recording');
                 btn.innerHTML = '🎤';
+                if (this.recordedBlob) btn.innerHTML = '✅';
             }
         }
     }
 };
 
-window.toggleMusic = (url, momentId) => {
-    MusicManager.play(url, momentId, false, true); // Mark as manual interaction
+window.toggleMusic = (url, momentId, voiceUrl) => {
+    MusicManager.play(url, momentId, false, true, voiceUrl); // Mark as manual interaction
 };
 
-window.handleCardClick = (e, momentId, musicUrl) => {
+window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
     // Prevent triggering if clicking on buttons, interactive elements, or collage photos
     const interactiveTags = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'LABEL'];
     if (interactiveTags.includes(e.target.tagName) || e.target.closest('.user-info') || e.target.closest('.card-actions') || e.target.closest('.mini-img-wrapper')) {
         return;
     }
 
-    if (musicUrl) {
-        console.log(`[CardClick] Triggering music for ${momentId}`);
-        window.toggleMusic(musicUrl, momentId);
+    if (musicUrl || voiceUrl) {
+        console.log(`[CardClick] Triggering audio for ${momentId}`);
+        window.toggleMusic(musicUrl, momentId, voiceUrl);
     }
 };
 
@@ -740,46 +810,59 @@ const VoicePlayer = {
         if (!url) return;
 
         if (this.currentMomentId === momentId && this.isPlaying) {
-            this.pause();
+            this.stop();
             return;
         }
 
-        this.pause();
+        this.stop();
         this.audio.src = url;
+        this.currentMomentId = momentId;
 
-        // Duck music during voice playback
-        MusicManager.setVolume(0.25);
+        this.audio.volume = 1.0;
+        this.audio.onplay = () => {
+            this.isPlaying = true;
+            // Duck music during voice playback
+            if (MusicManager.isPlaying) {
+                MusicManager.audio.volume = 0.25;
+            }
+            this.updateVoiceIcons(true);
+        };
+
+        this.audio.onended = () => {
+            this.isPlaying = false;
+            // Restore music volume
+            if (MusicManager.isPlaying) {
+                MusicManager.audio.volume = MusicManager.originalVolume;
+            }
+            this.updateVoiceIcons(false);
+        };
 
         try {
             await this.audio.play();
-            this.currentMomentId = momentId;
-            this.isPlaying = true;
-            this.updateUI();
-
-            this.audio.onended = () => {
-                this.isPlaying = false;
-                MusicManager.setVolume(MusicManager.originalVolume);
-                this.updateUI();
-            };
-        } catch (e) { console.warn("Voice playback failed:", e); }
+        } catch (e) {
+            console.warn("Voice play failed:", e);
+        }
     },
 
-    pause() {
+    stop() {
         this.audio.pause();
+        this.audio.currentTime = 0;
         this.isPlaying = false;
-        MusicManager.setVolume(MusicManager.originalVolume);
-        this.updateUI();
+        if (MusicManager.isPlaying) {
+            MusicManager.audio.volume = MusicManager.originalVolume;
+        }
+        this.updateVoiceIcons(false);
     },
 
-    updateUI() {
-        document.querySelectorAll('.voice-play-btn').forEach(btn => {
-            const mid = btn.dataset.momentId;
-            if (mid === this.currentMomentId && this.isPlaying) {
-                btn.innerHTML = '⏸️ Dinleniyor...';
-                btn.classList.add('playing');
+    updateVoiceIcons(active) {
+        document.querySelectorAll('.voice-indicator-icon').forEach(icon => {
+            const card = icon.closest('.moment-card');
+            if (card && card.dataset.id === this.currentMomentId) {
+                icon.style.color = active ? 'var(--accent)' : 'inherit';
+                icon.style.opacity = active ? '1' : '0.6';
             } else {
-                btn.innerHTML = '🎤 Sesli Not';
-                btn.classList.remove('playing');
+                icon.style.color = 'inherit';
+                icon.style.opacity = '0.6';
             }
         });
     }
@@ -1620,6 +1703,7 @@ function renderTimeline(searchQuery = '') {
                                     <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
                                         🎵 ${m.musicText}
                                     </div>
+                                    ${m.voiceUrl ? `<div class="voice-indicator-icon" title="Ses Kaydı Mevcut">🎙️</div>` : ''}
                                 </div>
                             ` : ''}
 
@@ -1642,7 +1726,7 @@ function renderTimeline(searchQuery = '') {
         }
 
         return `
-            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}" onclick="window.handleCardClick(event, '${m.id}', '${m.musicUrl || ''}')">
+            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}" onclick="window.handleCardClick(event, '${m.id}', '${m.musicUrl || ''}', '${m.voiceUrl || ''}')">
                 <!-- 1. Header (Kullanıcı Bilgisi) -->
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">

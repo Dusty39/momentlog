@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v202-search-icon-removal';
+const CACHE_NAME = 'momentlog-v203-voice-recording-overhaul';
 const ASSETS = [
     './',
     './index.html',
