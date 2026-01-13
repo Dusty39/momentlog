@@ -663,7 +663,7 @@ const VoiceRecorder = {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream);
             this.audioChunks = [];
-            this.seconds = 0;
+            this.seconds = this.maxSeconds; // Start from max
 
             this.mediaRecorder.ondataavailable = (event) => {
                 this.audioChunks.push(event.data);
@@ -674,8 +674,6 @@ const VoiceRecorder = {
                 this.isRecording = false;
                 this.stopTimer();
                 this.updateUI();
-
-                // We handle the blob in the stop logic after confirmation
                 this.tempBlob = blob;
             };
 
@@ -693,12 +691,15 @@ const VoiceRecorder = {
 
     startTimer() {
         const timerDom = document.getElementById('recordingTimer');
-        if (timerDom) timerDom.classList.remove('hidden');
+        if (timerDom) {
+            timerDom.classList.remove('hidden');
+            this.updateTimerUI(); // Initial display
+        }
 
         this.recordingInterval = setInterval(() => {
-            this.seconds++;
+            this.seconds--; // Countdown
             this.updateTimerUI();
-            if (this.seconds >= this.maxSeconds) {
+            if (this.seconds <= 0) {
                 this.stop(true); // Auto stop
             }
         }, 1000);
