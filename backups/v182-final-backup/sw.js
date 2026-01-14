@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v212-cloudinary-pro';
+const CACHE_NAME = 'momentlog-v182-music-ux';
 const ASSETS = [
     './',
     './index.html',

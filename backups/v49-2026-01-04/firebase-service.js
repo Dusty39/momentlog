@@ -29,14 +29,6 @@ const AuthService = {
     onAuthStateChanged: (callback) => {
         return auth.onAuthStateChanged(callback);
     },
-    // Profili Güncelle
-    updateProfile: (data) => {
-        const user = auth.currentUser;
-        if (user) {
-            return user.updateProfile(data);
-        }
-        return Promise.reject("Kullanıcı bulunamadı");
-    },
 
     // Mevcut Kullanıcı
     currentUser: () => {
@@ -51,84 +43,31 @@ const DBService = {
         const docRef = db.collection('users').doc(uid);
         const doc = await docRef.get();
         if (doc.exists) {
-            const profile = doc.data();
-            // Security cleanup: Remove email if it somehow still exists in public profile
-            if (profile.email) delete profile.email;
-            return profile;
+            return doc.data();
         } else {
-            // Only create profile if it's the current user
+            // Yeni kullanıcı profili oluştur
             const user = auth.currentUser;
-            if (user && user.uid === uid) {
-                const newUser = {
-                    uid: user.uid,
-                    displayName: user.displayName || 'İsimsiz',
-                    photoURL: user.photoURL || '👤',
-                    bio: 'Merhaba, ben momentLog kullanıyorum!',
-                    username: null,
-                    isVerified: false,
-                    isPrivateProfile: false,
-                    followers: [],
-                    following: [],
-                    pendingFollowers: [],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                // Store sensitive data separately
-                const privateData = {
-                    email: user.email,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                // Auto-verify first 20 Google users
-                const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
-                const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
-                if (isGoogleUser && verifiedSnap.size < 20) {
-                    newUser.isVerified = true;
-                }
-
-                await docRef.set(newUser);
-                await docRef.collection('private').doc('config').set(privateData);
-
-                return newUser;
-            }
-            return null;
+            const newUser = {
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                bio: 'Merhaba, ben momentLog kullanıyorum!',
+                username: null,
+                isPrivateProfile: false, // Default public
+                followers: [],
+                following: [],
+                pendingFollowers: [], // People who want to follow this user
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await docRef.set(newUser);
+            return newUser;
         }
     },
 
     // Kullanıcı Profilini Güncelle
     async updateUserProfile(uid, data) {
         return db.collection('users').doc(uid).update(data);
-    },
-
-    // Tüm anılardaki kullanıcı bilgilerini güncelle
-    async syncUserMoments(uid, updateData) {
-        const snapshots = await db.collection('moments').where('userId', '==', uid).get();
-        if (snapshots.empty) return;
-
-        const dataToSync = {};
-        if (updateData.username) dataToSync.userDisplayName = updateData.username;
-        else if (updateData.displayName) dataToSync.userDisplayName = updateData.displayName;
-        if (updateData.photoURL) dataToSync.userPhotoURL = updateData.photoURL;
-        if (updateData.isVerified !== undefined) dataToSync.isVerified = updateData.isVerified;
-
-        if (Object.keys(dataToSync).length === 0) return;
-
-        // Process in batches of 500 (Firestore limit)
-        const docs = snapshots.docs;
-        for (let i = 0; i < docs.length; i += 500) {
-            const batch = db.batch();
-            const chunk = docs.slice(i, i + 500);
-            chunk.forEach(doc => {
-                batch.update(doc.ref, dataToSync);
-            });
-            await batch.commit();
-        }
-    },
-
-    // Profil Fotoğrafı - Base64 olarak döndür (Storage yerine Firestore'da sakla)
-    async uploadProfilePhoto(uid, base64Data) {
-        // Firebase Storage kullanmıyoruz, base64'ü direkt döndür
-        return base64Data;
     },
 
     // Takip Et / İstek Gönder
@@ -218,11 +157,44 @@ const DBService = {
         });
     },
 
-    // Dosya Yükle (Storage) - Disabled for cost saving, using optimized Base64
-    uploadMedia: async (fileData, type) => {
-        // Firebase Storage yerine döküman içine base64 olarak gömüyoruz (maliyet ve basitlik için)
-        return fileData;
+    // Dosya Yükle (Storage)
+    uploadFile: async (fileData, type) => {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        try {
+            let storageEnabled = false;
+            try {
+                if (firebase.storage && firebase.storage().ref()) {
+                    storageEnabled = true;
+                }
+            } catch (initErr) {
+                console.warn("Storage check failed:", initErr);
+            }
+
+            if (!storageEnabled) return null;
+
+            const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
+            const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
+
+            const dataParts = fileData.split(',');
+            const mime = dataParts[0].match(/:(.*?);/)[1];
+            const binary = atob(dataParts[1]);
+            const array = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                array[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([array], { type: mime });
+
+            const snapshot = await storageRef.put(blob);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            return downloadURL;
+        } catch (e) {
+            console.error("Storage upload error:", e);
+            return null;
+        }
     },
+
     // Anı Ekle
     async addMoment(data) {
         const user = auth.currentUser;
@@ -234,7 +206,7 @@ const DBService = {
             userDisplayName: user.displayName || 'İsimsiz',
             userPhotoURL: data.userPhotoURL || user.photoURL || '👤',
             likes: [],
-            createdAt: data.createdAt || new Date().toISOString()
+            createdAt: data.createdAt || Date.now()
         };
 
         return db.collection('moments').add(momentData);
@@ -276,103 +248,47 @@ const DBService = {
     },
 
     // Kişisel Anıları Getir
-    getMyMoments: async (lastVisible = null) => {
+    getMyMoments: async () => {
         const user = auth.currentUser;
-        if (!user) return { moments: [], lastVisible: null };
+        if (!user) return [];
 
         try {
-            let query = db.collection('moments')
+            const snapshot = await db.collection('moments')
                 .where('userId', '==', user.uid)
-                .orderBy('createdAt', 'desc');
-
-            if (lastVisible) {
-                query = query.startAfter(lastVisible);
-            }
-
-            const snapshot = await query.limit(5).get();
-            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-
-            // Enrich with fresh profile
-            const profileDoc = await db.collection('users').doc(user.uid).get();
-            const profile = profileDoc.exists ? profileDoc.data() : null;
-
-            return {
-                moments: moments.map(m => ({
-                    ...m,
-                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
-                    isEarlyUser: profile?.isEarlyUser || false
-                })),
-                lastVisible: lastDoc
-            };
+                .orderBy('createdAt', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (e) {
             console.error("Personal Feed error:", e);
-            return { moments: [], lastVisible: null };
-        }
-    },
-
-    // Belirli Bir Kullanıcının Anılarını Getir
-    async getMomentsByUser(uid, lastVisible = null) {
-        const currentUser = auth.currentUser;
-        try {
-            let query = db.collection('moments').where('userId', '==', uid);
-
-            // If not own profile, only show public moments to avoid security rule errors
-            if (!currentUser || currentUser.uid !== uid) {
-                query = query.where('isPublic', '==', true);
-            }
-
-            query = query.orderBy('createdAt', 'desc');
-
-            if (lastVisible) {
-                query = query.startAfter(lastVisible);
-            }
-
-            const snapshot = await query.limit(5).get();
-            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-
-            // Enrich with fresh profile
-            const profileDoc = await db.collection('users').doc(uid).get();
-            const profile = profileDoc.exists ? profileDoc.data() : null;
-
-            return {
-                moments: moments.map(m => ({
-                    ...m,
-                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
-                    isEarlyUser: profile?.isEarlyUser || false
-                })),
-                lastVisible: lastDoc
-            };
-        } catch (e) {
-            console.error("User Feed error:", e);
             throw e;
         }
     },
 
-    // Tek bir anıyı getir
-    getMomentById: async (id) => {
+    // Belirli Bir Kullanıcının Anılarını Getir
+    getMomentsByUser: async (uid) => {
         try {
-            const doc = await db.collection('moments').doc(id).get();
-            if (!doc.exists) return null;
-            return { id: doc.id, ...doc.data() };
+            const snapshot = await db.collection('moments')
+                .where('userId', '==', uid)
+                .where('isPublic', '==', true)
+                .orderBy('createdAt', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (e) {
-            console.error("Get Moment error:", e);
-            return null;
+            console.error("Profile View error:", e);
+            throw e;
         }
     },
+
     // Anı Sil
     deleteMoment: async (id) => {
         return db.collection('moments').doc(id).delete();
     },
 
     // Takip Edilenlerin Anılarını Getir (Following Feed)
-    async getFollowingMoments(lastVisible = null) {
+    async getFollowingMoments() {
         try {
             const currentUser = auth.currentUser;
-            if (!currentUser) return { moments: [], lastVisible: null };
+            if (!currentUser) return [];
 
             // Get user's following list
             const userDoc = await db.collection('users').doc(currentUser.uid).get();
@@ -384,7 +300,7 @@ const DBService = {
             }
 
             if (following.length === 0) {
-                return { moments: [], lastVisible: null };
+                return []; // No one followed yet
             }
 
             // Firestore 'in' query supports max 10 items, so chunk if needed
@@ -393,91 +309,53 @@ const DBService = {
                 chunks.push(following.slice(i, i + 10));
             }
 
-            let allDocs = [];
+            let allMoments = [];
             for (const chunk of chunks) {
-                let query = db.collection('moments')
+                const snapshot = await db.collection('moments')
                     .where('userId', 'in', chunk)
                     .where('isPublic', '==', true)
                     .orderBy('createdAt', 'desc')
-                    .limit(5);
-
-                if (lastVisible) {
-                    query = query.startAfter(lastVisible);
-                }
-
-                const snapshot = await query.get();
-                allDocs = [...allDocs, ...snapshot.docs];
+                    .limit(20)
+                    .get();
+                allMoments = [...allMoments, ...snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))];
             }
 
-            // Sort by createdAt and take the latest 5 globally - Robust handling for mixed types
-            allDocs.sort((a, b) => {
-                const aTime = a.data().createdAt;
-                const bTime = b.data().createdAt;
-
-                const getVal = (v) => {
-                    if (!v) return 0;
-                    if (typeof v === 'string') return new Date(v).getTime();
-                    if (v.seconds) return v.seconds * 1000;
-                    return Number(v);
-                };
-
-                return getVal(bTime) - getVal(aTime);
-            });
-
-            const pagedDocs = allDocs.slice(0, 5);
-            const moments = pagedDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastDoc = pagedDocs[pagedDocs.length - 1] || null;
-
-            if (moments.length === 0) return { moments: [], lastVisible: null };
+            // Sort by createdAt and limit
+            allMoments.sort((a, b) => b.createdAt - a.createdAt);
+            const moments = allMoments.slice(0, 20);
 
             // Enrich with user profiles
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
             const userProfiles = {};
             await Promise.all(userIds.map(async (uid) => {
                 try {
-                    const profileDoc = await db.collection('users').doc(uid).get();
-                    if (profileDoc.exists) userProfiles[uid] = profileDoc.data();
+                    const userDoc = await db.collection('users').doc(uid).get();
+                    if (userDoc.exists) userProfiles[uid] = userDoc.data();
                 } catch (e) { console.warn('Could not fetch user:', uid); }
             }));
 
-            return {
-                moments: moments.map(m => ({
-                    ...m,
-                    userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
-                    userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤',
-                    isVerified: userProfiles[m.userId]?.isVerified || false,
-                    isEarlyUser: userProfiles[m.userId]?.isEarlyUser || false
-                })),
-                lastVisible: lastDoc
-            };
+            return moments.map(m => ({
+                ...m,
+                userDisplayName: userProfiles[m.userId]?.username || userProfiles[m.userId]?.displayName || m.userDisplayName || 'Anonim',
+                userPhotoURL: userProfiles[m.userId]?.photoURL || m.userPhotoURL || '👤'
+            }));
         } catch (e) {
             console.error("Following Feed error:", e);
-            return { moments: [], lastVisible: null };
+            return [];
         }
     },
 
     // Genel Anıları Getir (Social Feed)
-    async getPublicMoments(lastVisible = null) {
+    async getPublicMoments() {
         try {
-            let query = db.collection('moments')
+            const snapshot = await db.collection('moments')
                 .where('isPublic', '==', true)
-                .where('isPrivateProfile', '==', false)
-                .orderBy('createdAt', 'desc');
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .get();
 
-            if (lastVisible) {
-                query = query.startAfter(lastVisible);
-            }
-
-            const snapshot = await query.get();
-            const user = auth.currentUser;
-
-            // Filter out current user's moments and limit to 5
-            const moments = snapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(m => !user || m.userId !== user.uid)
-                .slice(0, 5);
-
-            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            // Enrich moments with fresh user profile data
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             // Get unique user IDs
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
@@ -496,19 +374,16 @@ const DBService = {
             }));
 
             // Enrich moments with user data
-            return {
-                moments: moments.map(m => {
-                    const profile = userProfiles[m.userId];
-                    return {
-                        ...m,
-                        userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
-                        userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤',
-                        isVerified: profile?.isVerified || false,
-                        isEarlyUser: profile?.isEarlyUser || false
-                    };
-                }),
-                lastVisible: lastDoc
-            };
+            console.log('User profiles fetched:', userProfiles);
+            return moments.map(m => {
+                const profile = userProfiles[m.userId];
+                console.log('Moment userId:', m.userId, 'Profile username:', profile?.username, 'Profile displayName:', profile?.displayName);
+                return {
+                    ...m,
+                    userDisplayName: profile?.username || profile?.displayName || m.userDisplayName || 'Anonim',
+                    userPhotoURL: profile?.photoURL || m.userPhotoURL || '👤'
+                };
+            });
         } catch (e) {
             console.error("Public Feed error:", e);
             throw e;
@@ -523,15 +398,10 @@ const DBService = {
         // Handle both string and object parameter
         const commentText = typeof textOrData === 'string' ? textOrData : (textOrData?.text || '');
 
-        // Get user profile for username
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userProfile = userDoc.exists ? userDoc.data() : {};
-
         const commentData = {
             userId: user.uid,
-            username: userProfile.username || '',
-            userDisplayName: userProfile.displayName || user.displayName || 'Anonim',
-            userPhoto: userProfile.photoURL || user.photoURL || '👤',
+            userDisplayName: user.displayName || 'Anonim',
+            userPhoto: user.photoURL || '👤',
             text: commentText,
             likes: [],
             createdAt: new Date().toISOString()
@@ -706,38 +576,9 @@ const DBService = {
                 transaction.delete(db.collection('usernames').doc(oldUsername.toLowerCase()));
             }
 
-            // Logic for Early Verified Badge: First 20 Google Users
-            let isVerified = userDoc.data()?.isVerified || false;
-
-            if (!isVerified) {
-                const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
-                // Check current verified count
-                const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
-                if (isGoogleUser && verifiedSnap.size < 20) {
-                    isVerified = true;
-                    console.log("[DBService] Granting Early Verifier Badge!");
-                }
-            }
-
             transaction.set(usernameRef, { uid: uid });
-            transaction.update(userRef, {
-                username: newUsername,
-                isVerified: isVerified
-            });
-            return isVerified;
+            transaction.update(userRef, { username: newUsername });
         });
-    },
-
-    // Kullanıcı Adı Kaydet
-    async registerUsername(username, uid) {
-        const lowerUsername = username.toLowerCase();
-        return db.collection('usernames').doc(lowerUsername).set({ uid: uid });
-    },
-
-    // Kullanıcı Adı Serbest Bırak
-    async releaseUsername(username) {
-        const lowerUsername = username.toLowerCase();
-        return db.collection('usernames').doc(lowerUsername).delete();
     },
 
     // Kullanıcı Ara

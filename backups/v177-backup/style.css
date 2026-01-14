@@ -114,7 +114,36 @@ header {
     border-color: var(--accent);
 }
 
-/* Unused header search styles removed */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-container input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 12px 16px 12px 44px;
+    color: white;
+    font-family: var(--font-body);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.search-container input:focus {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--accent);
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
 
 h1 {
     font-family: var(--font-heading);
@@ -132,7 +161,7 @@ h1 {
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-card);
-    padding: 20px;
+    padding: 24px;
     margin-bottom: 24px;
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6);
     position: relative;
@@ -141,12 +170,6 @@ h1 {
 }
 
 /* Standardize Input for Readability */
-.tool-btn.active {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 10px var(--accent-glow);
-    color: var(--accent) !important;
-}
-
 .input-section #momentInput {
     padding: 10px;
     border-radius: 8px;
@@ -186,7 +209,7 @@ h1 {
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    margin-top: 12px;
+    margin-top: 20px;
     /* Spacer from top */
 }
 
@@ -200,21 +223,9 @@ h1 {
     width: 100%;
 }
 
-.sticker-input:focus,
-.music-url-input:focus {
+.sticker-input:focus {
     border-color: var(--accent);
     outline: none;
-}
-
-.music-url-input {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    padding: 12px;
-    color: var(--text-primary);
-    font-size: 0.95rem;
-    width: 100%;
-    margin-top: 8px;
 }
 
 .input-section:focus-within {
@@ -1211,8 +1222,6 @@ textarea::placeholder {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-snap-stop: always;
-    overscroll-behavior-x: contain;
     gap: 0;
     width: 100%;
     height: 100%;
@@ -1256,7 +1265,7 @@ textarea::placeholder {
 .collage-stickers-overlay .mini-time-sticker {
     position: absolute;
     left: 15px;
-    top: 10px;
+    top: 15px;
     /* Fixed & Higher */
     transform: rotate(0deg) !important;
     /* Never rotated */
@@ -1265,9 +1274,9 @@ textarea::placeholder {
 .collage-stickers-overlay .mini-brush-sticker {
     position: absolute;
     right: 15px;
-    top: 30px;
+    top: 22px;
     /* Slightly lower than time */
-    transform: rotate(-3deg) !important;
+    transform: rotate(3deg) !important;
     /* Slanted/Yamuk */
 }
 
@@ -1299,100 +1308,29 @@ textarea::placeholder {
     top: 0;
     left: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
     height: 30px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     overflow: hidden;
-    padding: 0 10px;
     z-index: 110;
 }
-
-.recording-timer {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    color: #ff4757;
-    margin-left: 8px;
-    font-weight: 700;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-@keyframes recordingPulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-
-    50% {
-        transform: scale(1.1);
-        opacity: 0.7;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.tool-btn.recording {
-    color: #ff4757;
-    animation: recordingPulse 1.2s infinite ease-in-out;
-}
-
-.voice-indicator-icon {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-    order: 2;
-    margin-left: auto;
-}
-
-/* Voice Visualizer Waveform (Heartbeat) */
-.voice-visualizer-wave {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            var(--accent) 50%,
-            transparent 100%);
-    background-size: 200% 100%;
-    animation: waveMove 2s infinite linear;
-    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,10 L10,10 L15,0 L20,20 L25,5 L30,15 L35,10 L100,10" fill="none" stroke="black" stroke-width="1.5"/></svg>');
-    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,10 L10,10 L15,0 L20,20 L25,5 L30,15 L35,10 L100,10" fill="none" stroke="black" stroke-width="1.5"/></svg>');
-    mask-size: 40px 100%;
-    -webkit-mask-size: 40px 100%;
-    opacity: 0.6;
-    margin-top: 4px;
-}
-
-@keyframes waveMove {
-    from {
-        background-position: 200% 0;
-    }
-
-    to {
-        background-position: -200% 0;
-    }
-}
-
 
 .collage-music-marquee {
     white-space: nowrap;
     font-size: 0.75rem;
-    color: var(--text-secondary);
+    color: #fff;
     font-weight: 500;
-    display: block;
+    display: flex;
+    justify-content: center;
     width: 100%;
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .collage-music-marquee.has-scroll {
-    /* Animation removed as requested */
-    width: 100%;
+    animation: collage-marquee 15s linear infinite;
+    padding-left: 100%;
+    width: auto;
     justify-content: flex-start;
 }
 
@@ -1458,37 +1396,26 @@ textarea::placeholder {
     position: relative;
     width: 100%;
     height: 200px;
-    /* Base height for multi-photo */
+    /* Reduced further to tighten layout */
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: visible;
 }
 
-/* Single Photo - Much Larger & More Impactful */
-.mini-collage.count-1 {
-    height: 320px;
-}
-
 .mini-img-wrapper {
     position: absolute;
     width: 50%;
+    /* Slightly smaller for more spread */
     max-width: 160px;
     aspect-ratio: 1;
     background: white;
     padding: 4px 4px 14px 4px;
+    /* Polaroid effect: larger bottom space */
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     overflow: hidden;
     transition: transform 0.3s ease;
-}
-
-.mini-collage.count-1 .mini-img-wrapper {
-    width: 80%;
-    max-width: 300px;
-    padding: 6px 6px 20px 6px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    border-radius: 6px;
 }
 
 .mini-img-wrapper img {
@@ -2948,6 +2875,8 @@ body.app-theme-vintage h1 {
 }
 
 .date {
+    margin-left: auto !important;
+    text-align: right !important;
     white-space: nowrap !important;
 }
 
@@ -3997,100 +3926,4 @@ body.app-theme-vintage {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.highlight-moment {
-    animation: highlightFade 2s ease-out;
-}
-
-@keyframes highlightFade {
-    0% {
-        box-shadow: 0 0 20px var(--accent);
-        transform: scale(1.02);
-    }
-
-    100% {
-        box-shadow: none;
-        transform: scale(1);
-    }
-}
-
-/* Explore Search Styles */
-.explore-search-wrapper {
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    position: sticky;
-    top: 60px;
-    /* Below header */
-    z-index: 100;
-    transition: all 0.3s ease;
-}
-
-.search-input-container {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    padding: 6px 15px;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* .search-icon removed from HTML */
-
-#exploreSearchInput {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    flex: 1;
-    outline: none;
-    width: 100%;
-}
-
-#exploreSearchInput::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
-}
-
-.clear-search-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.7rem;
-    transition: all 0.2s ease;
-}
-
-.clear-search-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-/* Theme Adjustments */
-body.app-theme-light .search-input-container {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.1);
-}
-
-body.app-theme-light .clear-search-btn {
-    background: rgba(0, 0, 0, 0.1);
-    color: #444;
-}
-
-body.app-theme-vintage .search-input-container {
-    background: #fdf6e3;
-    border: 1px solid #d4a373;
-    box-shadow: 0 4px 10px rgba(93, 64, 55, 0.1);
-}
-
-body.app-theme-vintage #exploreSearchInput {
-    color: #5d4037;
 }

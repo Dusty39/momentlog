@@ -1,15 +1,16 @@
-// --- Global Helpers ---
-function escapeHTML(str) {
-    if (!str) return "";
-    const p = document.createElement("p");
-    p.textContent = str;
-    return p.innerHTML;
-}
+/**
+ * momentLog - Complete Application Logic v19
+ * Gold Theme Edition - Phase 29 Restore
+ */
 
+// --- Global Error Monitor ---
 window.onerror = function (msg, url, line) {
     console.error("Error: " + msg + " at line " + line);
     return false;
 };
+
+console.log("momentLog: Script loading v164...");
+console.log("DEBUG: v164 - closeModallnApp typo is GONE.");
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
@@ -24,7 +25,7 @@ let currentMood = '😊';
 let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
-const MAX_AUDIO_SECONDS = 24;
+const MAX_AUDIO_SECONDS = 30;
 let myPrivateMoments = []; // Separate cache for own moments to ensure individual visibility
 let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
@@ -474,10 +475,12 @@ const MusicManager = {
         // --- Toggle Logic ---
         if (this.currentMomentId === momentId) {
             if (this.isPlaying) {
+                console.log(`[MusicManager] Toggling OFF for ${momentId}`);
                 this.pause();
                 VoicePlayer.stop();
                 return;
             } else {
+                console.log(`[MusicManager] Toggling ON for ${momentId}`);
                 try {
                     await this.audio.play();
                     this.isPlaying = true;
@@ -493,6 +496,7 @@ const MusicManager = {
         }
 
         // New track
+        console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
         this.audio.load();
@@ -583,6 +587,7 @@ const MusicManager = {
 // --- Background Audio Control ---
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && MusicManager.isPlaying) {
+        console.log('[Visibility] Page hidden, pausing music');
         MusicManager.pause();
     }
 });
@@ -656,16 +661,14 @@ const VoiceRecorder = {
     recordingInterval: null,
     recordedBlob: null,
     seconds: 0,
-    maxSeconds: 16,
+    maxSeconds: 30,
 
     async start() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream, {
-                audioBitsPerSecond: 24000 // 24kbps for voice efficiency
-            });
+            this.mediaRecorder = new MediaRecorder(stream);
             this.audioChunks = [];
-            this.seconds = this.maxSeconds; // Start from max
+            this.seconds = 0;
 
             this.mediaRecorder.ondataavailable = (event) => {
                 this.audioChunks.push(event.data);
@@ -676,6 +679,8 @@ const VoiceRecorder = {
                 this.isRecording = false;
                 this.stopTimer();
                 this.updateUI();
+
+                // We handle the blob in the stop logic after confirmation
                 this.tempBlob = blob;
             };
 
@@ -693,15 +698,12 @@ const VoiceRecorder = {
 
     startTimer() {
         const timerDom = document.getElementById('recordingTimer');
-        if (timerDom) {
-            timerDom.classList.remove('hidden');
-            this.updateTimerUI(); // Initial display
-        }
+        if (timerDom) timerDom.classList.remove('hidden');
 
         this.recordingInterval = setInterval(() => {
-            this.seconds--; // Countdown
+            this.seconds++;
             this.updateTimerUI();
-            if (this.seconds <= 0) {
+            if (this.seconds >= this.maxSeconds) {
                 this.stop(true); // Auto stop
             }
         }, 1000);
@@ -716,7 +718,9 @@ const VoiceRecorder = {
     updateTimerUI() {
         const timerDom = document.getElementById('recordingTimer');
         if (timerDom) {
-            timerDom.textContent = this.seconds;
+            const mins = Math.floor(this.seconds / 60);
+            const secs = this.seconds % 60;
+            timerDom.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
     },
 
@@ -759,31 +763,21 @@ const VoiceRecorder = {
         this.updateUI();
     },
 
-    async toggle() {
-        if (this.isRecording) {
-            await this.stop();
-        } else if (this.recordedBlob) {
-            const confirmed = await showModal("Kaydı Sil", "Mevcut ses kaydını silmek istiyor musunuz?", true);
-            if (confirmed) {
-                this.recordedBlob = null;
-                this.audioChunks = [];
-                this.updateUI();
-            }
-        } else {
-            await this.start();
-        }
+    toggle() {
+        if (this.isRecording) this.stop();
+        else this.start();
     },
 
     updateUI() {
         const btn = document.getElementById('recordBtn');
         if (btn) {
-            btn.classList.toggle('recording', this.isRecording);
-            btn.classList.toggle('active', !!this.recordedBlob);
-
             if (this.isRecording) {
+                btn.classList.add('recording');
                 btn.innerHTML = '⏹️';
             } else {
-                btn.innerHTML = this.recordedBlob ? '✅' : '🎤';
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎤';
+                if (this.recordedBlob) btn.innerHTML = '✅';
             }
         }
     }
@@ -791,10 +785,6 @@ const VoiceRecorder = {
 
 window.toggleMusic = (url, momentId, voiceUrl) => {
     MusicManager.play(url, momentId, false, true, voiceUrl); // Mark as manual interaction
-};
-
-window.toggleVoiceMemo = (url, momentId) => {
-    VoicePlayer.play(url, momentId);
 };
 
 window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
@@ -805,6 +795,7 @@ window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
     }
 
     if (musicUrl || voiceUrl) {
+        console.log(`[CardClick] Triggering audio for ${momentId}`);
         window.toggleMusic(musicUrl, momentId, voiceUrl);
     }
 };
@@ -814,12 +805,11 @@ const VoicePlayer = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
-    playTimeout: null,
 
     async play(url, momentId) {
         if (!url) return;
 
-        if (this.currentMomentId === momentId && (this.isPlaying || this.playTimeout)) {
+        if (this.currentMomentId === momentId && this.isPlaying) {
             this.stop();
             return;
         }
@@ -829,26 +819,14 @@ const VoicePlayer = {
         this.currentMomentId = momentId;
 
         this.audio.volume = 1.0;
-
-        // 3 seconds delay if music is playing
-        const delay = MusicManager.isPlaying ? 3000 : 0;
-
-        this.playTimeout = setTimeout(async () => {
-            try {
-                this.playTimeout = null;
-                this.audio.load(); // Ensure it's ready
-                await this.audio.play();
-                this.isPlaying = true;
-                // Duck music during voice playback
-                if (MusicManager.isPlaying) {
-                    MusicManager.audio.volume = 0.25;
-                }
-                this.updateVoiceIcons(true);
-            } catch (e) {
-                console.warn("Voice play failed:", e);
-                this.isPlaying = false;
+        this.audio.onplay = () => {
+            this.isPlaying = true;
+            // Duck music during voice playback
+            if (MusicManager.isPlaying) {
+                MusicManager.audio.volume = 0.25;
             }
-        }, delay);
+            this.updateVoiceIcons(true);
+        };
 
         this.audio.onended = () => {
             this.isPlaying = false;
@@ -858,13 +836,15 @@ const VoicePlayer = {
             }
             this.updateVoiceIcons(false);
         };
+
+        try {
+            await this.audio.play();
+        } catch (e) {
+            console.warn("Voice play failed:", e);
+        }
     },
 
     stop() {
-        if (this.playTimeout) {
-            clearTimeout(this.playTimeout);
-            this.playTimeout = null;
-        }
         this.audio.pause();
         this.audio.currentTime = 0;
         this.isPlaying = false;
@@ -902,6 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInfiniteScroll();
 
     // Check last view
+    console.log("momentLog: DOM Loaded v19");
 
     const refreshTodayDate = () => {
         if (dom.momentDate) {
@@ -927,6 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
         setupAutoplayObserver();
+        console.log("momentLog: UI Initialized Successfully v19");
     } catch (e) {
         console.error("Initialization Error:", e);
     }
@@ -939,6 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
+                console.log("Kullanıcı giriş yaptı:", user.displayName);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // Get full profile from Firestore
@@ -972,10 +955,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastView = 'my-following';
                 }
 
+                console.log("Setting initial view:", lastView || 'my-following');
                 await window.setView(lastView || 'my-following', true);
 
                 setupNotifications();
             } else {
+                console.log("Kullanıcı giriş yapmadı.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 myPrivateMoments = [];
@@ -1009,6 +994,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW Registered'))
+            .catch(err => console.log('SW Registration Failed', err));
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -1297,6 +1284,7 @@ function setupInfiniteScroll() {
 
     const observer = new IntersectionObserver(async (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingNextPage) {
+            console.log("Loading more moments...");
             await loadMoments();
             renderTimeline();
         }
@@ -1335,6 +1323,7 @@ function setupAutoplayObserver() {
             } else {
                 // Scrolled out: If the card leaving is the one currently playing, fade out
                 if (MusicManager.currentMomentId === momentId && MusicManager.isPlaying) {
+                    console.log(`[Observer] Card ${momentId} scrolled out, fading out.`);
                     MusicManager.fadeOut();
                 }
             }
@@ -1355,6 +1344,7 @@ function setupAutoplayObserver() {
 
     // Audio Unlocker: Browser policy bypass
     const unlockAudio = () => {
+        console.log("[Audio] System unlocked by user interaction");
         MusicManager.audio.play().then(() => {
             MusicManager.audio.pause();
             MusicManager.isUnlocked = true;
@@ -1429,12 +1419,7 @@ async function saveMoment() {
     const text = dom.input?.value?.trim();
     const dateInput = dom.momentDate?.value;
 
-    // AUTO-STOP recording if user clicks Save while recording
-    if (VoiceRecorder.isRecording) {
-        await VoiceRecorder.stop(true); // Stop without confirmation
-    }
-
-    if (!text && currentMedia.length === 0 && !VoiceRecorder.recordedBlob) {
+    if (!text && currentMedia.length === 0) {
         showModal('Boş Anı', 'Lütfen bir metin girin veya medya ekleyin.');
         return;
     }
@@ -1459,21 +1444,32 @@ async function saveMoment() {
         const uploadedMedia = [];
         const mediaToUpload = currentMedia.filter(m => m && typeof m.data === 'string');
 
+        console.log('Media to upload:', mediaToUpload.length);
 
         if (mediaToUpload.length > 0) {
             showUploadProgress(0, mediaToUpload.length);
 
             for (let i = 0; i < mediaToUpload.length; i++) {
                 const m = mediaToUpload[i];
+                console.log('Uploading media', i + 1, 'type:', m.type);
                 try {
-                    // Standard compression for faster upload, but no longer forced by 1MB limit
-                    const compressedData = await compressImage(m.data, 0.8, 1200);
+                    // Priority: Compressed Base64 (WebP) to stay under 1MB Firestore limit
+                    console.log('Optimizing image for Firestore...');
+                    const compressedData = await compressImage(m.data, 0.65, 1080);
                     if (compressedData) {
-                        const cloudinaryUrl = await CloudinaryService.upload(compressedData, 'image');
-                        uploadedMedia.push({ type: m.type || 'image', url: cloudinaryUrl });
+                        uploadedMedia.push({ type: m.type || 'image', url: compressedData });
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);
+                    // Fallback on error too
+                    try {
+                        const compressedData = await compressImage(m.data, 0.85, 1440);
+                        if (compressedData) {
+                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        }
+                    } catch (compressErr) {
+                        console.error('Compression error:', compressErr);
+                    }
                 }
                 showUploadProgress(i + 1, mediaToUpload.length);
             }
@@ -1483,14 +1479,23 @@ async function saveMoment() {
         // Upload Voice Memo if exists
         let voiceUrl = null;
         if (VoiceRecorder.recordedBlob) {
+            console.log('Uploading voice memo...');
             try {
-                // Upload direct blob to Cloudinary (much more efficient than base64)
-                voiceUrl = await CloudinaryService.upload(VoiceRecorder.recordedBlob, 'audio');
+                // Convert blob to base64 for uploadMedia
+                const reader = new FileReader();
+                const base64Promise = new Promise(resolve => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(VoiceRecorder.recordedBlob);
+                });
+                const base64Data = await base64Promise;
+                voiceUrl = await DBService.uploadMedia(base64Data, 'audio');
+                console.log('Voice memo uploaded:', voiceUrl);
             } catch (err) {
                 console.error('Voice upload error:', err);
             }
         }
 
+        console.log('Uploaded media count:', uploadedMedia.length);
 
         // Ensure location is a simple string
         const locationString = typeof currentLocation === 'string' ? currentLocation :
@@ -1674,7 +1679,7 @@ function renderTimeline(searchQuery = '') {
         const stickersHtml = `
             <div class="collage-stickers-overlay">
                 <div class="mini-time-sticker collage-sticker">${formattedTime}</div>
-                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${escapeHTML(m.stickerText)}</div>` : ''}
+                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
             </div>
         `;
 
@@ -1693,14 +1698,13 @@ function renderTimeline(searchQuery = '') {
                             ${generateMiniCollage(m.media)}
                             
                             <!-- Music Marquee inside Collage (Top) -->
-                            ${(m.musicText || m.voiceUrl) ? `
+                            ${m.musicText ? `
                                 <div class="collage-music-wrapper">
-                                    <div class="collage-music-marquee ${(m.musicText && m.musicText.length > 25) ? 'has-scroll' : ''}">
-                                        ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
+                                    <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
+                                        🎵 ${m.musicText}
                                     </div>
                                     ${m.voiceUrl ? `<div class="voice-indicator-icon" title="Ses Kaydı Mevcut">🎙️</div>` : ''}
                                 </div>
-                                ${m.voiceUrl ? `<div class="voice-visualizer-wave"></div>` : ''}
                             ` : ''}
 
                             ${stickersHtml}
@@ -1729,14 +1733,13 @@ function renderTimeline(searchQuery = '') {
                         <div class="user-avatar">
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
-                        <div class="user-meta">
-                            <div class="user-name-row">
-                                <span class="username">${escapeHTML(m.userDisplayName || 'Anonim')}</span>
+                        <div class="user-details">
+                            <span class="username">
+                                ${m.userDisplayName || 'Anonim'}
                                 ${m.isVerified ? '<span class="verified-badge">✓</span>' : ''}
-                                ${m.isEarlyUser ? '<span class="early-user-tag">PRO</span>' : ''}
-                            </div>
-                            <div class="moment-metadata">
-                                <span class="date">${formattedDate}${escapeHTML(locationText)}</span>
+                            </span>
+                            <div class="meta-info">
+                                <span class="date">${formattedDate}${locationText}</span>
                                 ${m.verifiedLocation ? '<span class="verified-location-badge" title="Doğrulanmış Konum">📍✓</span>' : ''}
                             </div>
                         </div>
@@ -1754,13 +1757,6 @@ function renderTimeline(searchQuery = '') {
 
                 ${m.voiceUrl && images.length === 0 ? `
                     <div class="card-labels-stack" style="margin-top: 10px;">
-                        <div class="collage-music-wrapper" style="position: relative; margin-bottom: 5px; background: rgba(var(--accent-rgb), 0.1);">
-                             <div class="collage-music-marquee">
-                                ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
-                             </div>
-                             <div class="voice-indicator-icon">🎙️</div>
-                        </div>
-                        <div class="voice-visualizer-wave" style="margin-bottom: 10px;"></div>
                         <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
                             🎤 Sesli Not
                         </button>
@@ -1770,7 +1766,7 @@ function renderTimeline(searchQuery = '') {
                 <!-- 5. Medya -->
                 ${mediaHtml}
                 
-                ${m.text ? `<div class="card-content">${escapeHTML(m.text)}</div>` : ''}
+                ${m.text ? `<div class="card-content">${m.text}</div>` : ''}
                 
                 <div class="card-actions">
                     <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${m.id}')">
@@ -1849,8 +1845,8 @@ function renderMyRecentMoments() {
                     </div>
                     <div class="compact-info">
                         <div class="compact-date">${formattedDate} • ${formattedTime}</div>
-                        ${m.location ? `<div class="compact-location">📍 ${escapeHTML(m.location)}</div>` : ''}
-                        ${m.text ? `<div class="compact-text">${escapeHTML(m.text.substring(0, 60))}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
+                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
                     </div>
                     <div class="compact-stats">
                         <span>❤️ ${m.likes?.length || 0}</span>
@@ -2112,11 +2108,11 @@ async function loadInlineComments(momentId, expanded = false) {
             return `
                 <div class="comment-item">
                     <div class="comment-header">
-                        <span class="comment-author">@${escapeHTML(c.username || c.userDisplayName || c.userName || 'anonim')}</span>
+                        <span class="comment-author">@${c.username || c.userDisplayName || c.userName || 'anonim'}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwner ? `<button class="comment-delete" onclick="window.deleteComment('${momentId}', '${c.id}')">×</button>` : ''}
                     </div>
-                    <div class="comment-text">${escapeHTML(c.text)}</div>
+                    <div class="comment-text">${c.text}</div>
                     <div class="comment-actions">
                         <button class="comment-like ${isLiked ? 'liked' : ''}" onclick="window.toggleCommentLike('${momentId}', '${c.id}')">
                             ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
@@ -2215,6 +2211,7 @@ function fetchLocation() {
             }
         },
         (err) => {
+            console.log("Konum izni verilmedi");
             isRealLocationActive = false;
             const btn = document.getElementById('addLocationBtn');
             btn?.classList.remove('active');
@@ -2301,11 +2298,11 @@ async function openProfileView(uid) {
                 </div>
                 <div class="profile-info-minimal">
                     <h2>
-                        ${escapeHTML(userProfile.displayName || 'İsimsiz')}
+                        ${userProfile.displayName || 'İsimsiz'}
                         ${userProfile.isVerified ? '<span class="verified-badge">✓</span>' : ''}
                     </h2>
-                    <p class="profile-username">@${escapeHTML(userProfile.username || 'kullanici')}</p>
-                    <p class="profile-bio">${escapeHTML(userProfile.bio || '')}</p>
+                    <p class="profile-username">@${userProfile.username || 'kullanici'}</p>
+                    <p class="profile-bio">${userProfile.bio || ''}</p>
                 </div>
             </div>
 
@@ -2648,6 +2645,7 @@ window.submitComment = async (momentId) => {
 // --- Notification System ---
 function setupNotifications() {
     const currentUser = AuthService.currentUser();
+    console.log('setupNotifications called, user:', currentUser?.uid);
     if (!currentUser) return;
 
     DBService.onNotifications(currentUser.uid, (notifications) => {
@@ -2705,7 +2703,7 @@ function renderNotificationsInView(notifications) {
             'follow': 'seni takip etti',
             'follow_request': 'takip isteği gönderdi'
         };
-        const avatar = (n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:')) ? `<img src="${n.senderPhoto}">` : (n.senderPhoto || '👤');
+        const avatar = n.senderPhoto?.startsWith('http') ? `<img src="${n.senderPhoto}">` : '👤';
         const unreadClass = n.isRead ? '' : 'unread';
         const timeAgo = getTimeAgo(n.createdAt);
 
@@ -2721,7 +2719,7 @@ function renderNotificationsInView(notifications) {
                 <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}', '${n.type}')">
                     <div class="notif-avatar">${avatar}</div>
                     <div class="notif-content">
-                        <div class="notif-text"><strong>${escapeHTML(n.senderName || 'Biri')}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
+                        <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
                         <div class="notif-time">${timeAgo}</div>
                         ${actionButtons}
                     </div>
@@ -2916,3 +2914,4 @@ window.handleShare = async (e, momentId, text) => {
     }
 };
 
+console.log("momentLog: Script loaded successfully v20");

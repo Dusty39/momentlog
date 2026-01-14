@@ -1,19 +1,20 @@
-// --- Global Helpers ---
-function escapeHTML(str) {
-    if (!str) return "";
-    const p = document.createElement("p");
-    p.textContent = str;
-    return p.innerHTML;
-}
+/**
+ * momentLog - Complete Application Logic v19
+ * Gold Theme Edition - Phase 29 Restore
+ */
 
+// --- Global Error Monitor ---
 window.onerror = function (msg, url, line) {
     console.error("Error: " + msg + " at line " + line);
     return false;
 };
 
+console.log("momentLog: Script loading v164...");
+console.log("DEBUG: v164 - closeModallnApp typo is GONE.");
+
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = 4;
 
 let moments = [];
 let currentMedia = [];
@@ -24,14 +25,14 @@ let currentMood = '😊';
 let isDictating = false;
 let mediaRecorder = null;
 let audioChunks = [];
-const MAX_AUDIO_SECONDS = 24;
+const MAX_AUDIO_SECONDS = 30;
 let myPrivateMoments = []; // Separate cache for own moments to ensure individual visibility
 let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 
 // --- Image Compression for Fallback (WebP 2K Ready) ---
-async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
+async function compressImage(dataUrl, quality = 0.85, maxWidth = 1440) {
     return new Promise((resolve) => {
         const timeout = setTimeout(() => {
             console.warn("Compression timed out");
@@ -110,7 +111,7 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 18; left = 10; // Lowered to prevent sticker collision
+            top = 20; left = 25; // Centered
         } else if (images.length === 2) {
             top = idx === 0 ? 15 : 45;
             left = idx === 0 ? 10 : 40;
@@ -431,9 +432,6 @@ function initializeSelectors() {
         stickerInput: document.getElementById('stickerInput'),
         musicInput: document.getElementById('musicInput'),
         musicUrlInput: document.getElementById('musicUrlInput'),
-        exploreSearchWrapper: document.getElementById('exploreSearchWrapper'),
-        exploreSearchInput: document.getElementById('exploreSearchInput'),
-        clearSearchBtn: document.getElementById('clearSearchBtn'),
     };
 }
 
@@ -452,16 +450,8 @@ const MusicManager = {
     originalVolume: 0.8,
     isAutoplayAllowed: true, // New flag: Global control for autoplay
 
-    async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
-        if (!url && !voiceUrl) {
-            this.fadeOut();
-            if (VoicePlayer.isPlaying) VoicePlayer.stop();
-            return;
-        }
-
-        // Handle voice only moments (if any)
-        if (!url && voiceUrl) {
-            VoicePlayer.play(voiceUrl, momentId);
+    async play(url, momentId, skipFade = false, isManual = false) {
+        if (!url) {
             this.fadeOut();
             return;
         }
@@ -474,15 +464,15 @@ const MusicManager = {
         // --- Toggle Logic ---
         if (this.currentMomentId === momentId) {
             if (this.isPlaying) {
+                console.log(`[MusicManager] Toggling OFF for ${momentId}`);
                 this.pause();
-                VoicePlayer.stop();
                 return;
             } else {
+                console.log(`[MusicManager] Toggling ON for ${momentId}`);
                 try {
                     await this.audio.play();
                     this.isPlaying = true;
                     if (!skipFade) this.fadeIn();
-                    if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
                 } catch (e) {
                     console.warn("[MusicManager] Resume failed:", e);
                     this.isPlaying = false;
@@ -493,17 +483,18 @@ const MusicManager = {
         }
 
         // New track
+        console.log(`[MusicManager] Playing new: ${momentId}`);
         this.stop(true);
         this.audio.src = url;
-        this.audio.load();
+        this.audio.load(); // Explicit load for better cross-browser experience
         this.audio.loop = true;
         this.currentMomentId = momentId;
 
         try {
+            // Some browsers require interaction, so we try play() and only update state on success
             await this.audio.play();
             this.isPlaying = true;
             if (!skipFade) this.fadeIn();
-            if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
         } catch (e) {
             console.warn("[MusicManager] Play failed:", e);
             this.isPlaying = false;
@@ -567,8 +558,7 @@ const MusicManager = {
 
     updateUI() {
         document.querySelectorAll('.music-toggle-btn').forEach(btn => {
-            const card = btn.closest('.moment-card');
-            const mid = card ? card.dataset.id : btn.dataset.momentId;
+            const mid = btn.dataset.momentId;
             if (mid === this.currentMomentId && this.isPlaying) {
                 btn.innerHTML = '⏸️';
                 btn.classList.add('playing');
@@ -579,13 +569,6 @@ const MusicManager = {
         });
     }
 };
-
-// --- Background Audio Control ---
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden && MusicManager.isPlaying) {
-        MusicManager.pause();
-    }
-});
 
 // --- Music Metadata & Preview Fetcher ---
 async function fetchMusicMetadata(url) {
@@ -653,37 +636,37 @@ const VoiceRecorder = {
     mediaRecorder: null,
     audioChunks: [],
     isRecording: false,
-    recordingInterval: null,
+    recordingTimeout: null,
     recordedBlob: null,
-    seconds: 0,
-    maxSeconds: 16,
 
     async start() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream, {
-                audioBitsPerSecond: 24000 // 24kbps for voice efficiency
-            });
+            this.mediaRecorder = new MediaRecorder(stream);
             this.audioChunks = [];
-            this.seconds = this.maxSeconds; // Start from max
 
             this.mediaRecorder.ondataavailable = (event) => {
                 this.audioChunks.push(event.data);
             };
 
             this.mediaRecorder.onstop = () => {
-                const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                this.recordedBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
                 this.isRecording = false;
-                this.stopTimer();
+                MusicManager.setVolume(MusicManager.originalVolume);
                 this.updateUI();
-                this.tempBlob = blob;
+                console.log("Kayıt tamamlandı, blob boyutu:", this.recordedBlob.size);
             };
 
+            // Start recording
             this.mediaRecorder.start();
             this.isRecording = true;
-            this.startTimer();
-            MusicManager.setVolume(0.25);
+            MusicManager.setVolume(0.25); // Duck the music
             this.updateUI();
+
+            // Auto-stop after 20 seconds
+            this.recordingTimeout = setTimeout(() => {
+                if (this.isRecording) this.stop();
+            }, 20000);
 
         } catch (err) {
             console.error("Mikrofon erişim hatası:", err);
@@ -691,121 +674,47 @@ const VoiceRecorder = {
         }
     },
 
-    startTimer() {
-        const timerDom = document.getElementById('recordingTimer');
-        if (timerDom) {
-            timerDom.classList.remove('hidden');
-            this.updateTimerUI(); // Initial display
-        }
-
-        this.recordingInterval = setInterval(() => {
-            this.seconds--; // Countdown
-            this.updateTimerUI();
-            if (this.seconds <= 0) {
-                this.stop(true); // Auto stop
-            }
-        }, 1000);
-    },
-
-    stopTimer() {
-        clearInterval(this.recordingInterval);
-        const timerDom = document.getElementById('recordingTimer');
-        if (timerDom) timerDom.classList.add('hidden');
-    },
-
-    updateTimerUI() {
-        const timerDom = document.getElementById('recordingTimer');
-        if (timerDom) {
-            timerDom.textContent = this.seconds;
+    stop() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            clearTimeout(this.recordingTimeout);
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
         }
     },
 
-    async stop(auto = false) {
-        if (!this.mediaRecorder || !this.isRecording) return;
-
-        if (!auto) {
-            const confirmed = await showModal("Ses Kaydı", "Ses kaydını tamamlayıp anıya eklemek istiyor musunuz?", true);
-            if (!confirmed) {
-                // Cancel recording
-                this.mediaRecorder.onstop = null; // Ignore current stop
-                this.mediaRecorder.stop();
-                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                this.isRecording = false;
-                this.stopTimer();
-                MusicManager.setVolume(MusicManager.originalVolume);
-                this.audioChunks = [];
-                this.recordedBlob = null;
-                this.updateUI();
-                return;
-            }
-        }
-
-        this.mediaRecorder.stop();
-        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-
-        // Wait for onstop to finish (using promise approach for cleaner flow)
-        await new Promise(resolve => {
-            const originalOnStop = this.mediaRecorder.onstop;
-            this.mediaRecorder.onstop = () => {
-                if (originalOnStop) originalOnStop();
-                this.recordedBlob = this.tempBlob;
-                resolve();
-            };
-            if (this.mediaRecorder.state === 'inactive') resolve();
-        });
-
-        MusicManager.setVolume(MusicManager.originalVolume);
-        showModal("Tamam", "Ses kaydı hazır.");
-        this.updateUI();
-    },
-
-    async toggle() {
-        if (this.isRecording) {
-            await this.stop();
-        } else if (this.recordedBlob) {
-            const confirmed = await showModal("Kaydı Sil", "Mevcut ses kaydını silmek istiyor musunuz?", true);
-            if (confirmed) {
-                this.recordedBlob = null;
-                this.audioChunks = [];
-                this.updateUI();
-            }
-        } else {
-            await this.start();
-        }
+    toggle() {
+        if (this.isRecording) this.stop();
+        else this.start();
     },
 
     updateUI() {
         const btn = document.getElementById('recordBtn');
         if (btn) {
-            btn.classList.toggle('recording', this.isRecording);
-            btn.classList.toggle('active', !!this.recordedBlob);
-
             if (this.isRecording) {
+                btn.classList.add('recording');
                 btn.innerHTML = '⏹️';
             } else {
-                btn.innerHTML = this.recordedBlob ? '✅' : '🎤';
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎤';
             }
         }
     }
 };
 
-window.toggleMusic = (url, momentId, voiceUrl) => {
-    MusicManager.play(url, momentId, false, true, voiceUrl); // Mark as manual interaction
+window.toggleMusic = (url, momentId) => {
+    MusicManager.play(url, momentId, false, true); // Mark as manual interaction
 };
 
-window.toggleVoiceMemo = (url, momentId) => {
-    VoicePlayer.play(url, momentId);
-};
-
-window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
+window.handleCardClick = (e, momentId, musicUrl) => {
     // Prevent triggering if clicking on buttons, interactive elements, or collage photos
     const interactiveTags = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'LABEL'];
     if (interactiveTags.includes(e.target.tagName) || e.target.closest('.user-info') || e.target.closest('.card-actions') || e.target.closest('.mini-img-wrapper')) {
         return;
     }
 
-    if (musicUrl || voiceUrl) {
-        window.toggleMusic(musicUrl, momentId, voiceUrl);
+    if (musicUrl) {
+        console.log(`[CardClick] Triggering music for ${momentId}`);
+        window.toggleMusic(musicUrl, momentId);
     }
 };
 
@@ -814,75 +723,51 @@ const VoicePlayer = {
     audio: new Audio(),
     currentMomentId: null,
     isPlaying: false,
-    playTimeout: null,
 
     async play(url, momentId) {
         if (!url) return;
 
-        if (this.currentMomentId === momentId && (this.isPlaying || this.playTimeout)) {
-            this.stop();
+        if (this.currentMomentId === momentId && this.isPlaying) {
+            this.pause();
             return;
         }
 
-        this.stop();
+        this.pause();
         this.audio.src = url;
-        this.currentMomentId = momentId;
 
-        this.audio.volume = 1.0;
+        // Duck music during voice playback
+        MusicManager.setVolume(0.25);
 
-        // 3 seconds delay if music is playing
-        const delay = MusicManager.isPlaying ? 3000 : 0;
+        try {
+            await this.audio.play();
+            this.currentMomentId = momentId;
+            this.isPlaying = true;
+            this.updateUI();
 
-        this.playTimeout = setTimeout(async () => {
-            try {
-                this.playTimeout = null;
-                this.audio.load(); // Ensure it's ready
-                await this.audio.play();
-                this.isPlaying = true;
-                // Duck music during voice playback
-                if (MusicManager.isPlaying) {
-                    MusicManager.audio.volume = 0.25;
-                }
-                this.updateVoiceIcons(true);
-            } catch (e) {
-                console.warn("Voice play failed:", e);
+            this.audio.onended = () => {
                 this.isPlaying = false;
-            }
-        }, delay);
-
-        this.audio.onended = () => {
-            this.isPlaying = false;
-            // Restore music volume
-            if (MusicManager.isPlaying) {
-                MusicManager.audio.volume = MusicManager.originalVolume;
-            }
-            this.updateVoiceIcons(false);
-        };
+                MusicManager.setVolume(MusicManager.originalVolume);
+                this.updateUI();
+            };
+        } catch (e) { console.warn("Voice playback failed:", e); }
     },
 
-    stop() {
-        if (this.playTimeout) {
-            clearTimeout(this.playTimeout);
-            this.playTimeout = null;
-        }
+    pause() {
         this.audio.pause();
-        this.audio.currentTime = 0;
         this.isPlaying = false;
-        if (MusicManager.isPlaying) {
-            MusicManager.audio.volume = MusicManager.originalVolume;
-        }
-        this.updateVoiceIcons(false);
+        MusicManager.setVolume(MusicManager.originalVolume);
+        this.updateUI();
     },
 
-    updateVoiceIcons(active) {
-        document.querySelectorAll('.voice-indicator-icon').forEach(icon => {
-            const card = icon.closest('.moment-card');
-            if (card && card.dataset.id === this.currentMomentId) {
-                icon.style.color = active ? 'var(--accent)' : 'inherit';
-                icon.style.opacity = active ? '1' : '0.6';
+    updateUI() {
+        document.querySelectorAll('.voice-play-btn').forEach(btn => {
+            const mid = btn.dataset.momentId;
+            if (mid === this.currentMomentId && this.isPlaying) {
+                btn.innerHTML = '⏸️ Dinleniyor...';
+                btn.classList.add('playing');
             } else {
-                icon.style.color = 'inherit';
-                icon.style.opacity = '0.6';
+                btn.innerHTML = '🎤 Sesli Not';
+                btn.classList.remove('playing');
             }
         });
     }
@@ -902,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInfiniteScroll();
 
     // Check last view
+    console.log("momentLog: DOM Loaded v19");
 
     const refreshTodayDate = () => {
         if (dom.momentDate) {
@@ -927,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
         setupAutoplayObserver();
+        console.log("momentLog: UI Initialized Successfully v19");
     } catch (e) {
         console.error("Initialization Error:", e);
     }
@@ -939,6 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
+                console.log("Kullanıcı giriş yaptı:", user.displayName);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // Get full profile from Firestore
@@ -954,14 +842,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = userProfile?.username || user.displayName || 'Kullanıcı';
                 }
 
-                // Set initial view and load data
-                if (userProfile) {
-                    // Default post visibility matches profile privacy
-                    // Profile Private (true) -> isPublicState false
-                    // Profile Public (false) -> isPublicState true
-                    isPublicState = !userProfile.isPrivateProfile;
-                    window.updateVisibilityUI();
-                }
+                // Load initial sidebar data
+                const res = await DBService.getMyMoments();
+                myPrivateMoments = res.moments || [];
+                renderMyRecentMoments();
 
                 // Set initial view and load data
                 let lastView = localStorage.getItem('momentLog_lastView');
@@ -972,10 +856,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastView = 'my-following';
                 }
 
+                console.log("Setting initial view:", lastView || 'my-following');
                 await window.setView(lastView || 'my-following', true);
 
                 setupNotifications();
             } else {
+                console.log("Kullanıcı giriş yapmadı.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 myPrivateMoments = [];
@@ -1009,6 +895,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register Service Worker
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('SW Registered'))
+            .catch(err => console.log('SW Registration Failed', err));
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -1035,25 +923,21 @@ function setupEventListeners() {
         };
     }
 
-    // Visibility toggle helper
-    window.updateVisibilityUI = () => {
-        const visibleIcon = document.getElementById('visibleIcon');
-        const privateIcon = document.getElementById('privateIcon');
-        if (isPublicState) {
-            visibleIcon?.classList.remove('hidden');
-            privateIcon?.classList.add('hidden');
-            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
-        } else {
-            visibleIcon?.classList.add('hidden');
-            privateIcon?.classList.remove('hidden');
-            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
-        }
-    };
-
+    // Visibility toggle
     if (dom.visibilityToggle) {
         dom.visibilityToggle.onclick = () => {
             isPublicState = !isPublicState;
-            window.updateVisibilityUI();
+            const visibleIcon = document.getElementById('visibleIcon');
+            const privateIcon = document.getElementById('privateIcon');
+            if (isPublicState) {
+                visibleIcon?.classList.remove('hidden');
+                privateIcon?.classList.add('hidden');
+                dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
+            } else {
+                visibleIcon?.classList.add('hidden');
+                privateIcon?.classList.remove('hidden');
+                dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
+            }
         };
     }
 
@@ -1066,7 +950,7 @@ function setupEventListeners() {
     const dashboardFooter = document.getElementById('dashboardFooter');
     const myRecentMoments = document.getElementById('myRecentMoments');
 
-    window.setView = async (viewName, force = false, scrollId = null) => {
+    window.setView = async (viewName, force = false) => {
         if (!force && currentView === viewName) return;
 
         currentView = viewName;
@@ -1091,7 +975,6 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
-            dom.exploreSearchWrapper?.classList.remove('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
@@ -1105,7 +988,6 @@ function setupEventListeners() {
             inputSectionBase?.classList.remove('hidden-mode');
             dashboardFooter?.classList.remove('hidden-mode');
             myRecentMoments?.classList.remove('hidden-mode');
-            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
@@ -1119,7 +1001,6 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
-            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.remove('hidden-mode');
@@ -1142,26 +1023,9 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
-            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             dom.timeline?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.remove('hidden-mode');
-        } else if (currentView === 'my-moments') {
-            // Personal Journal View
-            if (titleEl) titleEl.textContent = "Günlüğüm";
-            exploreBtn?.classList.remove('active');
-            homeBtn?.classList.remove('active');
-            headerAddBtn?.classList.remove('active');
-            notificationsBtn?.classList.remove('active');
-            profileBtn?.classList.remove('active');
-
-            inputSectionBase?.classList.add('hidden-mode');
-            dashboardFooter?.classList.add('hidden-mode');
-            myRecentMoments?.classList.add('hidden-mode');
-            dom.exploreSearchWrapper?.classList.add('hidden-mode');
-            document.getElementById('profileView')?.classList.add('hidden-mode');
-            document.getElementById('notiView')?.classList.add('hidden-mode');
-            dom.timeline?.classList.remove('hidden-mode');
         } else {
             // Home / Following View
             exploreBtn?.classList.remove('active');
@@ -1173,7 +1037,6 @@ function setupEventListeners() {
             inputSectionBase?.classList.add('hidden-mode');
             dashboardFooter?.classList.add('hidden-mode');
             myRecentMoments?.classList.add('hidden-mode');
-            dom.exploreSearchWrapper?.classList.add('hidden-mode');
             document.getElementById('profileView')?.classList.add('hidden-mode');
             document.getElementById('notiView')?.classList.add('hidden-mode');
             dom.timeline?.classList.remove('hidden-mode');
@@ -1182,43 +1045,12 @@ function setupEventListeners() {
         await loadMoments();
         renderTimeline();
         if (currentView === 'write') renderMyRecentMoments();
-
-        // Scroll to specific moment if ID provided
-        if (scrollId && (currentView === 'my-moments' || currentView === 'my-following' || currentView === 'explore')) {
-            setTimeout(() => {
-                const target = document.querySelector(`.moment-card[data-id="${scrollId}"]`);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    target.classList.add('highlight-moment');
-                    setTimeout(() => target.classList.remove('highlight-moment'), 2000);
-                }
-            }, 300);
-        }
     };
 
     if (homeBtn) homeBtn.onclick = () => window.setView('my-following');
     if (exploreBtn) exploreBtn.onclick = () => window.setView('explore');
     if (headerAddBtn) headerAddBtn.onclick = () => window.setView('write');
     if (notificationsBtn) notificationsBtn.onclick = () => window.setView('notifications');
-
-    // Explore Search Listeners
-    if (dom.exploreSearchInput) {
-        dom.exploreSearchInput.oninput = (e) => {
-            const val = e.target.value.trim();
-            if (dom.clearSearchBtn) {
-                dom.clearSearchBtn.classList.toggle('hidden', val === '');
-            }
-            renderTimeline(val);
-        };
-    }
-
-    if (dom.clearSearchBtn) {
-        dom.clearSearchBtn.onclick = () => {
-            if (dom.exploreSearchInput) dom.exploreSearchInput.value = '';
-            dom.clearSearchBtn.classList.add('hidden');
-            renderTimeline();
-        };
-    }
     if (profileBtn) profileBtn.onclick = () => {
         const currentUser = AuthService.currentUser();
         if (currentUser) window.openProfileView(currentUser.uid);
@@ -1297,6 +1129,7 @@ function setupInfiniteScroll() {
 
     const observer = new IntersectionObserver(async (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingNextPage) {
+            console.log("Loading more moments...");
             await loadMoments();
             renderTimeline();
         }
@@ -1335,6 +1168,7 @@ function setupAutoplayObserver() {
             } else {
                 // Scrolled out: If the card leaving is the one currently playing, fade out
                 if (MusicManager.currentMomentId === momentId && MusicManager.isPlaying) {
+                    console.log(`[Observer] Card ${momentId} scrolled out, fading out.`);
                     MusicManager.fadeOut();
                 }
             }
@@ -1355,6 +1189,7 @@ function setupAutoplayObserver() {
 
     // Audio Unlocker: Browser policy bypass
     const unlockAudio = () => {
+        console.log("[Audio] System unlocked by user interaction");
         MusicManager.audio.play().then(() => {
             MusicManager.audio.pause();
             MusicManager.isUnlocked = true;
@@ -1429,12 +1264,7 @@ async function saveMoment() {
     const text = dom.input?.value?.trim();
     const dateInput = dom.momentDate?.value;
 
-    // AUTO-STOP recording if user clicks Save while recording
-    if (VoiceRecorder.isRecording) {
-        await VoiceRecorder.stop(true); // Stop without confirmation
-    }
-
-    if (!text && currentMedia.length === 0 && !VoiceRecorder.recordedBlob) {
+    if (!text && currentMedia.length === 0) {
         showModal('Boş Anı', 'Lütfen bir metin girin veya medya ekleyin.');
         return;
     }
@@ -1459,21 +1289,38 @@ async function saveMoment() {
         const uploadedMedia = [];
         const mediaToUpload = currentMedia.filter(m => m && typeof m.data === 'string');
 
+        console.log('Media to upload:', mediaToUpload.length);
 
         if (mediaToUpload.length > 0) {
             showUploadProgress(0, mediaToUpload.length);
 
             for (let i = 0; i < mediaToUpload.length; i++) {
                 const m = mediaToUpload[i];
+                console.log('Uploading media', i + 1, 'type:', m.type);
                 try {
-                    // Standard compression for faster upload, but no longer forced by 1MB limit
-                    const compressedData = await compressImage(m.data, 0.8, 1200);
-                    if (compressedData) {
-                        const cloudinaryUrl = await CloudinaryService.upload(compressedData, 'image');
-                        uploadedMedia.push({ type: m.type || 'image', url: cloudinaryUrl });
+                    const url = await DBService.uploadMedia(m.data, m.type || 'image');
+                    console.log('Upload result:', url ? 'success' : 'failed');
+                    if (url) {
+                        uploadedMedia.push({ type: m.type || 'image', url: url });
+                    } else {
+                        // Fallback: if Storage fails, try to save compressed base64 (Ultra HD WebP)
+                        console.log('Storage failed, using compressed data URL');
+                        const compressedData = await compressImage(m.data, 0.85, 1440);
+                        if (compressedData) {
+                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        }
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);
+                    // Fallback on error too
+                    try {
+                        const compressedData = await compressImage(m.data, 0.85, 1440);
+                        if (compressedData) {
+                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        }
+                    } catch (compressErr) {
+                        console.error('Compression error:', compressErr);
+                    }
                 }
                 showUploadProgress(i + 1, mediaToUpload.length);
             }
@@ -1483,14 +1330,23 @@ async function saveMoment() {
         // Upload Voice Memo if exists
         let voiceUrl = null;
         if (VoiceRecorder.recordedBlob) {
+            console.log('Uploading voice memo...');
             try {
-                // Upload direct blob to Cloudinary (much more efficient than base64)
-                voiceUrl = await CloudinaryService.upload(VoiceRecorder.recordedBlob, 'audio');
+                // Convert blob to base64 for uploadMedia
+                const reader = new FileReader();
+                const base64Promise = new Promise(resolve => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(VoiceRecorder.recordedBlob);
+                });
+                const base64Data = await base64Promise;
+                voiceUrl = await DBService.uploadMedia(base64Data, 'audio');
+                console.log('Voice memo uploaded:', voiceUrl);
             } catch (err) {
                 console.error('Voice upload error:', err);
             }
         }
 
+        console.log('Uploaded media count:', uploadedMedia.length);
 
         // Ensure location is a simple string
         const locationString = typeof currentLocation === 'string' ? currentLocation :
@@ -1577,12 +1433,13 @@ async function saveMoment() {
             // Re-setup autoplay for the new card
             setupAutoplayObserver();
 
-            // SUCCESS UX: Show auto-closing modal then switch view
-            await showModal('Başarılı', 'Anınız kaydedildi! ✨', false, 1500);
-            window.setView('my-moments');
+            // SUCCESS UX: Show auto-closing modal then reload to be 100% sure
+            await showModal('Başarılı', 'Anınız kaydedildi! ✨', false, 2000);
+            location.reload();
         } catch (refreshErr) {
             console.warn("Kayıt başarılı ancak arayüz yenilenirken hata oluştu:", refreshErr);
-            window.setView('my-moments');
+            // Even if silent error, reload is better
+            location.reload();
         }
     } catch (e) {
         console.error("Genel Kaydetme Hatası:", e);
@@ -1617,31 +1474,10 @@ function renderTimeline(searchQuery = '') {
 
     let filteredMoments = sortedMoments;
     if (searchQuery) {
-        const query = searchQuery.toLowerCase().trim();
-
-        if (query.startsWith('#')) {
-            // Hashtag Search
-            const tag = query.substring(1);
-            filteredMoments = sortedMoments.filter(m =>
-                (m.text && m.text.toLowerCase().includes('#' + tag)) ||
-                (m.stickerText && m.stickerText.toLowerCase().includes('#' + tag))
-            );
-        } else if (query.startsWith('@')) {
-            // User Search
-            const username = query.substring(1);
-            filteredMoments = sortedMoments.filter(m =>
-                (m.userDisplayName && m.userDisplayName.toLowerCase().includes(username))
-            );
-        } else {
-            // General Search (Location, Text, User, Sticker)
-            filteredMoments = sortedMoments.filter(m =>
-                m.text?.toLowerCase().includes(query) ||
-                m.location?.toLowerCase().includes(query) ||
-                m.venue?.toLowerCase().includes(query) ||
-                m.userDisplayName?.toLowerCase().includes(query) ||
-                m.stickerText?.toLowerCase().includes(query)
-            );
-        }
+        filteredMoments = sortedMoments.filter(m =>
+            m.text?.toLowerCase().includes(searchQuery) ||
+            m.location?.toLowerCase().includes(searchQuery)
+        );
     }
 
     if (filteredMoments.length === 0) {
@@ -1656,15 +1492,14 @@ function renderTimeline(searchQuery = '') {
 
     // Full card view for all tabs
     dom.timeline.innerHTML = filteredMoments.map(m => {
-        // Date: user selected momentDate OR createdAt
-        const displayDate = new Date(m.momentDate || m.createdAt);
-        // Time: ALWAYS use createdAt for actual capture time (to avoid 00:00/03:00 reset)
-        const displayTime = new Date(m.createdAt || m.momentDate);
+        // Use momentDate (user selected) for display, fallback to createdAt (system date)
+        const dateString = m.momentDate || m.createdAt;
+        const date = new Date(dateString);
 
-        const formattedDate = displayDate.toLocaleDateString('tr-TR', {
+        const formattedDate = date.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
-        const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const locationText = m.location ? ` • ${m.location}` : '';
         const currentUser = AuthService.currentUser();
         const isLiked = m.likes?.includes(currentUser?.uid);
@@ -1674,7 +1509,7 @@ function renderTimeline(searchQuery = '') {
         const stickersHtml = `
             <div class="collage-stickers-overlay">
                 <div class="mini-time-sticker collage-sticker">${formattedTime}</div>
-                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${escapeHTML(m.stickerText)}</div>` : ''}
+                ${m.stickerText ? `<div class="mini-brush-sticker collage-sticker">${m.stickerText}</div>` : ''}
             </div>
         `;
 
@@ -1693,14 +1528,12 @@ function renderTimeline(searchQuery = '') {
                             ${generateMiniCollage(m.media)}
                             
                             <!-- Music Marquee inside Collage (Top) -->
-                            ${(m.musicText || m.voiceUrl) ? `
+                            ${m.musicText ? `
                                 <div class="collage-music-wrapper">
-                                    <div class="collage-music-marquee ${(m.musicText && m.musicText.length > 25) ? 'has-scroll' : ''}">
-                                        ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
+                                    <div class="collage-music-marquee ${m.musicText.length > 25 ? 'has-scroll' : ''}">
+                                        🎵 ${m.musicText} ${m.musicText.length > 25 ? `&nbsp;&nbsp;&nbsp;&nbsp; 🎵 ${m.musicText}` : ''}
                                     </div>
-                                    ${m.voiceUrl ? `<div class="voice-indicator-icon" title="Ses Kaydı Mevcut">🎙️</div>` : ''}
                                 </div>
-                                ${m.voiceUrl ? `<div class="voice-visualizer-wave"></div>` : ''}
                             ` : ''}
 
                             ${stickersHtml}
@@ -1722,21 +1555,20 @@ function renderTimeline(searchQuery = '') {
         }
 
         return `
-            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}" onclick="window.handleCardClick(event, '${m.id}', '${m.musicUrl || ''}', '${m.voiceUrl || ''}')">
+            <div class="moment-card theme-${m.theme || 'default'}" data-id="${m.id}" onclick="window.handleCardClick(event, '${m.id}', '${m.musicUrl || ''}')">
                 <!-- 1. Header (Kullanıcı Bilgisi) -->
                 <div class="card-header">
                     <div class="user-info" onclick="openProfileView('${m.userId}')">
                         <div class="user-avatar">
                             ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
                         </div>
-                        <div class="user-meta">
-                            <div class="user-name-row">
-                                <span class="username">${escapeHTML(m.userDisplayName || 'Anonim')}</span>
+                        <div class="user-details">
+                            <span class="username">
+                                ${m.userDisplayName || 'Anonim'}
                                 ${m.isVerified ? '<span class="verified-badge">✓</span>' : ''}
-                                ${m.isEarlyUser ? '<span class="early-user-tag">PRO</span>' : ''}
-                            </div>
-                            <div class="moment-metadata">
-                                <span class="date">${formattedDate}${escapeHTML(locationText)}</span>
+                            </span>
+                            <div class="meta-info">
+                                <span class="date">${formattedDate}${locationText}</span>
                                 ${m.verifiedLocation ? '<span class="verified-location-badge" title="Doğrulanmış Konum">📍✓</span>' : ''}
                             </div>
                         </div>
@@ -1754,13 +1586,6 @@ function renderTimeline(searchQuery = '') {
 
                 ${m.voiceUrl && images.length === 0 ? `
                     <div class="card-labels-stack" style="margin-top: 10px;">
-                        <div class="collage-music-wrapper" style="position: relative; margin-bottom: 5px; background: rgba(var(--accent-rgb), 0.1);">
-                             <div class="collage-music-marquee">
-                                ${m.musicText ? `🎵 ${escapeHTML(m.musicText)}` : ''}
-                             </div>
-                             <div class="voice-indicator-icon">🎙️</div>
-                        </div>
-                        <div class="voice-visualizer-wave" style="margin-bottom: 10px;"></div>
                         <button class="voice-play-btn" onclick="event.stopPropagation(); window.toggleVoiceMemo('${m.voiceUrl}', '${m.id}')" data-moment-id="${m.id}">
                             🎤 Sesli Not
                         </button>
@@ -1770,7 +1595,7 @@ function renderTimeline(searchQuery = '') {
                 <!-- 5. Medya -->
                 ${mediaHtml}
                 
-                ${m.text ? `<div class="card-content">${escapeHTML(m.text)}</div>` : ''}
+                ${m.text ? `<div class="card-content">${m.text}</div>` : ''}
                 
                 <div class="card-actions">
                     <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${m.id}')">
@@ -1779,9 +1604,6 @@ function renderTimeline(searchQuery = '') {
                     </button>
                     <button class="action-btn" onclick="window.toggleComments('${m.id}')">
                         💬 ${m.commentsCount || 0}
-                    </button>
-                    <button class="action-btn" onclick="window.handleShare(event, '${m.id}', '${m.text ? m.text.replace(/'/g, "\\'").replace(/\n/g, " ") : ""}')">
-                        🔗 Paylaş
                     </button>
                     <div class="action-spacer"></div>
                     ${isOwner ? `
@@ -1822,13 +1644,11 @@ function renderMyRecentMoments() {
     }
 
     list.innerHTML = myMoments.map(m => {
-        const displayDate = new Date(m.momentDate || m.createdAt);
-        const displayTime = new Date(m.createdAt || m.momentDate);
-
-        const formattedDate = displayDate.toLocaleDateString('tr-TR', {
+        const date = new Date(m.createdAt);
+        const formattedDate = date.toLocaleDateString('tr-TR', {
             day: 'numeric', month: 'short', year: 'numeric'
         });
-        const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const formattedTime = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         const firstImg = m.media?.find(med => med.type === 'image');
         const imgSrc = firstImg?.url || firstImg?.data || '';
 
@@ -1838,7 +1658,6 @@ function renderMyRecentMoments() {
                     <span>✕</span>
                 </div>
                 <div class="compact-moment-item"
-                     onclick="window.setView('my-moments', false, '${m.id}')"
                      ontouchstart="window.handleSwipeStart(event)"
                      ontouchmove="window.handleSwipeMove(event)"
                      ontouchend="window.handleSwipeEnd(event)">
@@ -1849,8 +1668,8 @@ function renderMyRecentMoments() {
                     </div>
                     <div class="compact-info">
                         <div class="compact-date">${formattedDate} • ${formattedTime}</div>
-                        ${m.location ? `<div class="compact-location">📍 ${escapeHTML(m.location)}</div>` : ''}
-                        ${m.text ? `<div class="compact-text">${escapeHTML(m.text.substring(0, 60))}${m.text.length > 60 ? '...' : ''}</div>` : ''}
+                        ${m.location ? `<div class="compact-location">📍 ${m.location}</div>` : ''}
+                        ${m.text ? `<div class="compact-text">${m.text.substring(0, 60)}${m.text.length > 60 ? '...' : ''}</div>` : ''}
                     </div>
                     <div class="compact-stats">
                         <span>❤️ ${m.likes?.length || 0}</span>
@@ -2012,17 +1831,9 @@ window.deleteMomentConfirm = async (momentId) => {
     if (confirmed) {
         try {
             await DBService.deleteMoment(momentId);
-
-            // Dynamic UI update: remove from local caches
-            moments = moments.filter(m => m.id !== momentId);
-            myPrivateMoments = myPrivateMoments.filter(m => m.id !== momentId);
-
-            // Re-render
-            renderTimeline();
-            renderMyRecentMoments();
-
-            // SUCCESS UX: Show auto-closing modal
+            // SUCCESS UX: Show auto-closing modal then reload
             await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
+            location.reload();
         } catch (e) {
             console.error('Delete error:', e);
             showModal('Hata', 'Anı silinemedi: ' + e.message);
@@ -2034,24 +1845,8 @@ window.deleteMomentConfirm = async (momentId) => {
 window.toggleMomentVisibility = async (momentId, makePublic) => {
     try {
         await DBService.setMomentVisibility(momentId, makePublic);
-
-        // Update local state
-        const updateState = (list) => {
-            const m = list.find(item => item.id === momentId);
-            if (m) m.isPublic = makePublic;
-        };
-        updateState(moments);
-        updateState(myPrivateMoments);
-
-        // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
-        if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
-            moments = moments.filter(m => m.id !== momentId);
-        }
-
-        // Re-render
+        await loadMoments();
         renderTimeline();
-        renderMyRecentMoments();
-
         showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
     } catch (e) {
         console.error('Visibility error:', e);
@@ -2112,11 +1907,11 @@ async function loadInlineComments(momentId, expanded = false) {
             return `
                 <div class="comment-item">
                     <div class="comment-header">
-                        <span class="comment-author">@${escapeHTML(c.username || c.userDisplayName || c.userName || 'anonim')}</span>
+                        <span class="comment-author">@${c.username || c.userDisplayName || c.userName || 'anonim'}</span>
                         <span class="comment-date">${date}</span>
                         ${isOwner ? `<button class="comment-delete" onclick="window.deleteComment('${momentId}', '${c.id}')">×</button>` : ''}
                     </div>
-                    <div class="comment-text">${escapeHTML(c.text)}</div>
+                    <div class="comment-text">${c.text}</div>
                     <div class="comment-actions">
                         <button class="comment-like ${isLiked ? 'liked' : ''}" onclick="window.toggleCommentLike('${momentId}', '${c.id}')">
                             ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
@@ -2215,6 +2010,7 @@ function fetchLocation() {
             }
         },
         (err) => {
+            console.log("Konum izni verilmedi");
             isRealLocationActive = false;
             const btn = document.getElementById('addLocationBtn');
             btn?.classList.remove('active');
@@ -2301,11 +2097,11 @@ async function openProfileView(uid) {
                 </div>
                 <div class="profile-info-minimal">
                     <h2>
-                        ${escapeHTML(userProfile.displayName || 'İsimsiz')}
+                        ${userProfile.displayName || 'İsimsiz'}
                         ${userProfile.isVerified ? '<span class="verified-badge">✓</span>' : ''}
                     </h2>
-                    <p class="profile-username">@${escapeHTML(userProfile.username || 'kullanici')}</p>
-                    <p class="profile-bio">${escapeHTML(userProfile.bio || '')}</p>
+                    <p class="profile-username">@${userProfile.username || 'kullanici'}</p>
+                    <p class="profile-bio">${userProfile.bio || ''}</p>
                 </div>
             </div>
 
@@ -2356,10 +2152,9 @@ async function openProfileView(uid) {
                         ${momentsList.length > 0 ? momentsList.map(m => {
                     const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
                     const imgSrc = firstImg?.url || firstImg?.data || '';
-                    const targetView = isOwnProfile ? 'my-moments' : 'explore';
-                    return `<div class="grid-item" onclick="window.setView('${targetView}', false, '${m.id}')">
-                        ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
-                        </div>`;
+                    return '<div class="grid-item">' +
+                        (imgSrc ? '<img src="' + imgSrc + '">' : '<div class="text-placeholder">📝</div>') +
+                        '</div>';
                 }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
                     </div>
                 ` : `
@@ -2648,6 +2443,7 @@ window.submitComment = async (momentId) => {
 // --- Notification System ---
 function setupNotifications() {
     const currentUser = AuthService.currentUser();
+    console.log('setupNotifications called, user:', currentUser?.uid);
     if (!currentUser) return;
 
     DBService.onNotifications(currentUser.uid, (notifications) => {
@@ -2705,7 +2501,7 @@ function renderNotificationsInView(notifications) {
             'follow': 'seni takip etti',
             'follow_request': 'takip isteği gönderdi'
         };
-        const avatar = (n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:')) ? `<img src="${n.senderPhoto}">` : (n.senderPhoto || '👤');
+        const avatar = n.senderPhoto?.startsWith('http') ? `<img src="${n.senderPhoto}">` : '👤';
         const unreadClass = n.isRead ? '' : 'unread';
         const timeAgo = getTimeAgo(n.createdAt);
 
@@ -2721,7 +2517,7 @@ function renderNotificationsInView(notifications) {
                 <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}', '${n.type}')">
                     <div class="notif-avatar">${avatar}</div>
                     <div class="notif-content">
-                        <div class="notif-text"><strong>${escapeHTML(n.senderName || 'Biri')}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
+                        <div class="notif-text"><strong>${n.senderName || 'Biri'}</strong> ${typeText[n.type] || 'etkileşimde bulundu'}</div>
                         <div class="notif-time">${timeAgo}</div>
                         ${actionButtons}
                     </div>
@@ -2894,25 +2690,4 @@ window._handleCarouselScroll = (el) => {
     }
 };
 
-window.handleShare = async (e, momentId, text) => {
-    e.stopPropagation();
-    const shareData = {
-        title: 'MomentLog Anısı',
-        text: text || 'Harika bir anıya bak!',
-        url: window.location.origin // Dynamic app URL
-    };
-
-    try {
-        if (navigator.share) {
-            await navigator.share(shareData);
-        } else {
-            // Fallback for desktop: Copy to clipboard
-            const shareUrl = `${window.location.origin}`;
-            await navigator.clipboard.writeText(shareUrl);
-            showModal('Bağlantı Kopyalandı', 'Uygulama bağlantısı panoya kopyalandı! 🔗');
-        }
-    } catch (err) {
-        console.warn('Share failed:', err);
-    }
-};
-
+console.log("momentLog: Script loaded successfully v19");

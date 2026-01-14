@@ -51,10 +51,7 @@ const DBService = {
         const docRef = db.collection('users').doc(uid);
         const doc = await docRef.get();
         if (doc.exists) {
-            const profile = doc.data();
-            // Security cleanup: Remove email if it somehow still exists in public profile
-            if (profile.email) delete profile.email;
-            return profile;
+            return doc.data();
         } else {
             // Only create profile if it's the current user
             const user = auth.currentUser;
@@ -62,10 +59,11 @@ const DBService = {
                 const newUser = {
                     uid: user.uid,
                     displayName: user.displayName || 'İsimsiz',
+                    email: user.email,
                     photoURL: user.photoURL || '👤',
                     bio: 'Merhaba, ben momentLog kullanıyorum!',
                     username: null,
-                    isVerified: false,
+                    isVerified: false, // Default
                     isPrivateProfile: false,
                     followers: [],
                     following: [],
@@ -73,25 +71,18 @@ const DBService = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // Store sensitive data separately
-                const privateData = {
-                    email: user.email,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
                 // Auto-verify first 20 Google users
                 const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
                 const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
                 if (isGoogleUser && verifiedSnap.size < 20) {
                     newUser.isVerified = true;
+                    console.log("[DBService] New Google User is Verified!");
                 }
 
                 await docRef.set(newUser);
-                await docRef.collection('private').doc('config').set(privateData);
-
                 return newUser;
             }
-            return null;
+            return null; // Return null for others instead of throwing security error
         }
     },
 
@@ -220,8 +211,7 @@ const DBService = {
 
     // Dosya Yükle (Storage) - Disabled for cost saving, using optimized Base64
     uploadMedia: async (fileData, type) => {
-        // Firebase Storage yerine döküman içine base64 olarak gömüyoruz (maliyet ve basitlik için)
-        return fileData;
+        return null;
     },
     // Anı Ekle
     async addMoment(data) {

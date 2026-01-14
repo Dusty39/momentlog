@@ -141,12 +141,6 @@ h1 {
 }
 
 /* Standardize Input for Readability */
-.tool-btn.active {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 10px var(--accent-glow);
-    color: var(--accent) !important;
-}
-
 .input-section #momentInput {
     padding: 10px;
     border-radius: 8px;
@@ -1345,36 +1339,6 @@ textarea::placeholder {
     font-size: 0.9rem;
     opacity: 0.9;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-    order: 2;
-    margin-left: auto;
-}
-
-/* Voice Visualizer Waveform (Heartbeat) */
-.voice-visualizer-wave {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            var(--accent) 50%,
-            transparent 100%);
-    background-size: 200% 100%;
-    animation: waveMove 2s infinite linear;
-    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,10 L10,10 L15,0 L20,20 L25,5 L30,15 L35,10 L100,10" fill="none" stroke="black" stroke-width="1.5"/></svg>');
-    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0,10 L10,10 L15,0 L20,20 L25,5 L30,15 L35,10 L100,10" fill="none" stroke="black" stroke-width="1.5"/></svg>');
-    mask-size: 40px 100%;
-    -webkit-mask-size: 40px 100%;
-    opacity: 0.6;
-    margin-top: 4px;
-}
-
-@keyframes waveMove {
-    from {
-        background-position: 200% 0;
-    }
-
-    to {
-        background-position: -200% 0;
-    }
 }
 
 

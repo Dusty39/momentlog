@@ -51,10 +51,7 @@ const DBService = {
         const docRef = db.collection('users').doc(uid);
         const doc = await docRef.get();
         if (doc.exists) {
-            const profile = doc.data();
-            // Security cleanup: Remove email if it somehow still exists in public profile
-            if (profile.email) delete profile.email;
-            return profile;
+            return doc.data();
         } else {
             // Only create profile if it's the current user
             const user = auth.currentUser;
@@ -62,10 +59,11 @@ const DBService = {
                 const newUser = {
                     uid: user.uid,
                     displayName: user.displayName || 'İsimsiz',
+                    email: user.email,
                     photoURL: user.photoURL || '👤',
                     bio: 'Merhaba, ben momentLog kullanıyorum!',
                     username: null,
-                    isVerified: false,
+                    isVerified: false, // Default
                     isPrivateProfile: false,
                     followers: [],
                     following: [],
@@ -73,25 +71,18 @@ const DBService = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
-                // Store sensitive data separately
-                const privateData = {
-                    email: user.email,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
                 // Auto-verify first 20 Google users
                 const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
                 const verifiedSnap = await db.collection('users').where('isVerified', '==', true).get();
                 if (isGoogleUser && verifiedSnap.size < 20) {
                     newUser.isVerified = true;
+                    console.log("[DBService] New Google User is Verified!");
                 }
 
                 await docRef.set(newUser);
-                await docRef.collection('private').doc('config').set(privateData);
-
                 return newUser;
             }
-            return null;
+            return null; // Return null for others instead of throwing security error
         }
     },
 
@@ -218,10 +209,59 @@ const DBService = {
         });
     },
 
-    // Dosya Yükle (Storage) - Disabled for cost saving, using optimized Base64
+    // Dosya Yükle (Storage)
     uploadMedia: async (fileData, type) => {
-        // Firebase Storage yerine döküman içine base64 olarak gömüyoruz (maliyet ve basitlik için)
-        return fileData;
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        // Timeout promise (10 seconds)
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 10000)
+        );
+
+        const uploadTask = (async () => {
+            try {
+                let storageEnabled = false;
+                try {
+                    if (firebase.storage && firebase.storage().ref()) {
+                        storageEnabled = true;
+                    }
+                } catch (initErr) {
+                    console.warn("Storage check failed:", initErr);
+                }
+
+                if (!storageEnabled) return null;
+
+                const fileName = `${user.uid}_${Date.now()}.${type === 'audio' ? 'webm' : 'jpg'}`;
+                const storageRef = storage.ref().child(`moments/${user.uid}/${fileName}`);
+
+                const dataParts = fileData.split(',');
+                const mime = dataParts[0].match(/:(.*?);/)[1];
+                const binary = atob(dataParts[1]);
+                const array = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    array[i] = binary.charCodeAt(i);
+                }
+                const blob = new Blob([array], { type: mime });
+
+                const snapshot = await storageRef.put(blob);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                return downloadURL;
+            } catch (e) {
+                console.error("Storage upload error:", e);
+                return null;
+            }
+        })();
+
+        try {
+            return await Promise.race([uploadTask, timeoutPromise]);
+        } catch (e) {
+            if (e.message === "Timeout") {
+                console.warn("Upload timed out, falling back to compression.");
+                return null;
+            }
+            throw e;
+        }
     },
     // Anı Ekle
     async addMoment(data) {
@@ -397,7 +437,6 @@ const DBService = {
             for (const chunk of chunks) {
                 let query = db.collection('moments')
                     .where('userId', 'in', chunk)
-                    .where('isPublic', '==', true)
                     .orderBy('createdAt', 'desc')
                     .limit(5);
 
@@ -461,23 +500,18 @@ const DBService = {
         try {
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
-                .where('isPrivateProfile', '==', false)
+                // .where('isPrivateProfile', '==', false) // Temporarily disabled for backward compatibility
                 .orderBy('createdAt', 'desc');
 
             if (lastVisible) {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.get();
-            const user = auth.currentUser;
-
-            // Filter out current user's moments and limit to 5
-            const moments = snapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(m => !user || m.userId !== user.uid)
-                .slice(0, 5);
-
+            const snapshot = await query.limit(5).get();
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+            // Enrich moments with fresh user profile data
+            const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
             // Get unique user IDs
             const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];

@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=210">
+    <link rel="stylesheet" href="style.css?v=19">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -20,15 +20,8 @@
 </head>
 
 <body>
-    <!-- Loading Splash Screen -->
-    <div id="loadingSplash" class="loading-splash">
-        <div class="splash-content">
-            <h1>momentLog</h1>
-        </div>
-    </div>
-
     <!-- Login Overlay -->
-    <div id="loginOverlay" class="login-overlay">
+    <div id="loginOverlay" class="login-overlay active">
         <div class="login-content">
             <h1>momentLog</h1>
             <p>Anılarını kaydet, paylaş, keşfet.</p>
@@ -49,11 +42,11 @@
         </div>
     </div>
 
-    <div id="app" class="hidden">
+    <div id="app">
         <header>
             <!-- Logo Row - Centered -->
             <div class="header-logo">
-                <h1 class="main-title">momentLog</h1>
+                <h1>momentLog</h1>
             </div>
 
             <!-- Menu Row - Centered -->
@@ -122,7 +115,6 @@
 
                         <!-- Ses Kaydı -->
                         <button id="recordBtn" class="tool-btn" title="Ses Kaydı">🎤</button>
-                        <span id="recordingTimer" class="recording-timer hidden">00:00</span>
 
                         <!-- Konum -->
                         <button id="addLocationBtn" class="tool-btn" title="Gerçek Konum Ekle">📍</button>
@@ -132,9 +124,6 @@
                             onclick="document.getElementById('momentDate').showPicker()">📅</button>
                         <input type="date" id="momentDate" max=""
                             style="position:absolute;visibility:hidden;width:0;height:0;">
-
-                        <!-- Şarkı Ekle -->
-                        <button id="musicBtn" class="tool-btn" title="Şarkı Seç">🎵</button>
 
                         <!-- Tema -->
                         <button id="themeBtn" class="tool-btn" title="Anı Teması"
@@ -148,35 +137,11 @@
                     </div>
 
                     <div class="input-actions">
-                        <div class="location-input-wrapper">
-                            <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
-                                maxlength="30" class="sticker-input" autocomplete="off">
-                            <input type="text" id="musicInput" placeholder="Şarkı adı - Sanatçı"
-                                class="music-input hidden">
-                            <input type="text" id="musicUrlInput" placeholder="Spotify linki yapıştır"
-                                class="music-url-input hidden">
-                            <input type="text" id="venueInput" placeholder="Neredesin?" class="venue-input hidden">
-                            <span id="locationStatus" class="location-badge hidden"></span>
-                        </div>
+                        <span id="locationStatus" class="location-badge hidden"></span>
                         <button id="addMomentBtn" class="primary-btn">
                             Kaydet ✓
                         </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- My Recent Moments (Compact List) -->
-            <div id="myRecentMoments" class="my-recent-moments hidden-mode">
-                <h4>Son Anılarım</h4>
-                <div id="myMomentsList" class="compact-moments-list"></div>
-            </div>
-
-            <!-- Explore Search -->
-            <div id="exploreSearchWrapper" class="explore-search-wrapper hidden-mode">
-                <div class="search-input-container">
-                    <input type="text" id="exploreSearchInput" placeholder="Kullanıcı (@), Konum veya Etiket (#)..."
-                        autocomplete="off">
-                    <button id="clearSearchBtn" class="clear-search-btn hidden">✕</button>
                 </div>
             </div>
 
@@ -188,24 +153,31 @@
             <div id="dashboardFooter" class="dashboard-footer hidden-mode">
                 Created with ✨ by <span class="designer-name">Serhat Aykış</span>
             </div>
-
-            <!-- Profile View (Moved inside main) -->
-            <div id="profileView" class="profile-page hidden-mode">
-                <div id="profileContent">
-                    <!-- Profile HTML injected here -->
-                </div>
-            </div>
-
-            <!-- Notification View (Moved inside main) -->
-            <div id="notiView" class="noti-page hidden-mode">
-                <div class="noti-header">
-                </div>
-                <div id="notiContent" class="noti-list-content">
-                    <div class="loading">Yükleniyor...</div>
-                </div>
-            </div>
         </main>
 
+        <!-- Immersive View -->
+        <div id="immersiveView" class="immersive-modal hidden">
+            <!-- Content will be injected via JS -->
+        </div>
+
+        <!-- Profile View -->
+        <div id="profileView" class="profile-view hidden">
+            <button class="close-btn" id="closeProfile">×</button>
+            <div id="profileContent">
+                <!-- Profile HTML injected here -->
+            </div>
+        </div>
+
+        <!-- Notification View -->
+        <div id="notiView" class="profile-view hidden">
+            <div class="noti-header">
+                <h2>Bildirimler</h2>
+                <button id="closeNoti" class="close-btn">×</button>
+            </div>
+            <div id="notiContent" class="noti-list-content">
+                <div class="loading">Yükleniyor...</div>
+            </div>
+        </div>
     </div>
 
     <!-- Custom Modal -->
@@ -216,41 +188,6 @@
             <div class="modal-actions">
                 <button id="modalCancelBtn" class="modal-btn secondary">İptal</button>
                 <button id="modalConfirmBtn" class="modal-btn primary">Tamam</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="modal-overlay hidden">
-        <div class="modal-content edit-profile-modal">
-            <h3>Profili Düzenle</h3>
-
-            <div class="edit-photo-section">
-                <div class="edit-avatar-preview" id="editAvatarPreview">👤</div>
-                <input type="file" id="editPhotoInput" accept="image/*" style="display:none">
-                <button class="upload-photo-btn" onclick="document.getElementById('editPhotoInput').click()">📷 Fotoğraf
-                    Değiştir</button>
-            </div>
-
-            <div class="edit-field">
-                <label>Görünen Ad</label>
-                <input type="text" id="editDisplayName" placeholder="Görünen adınız" maxlength="30">
-            </div>
-
-            <div class="edit-field">
-                <label>Kullanıcı Adı (@)</label>
-                <input type="text" id="editUsername" placeholder="kullanici_adi" maxlength="20">
-                <small class="username-status" id="usernameStatus"></small>
-            </div>
-
-            <div class="edit-field">
-                <label>Biyografi</label>
-                <textarea id="editBio" placeholder="Kendinizi kısaca tanıtın..." maxlength="150" rows="3"></textarea>
-            </div>
-
-            <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="window.closeEditProfileModal()">İptal</button>
-                <button class="modal-btn save" onclick="window.saveProfileChanges()">Kaydet</button>
             </div>
         </div>
     </div>
@@ -288,8 +225,7 @@
 
     <script src="firebase-config.js"></script>
     <script src="firebase-service.js"></script>
-    <script src="cloudinary-service.js"></script>
-    <script src="app.js?v=210"></script>
+    <script src="app.js?v=19"></script>
 </body>
 
 </html>

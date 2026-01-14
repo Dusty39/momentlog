@@ -21,22 +21,13 @@ service cloud.firestore {
       return resource.data.isPublic == true;
     }
     
-    // Check if user follows the author
-    function isFollower(authorId) {
-      return isAuthenticated() && 
-             get(/databases/$(database)/documents/users/$(authorId)).data.followers.hasAny([request.auth.uid]);
-    }
-    
     // =============================================
     // MOMENTS COLLECTION
     // =============================================
     match /moments/{momentId} {
       
-      // READ: 
-      // 1. Owner can always read.
-      // 2. Others can only read if the moment is PUBLIC AND (Profile is Public OR user is a Follower).
-      allow read: if isOwner(resource.data.userId) 
-                  || (isPublicMoment() && (!resource.data.isPrivateProfile || isFollower(resource.data.userId)));
+      // READ: Public moments visible to all, private only to owner
+      allow read: if isPublicMoment() || isOwner(resource.data.userId);
       
       // CREATE: Only authenticated users can create their own moments
       allow create: if isAuthenticated() 
@@ -55,10 +46,9 @@ service cloud.firestore {
       // COMMENTS SUB-COLLECTION
       // =============================================
       match /comments/{commentId} {
-        // Anyone can read comments on public moments, others must be followers
+        // Anyone can read comments on public moments
         allow read: if get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
-                    || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId)
-                    || isFollower(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
+                    || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
         
         // Authenticated users can create comments on public moments
         allow create: if isAuthenticated()
@@ -78,13 +68,13 @@ service cloud.firestore {
     // USERS COLLECTION
     // =============================================
     match /users/{userId} {
-      // Public profile data readable by all
-      allow read: if true;
+      // Public profile data readable by all authenticated users
+      allow read: if isAuthenticated();
       
       // Only owner can create their own profile
       allow create: if isOwner(userId);
       
-      // UPDATE: Only owner can update profile, others can only manage their own follow status
+      // Owner can update their own profile, others can update follow arrays
       allow update: if isOwner(userId) 
                     || (isAuthenticated() 
                         && request.resource.data.diff(resource.data).affectedKeys()
@@ -92,11 +82,6 @@ service cloud.firestore {
       
       // Only owner can delete
       allow delete: if isOwner(userId);
-
-      // PRIVATE DATA SUB-COLLECTION (Sensitive Info)
-      match /private/config {
-        allow read, write: if isOwner(userId);
-      }
       
       // =============================================
       // FOLLOWERS SUB-COLLECTION
@@ -155,15 +140,6 @@ service cloud.firestore {
       
       // Only target user can update (mark as read) or delete
       allow update, delete: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
-    }
-
-    // =============================================
-    // USERNAMES COLLECTION (for unique check)
-    // =============================================
-    match /usernames/{username} {
-      allow read: if true; // Allow everyone to check availability
-      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
   }
 }

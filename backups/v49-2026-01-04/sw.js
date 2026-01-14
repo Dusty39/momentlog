@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v212-cloudinary-pro';
+const CACHE_NAME = 'momentlog-v49-notif-ui';
 const ASSETS = [
     './',
     './index.html',
@@ -12,7 +12,6 @@ const ASSETS = [
 
 // Install Event
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // Force the waiting service worker to become the active service worker
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS);
@@ -27,8 +26,6 @@ self.addEventListener('activate', (event) => {
             return Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
             );
-        }).then(() => {
-            return self.clients.claim(); // Take control of all clients immediately
         })
     );
 });
