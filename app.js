@@ -1466,22 +1466,14 @@ async function saveMoment() {
             for (let i = 0; i < mediaToUpload.length; i++) {
                 const m = mediaToUpload[i];
                 try {
-                    // Priority: Compressed Base64 (WebP) to stay under 1MB Firestore limit
-                    const compressedData = await compressImage(m.data, 0.65, 1080);
+                    // Standard compression for faster upload, but no longer forced by 1MB limit
+                    const compressedData = await compressImage(m.data, 0.8, 1200);
                     if (compressedData) {
-                        uploadedMedia.push({ type: m.type || 'image', url: compressedData });
+                        const cloudinaryUrl = await CloudinaryService.upload(compressedData, 'image');
+                        uploadedMedia.push({ type: m.type || 'image', url: cloudinaryUrl });
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);
-                    // Fallback on error too
-                    try {
-                        const compressedData = await compressImage(m.data, 0.85, 1440);
-                        if (compressedData) {
-                            uploadedMedia.push({ type: m.type || 'image', url: compressedData });
-                        }
-                    } catch (compressErr) {
-                        console.error('Compression error:', compressErr);
-                    }
                 }
                 showUploadProgress(i + 1, mediaToUpload.length);
             }
@@ -1492,14 +1484,8 @@ async function saveMoment() {
         let voiceUrl = null;
         if (VoiceRecorder.recordedBlob) {
             try {
-                // Convert blob to base64 for uploadMedia
-                const reader = new FileReader();
-                const base64Promise = new Promise(resolve => {
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(VoiceRecorder.recordedBlob);
-                });
-                const base64Data = await base64Promise;
-                voiceUrl = await DBService.uploadMedia(base64Data, 'audio');
+                // Upload direct blob to Cloudinary (much more efficient than base64)
+                voiceUrl = await CloudinaryService.upload(VoiceRecorder.recordedBlob, 'audio');
             } catch (err) {
                 console.error('Voice upload error:', err);
             }
@@ -1536,13 +1522,6 @@ async function saveMoment() {
             momentDate: dateInput || null, // The user-selected date
             createdAt: new Date().toISOString() // ACTUAL UPLOAD TIME for absolute sorting
         };
-
-        // SIZE GUARD: Firestore limit is 1MB. 
-        // Estimate size using JSON stringification
-        const estimatedSize = JSON.stringify(momentData).length;
-        if (estimatedSize > 1000000) { // Slightly under 1MB to be safe
-            throw new Error("Bu anı çok büyük (1MB sınırını aşıyor). Lütfen görsel sayısını veya kalitesini azaltın.");
-        }
 
         if (isRealLocationActive && locationString) {
             momentData.verifiedLocation = true;

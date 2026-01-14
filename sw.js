@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v211-size-optimization';
+const CACHE_NAME = 'momentlog-v212-cloudinary-pro';
 const ASSETS = [
     './',
     './index.html',
