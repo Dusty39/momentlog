@@ -1498,8 +1498,8 @@ textarea::placeholder {
 }
 
 .mini-collage.count-1 .mini-img-wrapper {
-    width: 80%;
-    max-width: 300px;
+    width: 70%;
+    max-width: 250px;
     padding: 6px 6px 20px 6px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
     border-radius: 6px;
