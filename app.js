@@ -1397,6 +1397,7 @@ async function loadMoments() {
 
         if (currentView === 'explore') {
             result = await DBService.getPublicMoments(currentLastDoc);
+            console.log(`[App] Explore moments loaded: ${result?.moments?.length || 0}`);
         } else if (currentView === 'write') {
             result = { moments: myPrivateMoments, lastVisible: null };
             hasMore = false;
@@ -1411,14 +1412,17 @@ async function loadMoments() {
             moments = [...moments, ...newMoments];
             currentLastDoc = result.lastVisible;
 
-            if (newMoments.length < 5) {
+            if (newMoments.length === 0) {
                 hasMore = false;
             }
         } else {
             hasMore = false;
         }
     } catch (e) {
-        console.error("Veri yükleme hatası:", e);
+        console.error("Critical Data Load Error:", e);
+        if (currentView === 'explore') {
+            console.warn("Hint: Ensure composite index (isPublic: asc, createdAt: desc) exists in Firebase console.");
+        }
         hasMore = false;
     } finally {
         isLoadingNextPage = false;

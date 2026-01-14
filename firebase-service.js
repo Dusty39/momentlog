@@ -459,28 +459,36 @@ const DBService = {
     // Genel Anıları Getir (Social Feed)
     async getPublicMoments(lastVisible = null) {
         try {
+            const user = auth.currentUser;
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
-                .where('isPrivateProfile', '==', false)
                 .orderBy('createdAt', 'desc');
 
             if (lastVisible) {
                 query = query.startAfter(lastVisible);
             }
 
-            const snapshot = await query.get();
-            const user = auth.currentUser;
+            // Fetch a bit more to account for in-memory filtering (self and private profiles)
+            const limitCount = 15;
+            const snapshot = await query.limit(limitCount).get();
 
-            // Filter out current user's moments and limit to 5
-            const moments = snapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
+            if (snapshot.empty) {
+                return { moments: [], lastVisible: null };
+            }
+
+            const rawMoments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Filter out current user's moments and moments from users who might have private profiles
+            // Note: firestore.rules already handles the heavy lifting, but we filter userId here for UX.
+            const filteredMoments = rawMoments
                 .filter(m => !user || m.userId !== user.uid)
-                .slice(0, 5);
+                .filter(m => m.isPrivateProfile !== true)
+                .slice(0, 10); // Return up to 10 for the UI
 
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
 
-            // Get unique user IDs
-            const userIds = [...new Set(moments.map(m => m.userId).filter(Boolean))];
+            // Get unique user IDs for batch profile fetch
+            const userIds = [...new Set(filteredMoments.map(m => m.userId).filter(Boolean))];
 
             // Fetch all user profiles in parallel
             const userProfiles = {};
@@ -491,13 +499,12 @@ const DBService = {
                         userProfiles[uid] = userDoc.data();
                     }
                 } catch (e) {
-                    console.warn('Could not fetch user profile:', uid);
+                    console.warn('[DBService] Could not fetch profile for explore:', uid);
                 }
             }));
 
-            // Enrich moments with user data
             return {
-                moments: moments.map(m => {
+                moments: filteredMoments.map(m => {
                     const profile = userProfiles[m.userId];
                     return {
                         ...m,
