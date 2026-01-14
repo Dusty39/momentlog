@@ -110,7 +110,7 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 18; left = 10; // Lowered to prevent sticker collision
+            top = 28; left = 15; // Centered more and lowered for stickers
         } else if (images.length === 2) {
             top = idx === 0 ? 15 : 45;
             left = idx === 0 ? 10 : 40;
@@ -656,7 +656,7 @@ const VoiceRecorder = {
     recordingInterval: null,
     recordedBlob: null,
     seconds: 0,
-    maxSeconds: 16,
+    maxSeconds: 24,
 
     async start() {
         try {

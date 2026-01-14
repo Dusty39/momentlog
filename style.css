@@ -1367,6 +1367,20 @@ textarea::placeholder {
     margin-top: 4px;
 }
 
+.collage-slide .voice-visualizer-wave {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    z-index: 120;
+    margin-top: 0;
+}
+
+.collage-slide .collage-stickers-overlay {
+    top: 45px;
+    bottom: auto;
+}
+
 @keyframes waveMove {
     from {
         background-position: 200% 0;
