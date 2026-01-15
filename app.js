@@ -1029,7 +1029,55 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.reload();
         });
     }
+
+    // --- PWA & Mobile Download Logic ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    const loginDownloadBtn = document.getElementById('loginDownloadBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can add to home screen
+        if (installBtn) installBtn.classList.remove('hidden');
+    });
+
+    const triggerInstall = async () => {
+        if (!deferredPrompt) {
+            showModal("Yükle", "Uygulamayı yüklemek için tarayıcı menüsünden 'Ana Ekrana Ekle' seçeneğini kullanabilirsiniz.");
+            return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            if (installBtn) installBtn.classList.add('hidden');
+        }
+        deferredPrompt = null;
+    };
+
+    if (installBtn) installBtn.onclick = triggerInstall;
+    if (loginDownloadBtn) {
+        loginDownloadBtn.onclick = () => {
+            // Priority 1: If PWA prompt is available, use it.
+            // Priority 2: Fallback to APK download (if exists) or instructions.
+            if (deferredPrompt) {
+                triggerInstall();
+            } else {
+                // User mentioned GitHub link - we can link to it or a local APK
+                // For now, let's provide a helpful modal or a direct link if known.
+                showModal("Uygulamayı İndir", "Android (.apk) sürümü indirilmeye hazırlanıyor... \n\nEğer indirme başlamazsa tarayıcı menüsünden 'Yükle' seçeneğini deneyebilirsiniz.", true).then(confirmed => {
+                    if (confirmed) {
+                        // Attempt to download a local APK if the user provides it later
+                        window.location.href = 'momentlog.apk';
+                    }
+                });
+            }
+        };
+    }
 });
+
 
 // --- Event Listeners Setup ---
 function setupEventListeners() {
