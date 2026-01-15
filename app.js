@@ -453,6 +453,14 @@ const MusicManager = {
     isAutoplayAllowed: true, // New flag: Global control for autoplay
 
     async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
+        // Autoplay priming: Call play() immediately on user interaction
+        if (isManual) {
+            this.audio.play().then(() => this.audio.pause()).catch(() => { });
+            if (voiceUrl) {
+                VoicePlayer.audio.play().then(() => VoicePlayer.audio.pause()).catch(() => { });
+            }
+        }
+
         if (!url && !voiceUrl) {
             this.fadeOut();
             if (VoicePlayer.isPlaying) VoicePlayer.stop();
@@ -461,7 +469,7 @@ const MusicManager = {
 
         // Handle voice only moments (if any)
         if (!url && voiceUrl) {
-            VoicePlayer.play(voiceUrl, momentId);
+            VoicePlayer.play(voiceUrl, momentId, isManual);
             this.fadeOut();
             return;
         }
@@ -482,7 +490,7 @@ const MusicManager = {
                     await this.audio.play();
                     this.isPlaying = true;
                     if (!skipFade) this.fadeIn();
-                    if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
+                    if (voiceUrl) VoicePlayer.play(voiceUrl, momentId, isManual);
                 } catch (e) {
                     console.warn("[MusicManager] Resume failed:", e);
                     this.isPlaying = false;
@@ -503,7 +511,7 @@ const MusicManager = {
             await this.audio.play();
             this.isPlaying = true;
             if (!skipFade) this.fadeIn();
-            if (voiceUrl) VoicePlayer.play(voiceUrl, momentId);
+            if (voiceUrl) VoicePlayer.play(voiceUrl, momentId, isManual);
         } catch (e) {
             console.warn("[MusicManager] Play failed:", e);
             this.isPlaying = false;
@@ -816,8 +824,13 @@ const VoicePlayer = {
     isPlaying: false,
     playTimeout: null,
 
-    async play(url, momentId) {
+    async play(url, momentId, isManual = false) {
         if (!url) return;
+
+        // Priming for autoplay bypass
+        if (isManual) {
+            this.audio.play().then(() => this.audio.pause()).catch(() => { });
+        }
 
         if (this.currentMomentId === momentId && (this.isPlaying || this.playTimeout)) {
             this.stop();
@@ -830,16 +843,16 @@ const VoicePlayer = {
 
         this.audio.volume = 1.0;
 
-        // 3 seconds delay if music is playing
-        const delay = MusicManager.isPlaying ? 3000 : 0;
+        // Reduced delay to 1s instead of 3s to stay within the "interaction window" 
+        // while still allowing music to duck slightly.
+        const delay = MusicManager.isPlaying ? 800 : 0;
 
         this.playTimeout = setTimeout(async () => {
             try {
                 this.playTimeout = null;
-                this.audio.load(); // Ensure it's ready
+                this.audio.load();
                 await this.audio.play();
                 this.isPlaying = true;
-                // Duck music during voice playback
                 if (MusicManager.isPlaying) {
                     MusicManager.audio.volume = 0.25;
                 }
@@ -852,7 +865,6 @@ const VoicePlayer = {
 
         this.audio.onended = () => {
             this.isPlaying = false;
-            // Restore music volume
             if (MusicManager.isPlaying) {
                 MusicManager.audio.volume = MusicManager.originalVolume;
             }
