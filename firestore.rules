@@ -36,7 +36,8 @@ service cloud.firestore {
       // 1. Owner can always read.
       // 2. Others can only read if the moment is PUBLIC AND (Profile is Public OR user is a Follower).
       allow read: if isOwner(resource.data.userId) 
-                  || (isPublicMoment() && (!resource.data.isPrivateProfile || isFollower(resource.data.userId)));
+                  || (isPublicMoment() && (resource.data.isPrivateProfile != true || isFollower(resource.data.userId)));
+
       
       // CREATE: Only authenticated users can create their own moments
       allow create: if isAuthenticated() 

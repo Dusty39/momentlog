@@ -73,6 +73,7 @@ const DBService = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
+
                 // Store sensitive data separately
                 const privateData = {
                     email: user.email,
@@ -228,17 +229,28 @@ const DBService = {
         const user = auth.currentUser;
         if (!user) throw new Error("Giriş yapmalısınız!");
 
+        // Fetch user profile to get privacy status
+        let isPrivateProfile = false;
+        try {
+            const profile = await this.getUserProfile(user.uid);
+            isPrivateProfile = profile?.isPrivateProfile || false;
+        } catch (e) {
+            console.warn("[DBService] Could not fetch profile privacy for new moment:", e);
+        }
+
         const momentData = {
             ...data,
             userId: user.uid,
             userDisplayName: user.displayName || 'İsimsiz',
             userPhotoURL: data.userPhotoURL || user.photoURL || '👤',
+            isPrivateProfile: isPrivateProfile,
             likes: [],
             createdAt: data.createdAt || new Date().toISOString()
         };
 
         return db.collection('moments').add(momentData);
     },
+
 
     // Anı Güncelle
     async updateMoment(id, data) {
@@ -462,7 +474,9 @@ const DBService = {
             const user = auth.currentUser;
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
+                .where('isPrivateProfile', '==', false)
                 .orderBy('createdAt', 'desc');
+
 
             if (lastVisible) {
                 query = query.startAfter(lastVisible);
