@@ -133,8 +133,8 @@ header {
 
     /* Horizontal & Narrower Card Refinements */
     .moment-card {
-        padding: 30px 0;
-        /* Increased vertical breathing room */
+        padding: 20px 0;
+        /* Reduced vertical padding for better screen fit */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -157,9 +157,9 @@ header {
         width: 100% !important;
         /* Full width of the card padding-box */
         max-width: 620px !important;
-        margin: 30px auto !important;
-        height: 420px !important;
-        /* Larger display area */
+        margin: 20px auto !important;
+        height: 340px !important;
+        /* Reduced height for better screen fit */
     }
 
     /* Larger & More Centered Photo Look */
@@ -177,7 +177,7 @@ header {
     .card-content {
         width: 100%;
         text-align: center;
-        padding: 15px 50px;
+        padding: 10px 50px;
         font-size: 1.05rem;
     }
 
@@ -185,7 +185,7 @@ header {
         width: 100%;
         justify-content: center;
         gap: 30px;
-        padding: 15px 0;
+        padding: 10px 0;
     }
 
     /* Sticker Enlargement */
