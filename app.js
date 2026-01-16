@@ -598,10 +598,9 @@ const MusicManager = {
     }
 };
 
-// --- Background Audio Control ---
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden && MusicManager.isPlaying) {
-        MusicManager.pause();
+    if (document.hidden && (MusicManager.isPlaying || VoicePlayer.isPlaying)) {
+        MusicManager.stop(true);
     }
 });
 

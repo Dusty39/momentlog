@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v220-recorder-fix';
+const CACHE_NAME = 'momentlog-v221-background-stop';
 const ASSETS = [
     './',
     './index.html',
