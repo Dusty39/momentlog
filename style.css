@@ -187,6 +187,24 @@ header {
         gap: 30px;
         padding: 15px 0;
     }
+
+    /* Sticker Enlargement */
+    .mini-time-sticker {
+        font-size: 0.95rem;
+        padding: 6px 16px;
+        top: 25px;
+        left: 25px;
+    }
+
+    .brush-sticker {
+        font-size: 1.45rem;
+        padding: 15px 55px;
+    }
+
+    .mini-brush-sticker {
+        font-size: 1.1rem;
+        padding: 6px 20px;
+    }
 }
 
 
@@ -924,7 +942,6 @@ textarea::placeholder {
     font-family: var(--font-heading);
     font-weight: 800;
     color: white;
-    text-transform: uppercase;
     letter-spacing: 3px;
     font-size: 1.1rem;
     transform: rotate(-4deg);
@@ -1081,7 +1098,6 @@ textarea::placeholder {
     color: white;
     font-size: 0.75rem;
     font-weight: 800;
-    text-transform: uppercase;
     letter-spacing: 1.5px;
     transform: rotate(3deg);
     clip-path: polygon(2% 15%, 98% 0%, 96% 85%, 4% 100%);
