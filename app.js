@@ -449,8 +449,7 @@ const MusicManager = {
     isPlaying: false,
     fadeInterval: null,
     originalVolume: 0.8,
-    isAutoplayAllowed: true,
-    cycleTimeout: null,
+    cycleTimeouts: [],
     isDucked: false,
     voicePlayedThisActivation: false,
 
@@ -570,8 +569,8 @@ const MusicManager = {
     },
 
     stop(immediate = false) {
-        clearTimeout(this.cycleTimeout);
-        this.cycleTimeout = null;
+        this.cycleTimeouts.forEach(t => clearTimeout(t));
+        this.cycleTimeouts = [];
         clearInterval(this.fadeInterval);
         this.audio.pause();
         this.audio.currentTime = 0;
