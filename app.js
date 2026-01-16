@@ -675,8 +675,13 @@ const VoiceRecorder = {
     recordedBlob: null,
     seconds: 0,
     maxSeconds: 24,
+    isProcessing: false,
 
     async start() {
+        if (this.isProcessing || this.isRecording) return;
+        this.isProcessing = true;
+        this.updateUI();
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             this.mediaRecorder = new MediaRecorder(stream, {
@@ -705,7 +710,12 @@ const VoiceRecorder = {
 
         } catch (err) {
             console.error("Mikrofon erişim hatası:", err);
-            showModal("Hata", "Mikrofona erişilemedi. Lütfen izinleri kontrol edin.");
+            this.isRecording = false;
+            this.stopTimer();
+            await showModal("Hata", "Mikrofona erişilemedi. Lütfen izinleri kontrol edin.");
+        } finally {
+            this.isProcessing = false;
+            this.updateUI();
         }
     },
 
@@ -739,7 +749,10 @@ const VoiceRecorder = {
     },
 
     async stop(auto = false) {
+        if (this.isProcessing) return;
         if (!this.mediaRecorder || !this.isRecording) return;
+        this.isProcessing = true;
+        this.updateUI();
 
         if (!auto) {
             const confirmed = await showModal("Ses Kaydı", "Ses kaydını tamamlayıp anıya eklemek istiyor musunuz?", true);
@@ -774,6 +787,7 @@ const VoiceRecorder = {
 
         MusicManager.setVolume(MusicManager.originalVolume);
         showModal("Tamam", "Ses kaydı hazır.");
+        this.isProcessing = false;
         this.updateUI();
     },
 
@@ -787,7 +801,7 @@ const VoiceRecorder = {
                 this.audioChunks = [];
                 this.updateUI();
             }
-        } else {
+        } else if (!this.isProcessing) {
             await this.start();
         }
     },
@@ -796,6 +810,8 @@ const VoiceRecorder = {
         const btn = document.getElementById('recordBtn');
         if (btn) {
             btn.classList.toggle('recording', this.isRecording);
+            btn.classList.toggle('processing', this.isProcessing);
+            btn.disabled = this.isProcessing;
             btn.classList.toggle('active', !!this.recordedBlob);
 
             if (this.isRecording) {
