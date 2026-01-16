@@ -6,69 +6,63 @@ service cloud.firestore {
     // HELPER FUNCTIONS
     // =============================================
     
-    // Check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Check if user is the owner of the resource
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Check if the moment is public
     function isPublicMoment() {
       return resource.data.isPublic == true;
     }
     
-    // Check if user follows the author
     function isFollower(authorId) {
       return isAuthenticated() && 
              get(/databases/$(database)/documents/users/$(authorId)).data.followers.hasAny([request.auth.uid]);
+    }
+
+    // Security Check: Ensure array modification only affects the current user's UID
+    function onlyModifiesOwnIdInArray(arrayField) {
+      let added = request.resource.data[arrayField].removeAll(resource.data[arrayField]);
+      let removed = resource.data[arrayField].removeAll(request.resource.data[arrayField]);
+      return (added.size() <= 1 && (added.size() == 0 || added.hasAll([request.auth.uid]))) &&
+             (removed.size() <= 1 && (removed.size() == 0 || removed.hasAll([request.auth.uid])));
     }
     
     // =============================================
     // MOMENTS COLLECTION
     // =============================================
     match /moments/{momentId} {
-      
-      // READ: 
-      // 1. Owner can always read.
-      // 2. Others can only read if the moment is PUBLIC AND (Profile is Public OR user is a Follower).
       allow read: if isOwner(resource.data.userId) 
                   || (isPublicMoment() && (resource.data.isPrivateProfile != true || isFollower(resource.data.userId)));
 
-      
-      // CREATE: Only authenticated users can create their own moments
       allow create: if isAuthenticated() 
                     && request.resource.data.userId == request.auth.uid;
       
-      // UPDATE: Owner can update anything, others can only update likes array
+      // Update protection: Only owner can edit content. 
+      // Others can only toggle THEIR OWN LIKE, and ONLY if the moment is accessible.
       allow update: if isOwner(resource.data.userId) 
                     || (isAuthenticated() 
-                        && isPublicMoment()
-                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentsCount']));
+                        && (isPublicMoment() || isFollower(resource.data.userId) || isOwner(resource.data.userId))
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentsCount'])
+                        && onlyModifiesOwnIdInArray('likes'));
       
-      // DELETE: Only owner can delete
       allow delete: if isOwner(resource.data.userId);
       
-      // =============================================
-      // COMMENTS SUB-COLLECTION
-      // =============================================
       match /comments/{commentId} {
-        // Anyone can read comments on public moments, others must be followers
         allow read: if get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
                     || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId)
                     || isFollower(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
         
-        // Authenticated users can create comments on public moments
         allow create: if isAuthenticated()
-                      && get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true
+                      && (get(/databases/$(database)/documents/moments/$(momentId)).data.isPublic == true || isFollower(get(/databases/$(database)/documents/moments/$(momentId)).data.userId))
                       && request.resource.data.userId == request.auth.uid;
         
-        // Comment owner can update (like) their comment, moment owner can delete
         allow update: if isAuthenticated()
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']);
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+                      && onlyModifiesOwnIdInArray('likes');
         
         allow delete: if isOwner(resource.data.userId)
                       || isOwner(get(/databases/$(database)/documents/moments/$(momentId)).data.userId);
@@ -79,90 +73,59 @@ service cloud.firestore {
     // USERS COLLECTION
     // =============================================
     match /users/{userId} {
-      // Public profile data readable by all
       allow read: if true;
-      
-      // Only owner can create their own profile
       allow create: if isOwner(userId);
       
-      // UPDATE: Only owner can update profile, others can only manage their own follow status
+      // Update protection: Only owner can edit profile.
+      // Others can only ADD/REMOVE THEMSELVES from the followers array (for following/unfollowing).
       allow update: if isOwner(userId) 
                     || (isAuthenticated() 
-                        && request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['followers', 'following', 'pendingFollowers']));
+                        && request.resource.data.diff(resource.data).affectedKeys().hasAny(['followers', 'pendingFollowers'])
+                        && onlyModifiesOwnIdInArray('followers') 
+                        && (request.resource.data.pendingFollowers == resource.data.pendingFollowers || onlyModifiesOwnIdInArray('pendingFollowers')));
       
-      // Only owner can delete
       allow delete: if isOwner(userId);
 
-      // PRIVATE DATA SUB-COLLECTION (Sensitive Info)
       match /private/config {
         allow read, write: if isOwner(userId);
       }
       
-      // =============================================
-      // FOLLOWERS SUB-COLLECTION
-      // =============================================
       match /followers/{followerId} {
         allow read: if isAuthenticated();
-        allow create, delete: if isAuthenticated() && request.auth.uid == followerId;
+        allow create, delete: if isOwner(followerId);
       }
       
-      // =============================================
-      // FOLLOWING SUB-COLLECTION
-      // =============================================
       match /following/{followingId} {
         allow read: if isAuthenticated();
-        allow create, delete: if isOwner(userId);
-      }
-      
-      // =============================================
-      // FOLLOW REQUESTS SUB-COLLECTION
-      // =============================================
-      match /followRequests/{requesterId} {
-        allow read: if isOwner(userId) || isOwner(requesterId);
-        allow create: if isAuthenticated() && request.auth.uid == requesterId;
-        allow delete: if isOwner(userId) || isOwner(requesterId);
-      }
-      
-      // =============================================
-      // NOTIFICATIONS SUB-COLLECTION
-      // =============================================
-      match /notifications/{notificationId} {
-        allow read: if isOwner(userId);
-        allow create: if isAuthenticated();
-        allow update, delete: if isOwner(userId);
+        // Only owner can modify who they are following
+        allow create, delete: if isOwner(userId) && isOwner(followingId);
       }
     }
     
     // =============================================
-    // JOURNALS COLLECTION (if exists)
+    // JOURNALS COLLECTION
     // =============================================
     match /journals/{journalId} {
-      allow read, write: if isOwner(resource.data.userId) || 
-                           (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+      // Strictly owner only
+      allow read, write: if isAuthenticated() && 
+                           ((resource == null && request.resource.data.userId == request.auth.uid) || 
+                            (resource != null && resource.data.userId == request.auth.uid));
     }
     
     // =============================================
-    // NOTIFICATIONS COLLECTION (root level)
+    // NOTIFICATIONS COLLECTION
     // =============================================
     match /notifications/{notificationId} {
-      // Only target user can read their notifications
-      allow read: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
+      allow read: if isAuthenticated() && (resource.data.targetUid == request.auth.uid || resource.data.userId == request.auth.uid);
       
-      // Any authenticated user can create notifications for others
       allow create: if isAuthenticated() 
-                    && request.resource.data.senderUid == request.auth.uid
-                    && request.resource.data.targetUid != request.auth.uid;
+                    && (request.resource.data.senderUid == request.auth.uid || request.resource.data.fromUid == request.auth.uid);
       
-      // Only target user can update (mark as read) or delete
-      allow update, delete: if isAuthenticated() && resource.data.targetUid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (resource.data.targetUid == request.auth.uid || resource.data.userId == request.auth.uid);
     }
 
-    // =============================================
-    // USERNAMES COLLECTION (for unique check)
-    // =============================================
     match /usernames/{username} {
-      allow read: if true; // Allow everyone to check availability
+      allow read: if true;
       allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }

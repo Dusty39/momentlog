@@ -1917,7 +1917,7 @@ function renderTimeline(searchQuery = '') {
                     <button class="action-btn" onclick="window.toggleComments('${m.id}')">
                         💬 ${m.commentsCount || 0}
                     </button>
-                    <button class="action-btn" onclick="window.handleShare(event, '${m.id}', '${m.text ? m.text.replace(/'/g, "\\'").replace(/\n/g, " ") : ""}')">
+                    <button class="action-btn" onclick="window.handleShare(event, '${m.id}')">
                         🔗 Paylaş
                     </button>
                     <div class="action-spacer"></div>
@@ -3031,11 +3031,14 @@ window._handleCarouselScroll = (el) => {
     }
 };
 
-window.handleShare = async (e, momentId, text) => {
+window.handleShare = async (e, momentId) => {
     e.stopPropagation();
+    const moment = moments.find(m => m.id === momentId);
+    const text = moment?.text || 'Harika bir anıya bak!';
+
     const shareData = {
         title: 'MomentLog Anısı',
-        text: text || 'Harika bir anıya bak!',
+        text: text,
         url: window.location.origin // Dynamic app URL
     };
 
