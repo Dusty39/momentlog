@@ -481,6 +481,9 @@ const MusicManager = {
         const runCycle = async () => {
             if (this.currentMomentId !== momentId) return;
 
+            // Ensure no voice is left playing from previous cycle
+            VoicePlayer.stop();
+
             // 1. Music Start with Fade-in
             if (url) {
                 this.audio.src = url;
