@@ -70,6 +70,7 @@ const DBService = {
                     followers: [],
                     following: [],
                     pendingFollowers: [],
+                    legalAccepted: false,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
 
@@ -104,6 +105,14 @@ const DBService = {
         if (data.isPrivateProfile !== undefined || data.username || data.displayName || data.photoURL || data.isVerified !== undefined) {
             await this.syncUserMoments(uid, data);
         }
+    },
+
+    // Yasal Koşulları Kabul Et
+    async acceptLegalTerms(uid) {
+        return db.collection('users').doc(uid).update({
+            legalAccepted: true,
+            legalAcceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
     },
 
     // Tüm anılardaki kullanıcı bilgilerini güncelle

@@ -1521,6 +1521,21 @@ async function saveMoment() {
     try {
         const userProfile = await DBService.getUserProfile(currentUser.uid);
 
+        // LEGAL CHECK: First time share requires agreement
+        if (!userProfile.legalAccepted) {
+            const accepted = await window.showLegalModal();
+            if (!accepted) {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalBtnText;
+                }
+                return;
+            }
+            // Save acceptance to Firebase
+            await DBService.acceptLegalTerms(currentUser.uid);
+            userProfile.legalAccepted = true; // Update local copy
+        }
+
         // Upload media to Firebase Storage and get URLs
         const uploadedMedia = [];
         const mediaToUpload = currentMedia.filter(m => m && typeof m.data === 'string');
