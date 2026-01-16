@@ -511,16 +511,16 @@ const MusicManager = {
             }, 3000);
 
             // 3. 28s Mark -> Fade-out
-            setTimeout(() => {
+            this.cycleTimeouts.push(setTimeout(() => {
                 if (this.currentMomentId !== momentId) return;
                 this.fadeOut(2000, false); // Fade out over 2s but don't stop yet
-            }, 28000);
+            }, 28000));
 
             // 4. 30s Mark -> Restart Cycle
-            setTimeout(() => {
+            this.cycleTimeouts.push(setTimeout(() => {
                 if (this.currentMomentId !== momentId) return;
                 runCycle();
-            }, 30000);
+            }, 30000));
         };
 
         runCycle();
