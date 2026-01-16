@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v221-background-stop';
+const CACHE_NAME = 'momentlog-v222-desktop-refine';
 const ASSETS = [
     './',
     './index.html',
