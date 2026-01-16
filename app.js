@@ -402,6 +402,62 @@ function showModal(title, message, isConfirm = false, duration = 0) {
     });
 }
 
+// --- Legal & Terms Modal ---
+window.showLegalModal = () => {
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.id = 'legalModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(15px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; padding: 20px; animation: viewerIn 0.3s ease;
+        `;
+
+        modal.innerHTML = `
+            <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); 
+                        border-radius: 24px; padding: 30px; max-width: 500px; width: 100%;
+                        box-shadow: 0 30px 60px rgba(0,0,0,0.5);">
+                <h2 style="font-family: var(--font-heading); margin-bottom: 20px; color: var(--accent);">
+                    📜 Kullanım Koşulları & KVKK
+                </h2>
+                <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 25px; 
+                            max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                    <p style="margin-bottom: 15px;">momentLog sosyal paylaşım platformuna hoş geldiniz. Paylaşım yapmadan önce lütfen aşağıdaki maddeleri dikkatle okuyunuz:</p>
+                    
+                    <p style="margin-bottom: 10px;"><strong>1. İçerik Sorumluluğu:</strong> Uygulama üzerinden paylaştığınız tüm metin, fotoğraf, konum ve ses kayıtlarından tamamen siz sorumlusunuz.</p>
+                    
+                    <p style="margin-bottom: 10px;"><strong>2. Kötü Niyetli Paylaşım:</strong> Yasalara aykırı, telif hakkı ihlali içeren veya topluluk huzurunu bozan paylaşımlar yasaktır. Bu durumlarda momentLog sorumluluk kabul etmez ve gerekli yaptırımları uygulama hakkını saklı tutar.</p>
+                    
+                    <p style="margin-bottom: 10px;"><strong>3. KVKK ve Gizlilik:</strong> Paylaştığınız verilerin platform altyapısında saklanmasına ve tercih ettiğiniz gizlilik ayarlarıyla yayınlanmasına izin veriyorsunuz.</p>
+                    
+                    <p style="margin-top: 20px; font-style: italic; color: var(--text-secondary); font-size: 0.85rem;">
+                        *Onayla ve Devam Et butonuna basarak yukarıdaki koşulları ve sorumlulukları kabul etmiş sayılırsınız.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <button id="legalCancel" class="secondary-btn" style="flex: 1; padding: 12px; border-radius: 14px;">Vazgeç</button>
+                    <button id="legalAccept" class="primary-btn" style="flex: 2; padding: 12px; border-radius: 14px; justify-content: center;">Onayla ve Devam Et</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const handleAccept = () => {
+            modal.remove();
+            resolve(true);
+        };
+        const handleCancel = () => {
+            modal.remove();
+            resolve(false);
+        };
+
+        modal.querySelector('#legalAccept').onclick = handleAccept;
+        modal.querySelector('#legalCancel').onclick = handleCancel;
+    });
+};
+
 // --- Selectors ---
 let dom = {};
 
