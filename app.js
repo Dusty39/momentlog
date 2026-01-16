@@ -497,8 +497,8 @@ const MusicManager = {
                 }
             }
 
-            // 2. 3s Delay -> Voice Start + Ducking
-            this.cycleTimeout = setTimeout(() => {
+            // 2. 3s Delay -> Voice Start + Ducking (ONLY if not played yet)
+            this.cycleTimeouts.push(setTimeout(() => {
                 if (this.currentMomentId !== momentId) return;
 
                 if (voiceUrl && !this.voicePlayedThisActivation) {
