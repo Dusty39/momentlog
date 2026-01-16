@@ -845,7 +845,7 @@ const VoicePlayer = {
 
         // Reduced delay to 1s instead of 3s to stay within the "interaction window" 
         // while still allowing music to duck slightly.
-        const delay = MusicManager.isPlaying ? 800 : 0;
+        const delay = MusicManager.isPlaying ? 3000 : 0;
 
         this.playTimeout = setTimeout(async () => {
             try {

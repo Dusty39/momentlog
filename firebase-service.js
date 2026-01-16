@@ -98,7 +98,12 @@ const DBService = {
 
     // Kullanıcı Profilini Güncelle
     async updateUserProfile(uid, data) {
-        return db.collection('users').doc(uid).update(data);
+        await db.collection('users').doc(uid).update(data);
+
+        // If privacy or display info changed, sync moments
+        if (data.isPrivateProfile !== undefined || data.username || data.displayName || data.photoURL || data.isVerified !== undefined) {
+            await this.syncUserMoments(uid, data);
+        }
     },
 
     // Tüm anılardaki kullanıcı bilgilerini güncelle
@@ -111,6 +116,7 @@ const DBService = {
         else if (updateData.displayName) dataToSync.userDisplayName = updateData.displayName;
         if (updateData.photoURL) dataToSync.userPhotoURL = updateData.photoURL;
         if (updateData.isVerified !== undefined) dataToSync.isVerified = updateData.isVerified;
+        if (updateData.isPrivateProfile !== undefined) dataToSync.isPrivateProfile = updateData.isPrivateProfile;
 
         if (Object.keys(dataToSync).length === 0) return;
 
