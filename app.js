@@ -452,6 +452,7 @@ const MusicManager = {
     isAutoplayAllowed: true,
     cycleTimeout: null,
     isDucked: false,
+    voicePlayedThisActivation: false,
 
     async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
         // Autoplay priming
