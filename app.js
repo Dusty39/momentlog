@@ -760,7 +760,9 @@ const VoiceRecorder = {
             this.mediaRecorder.start();
             this.isRecording = true;
             this.startTimer();
-            MusicManager.setVolume(0.25);
+            if (MusicManager.isPlaying) {
+                MusicManager.duck(0.25);
+            }
             this.updateUI();
 
         } catch (err) {
@@ -818,10 +820,13 @@ const VoiceRecorder = {
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 this.isRecording = false;
                 this.stopTimer();
-                MusicManager.setVolume(MusicManager.originalVolume);
+                if (MusicManager.isPlaying) {
+                    MusicManager.restore();
+                }
                 this.audioChunks = [];
                 this.recordedBlob = null;
                 this.updateUI();
+                this.isProcessing = false;
                 return;
             }
         }
@@ -840,7 +845,9 @@ const VoiceRecorder = {
             if (this.mediaRecorder.state === 'inactive') resolve();
         });
 
-        MusicManager.setVolume(MusicManager.originalVolume);
+        if (MusicManager.isPlaying) {
+            MusicManager.restore();
+        }
         showModal("Tamam", "Ses kaydı hazır.");
         this.isProcessing = false;
         this.updateUI();
