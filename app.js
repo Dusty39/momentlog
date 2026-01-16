@@ -508,7 +508,7 @@ const MusicManager = {
                         this.duck(0.25);
                     }
                 }
-            }, 3000);
+            }, 3000));
 
             // 3. 28s Mark -> Fade-out
             this.cycleTimeouts.push(setTimeout(() => {
