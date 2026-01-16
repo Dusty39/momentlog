@@ -443,147 +443,153 @@ let isRealLocationActive = false;
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'light';
 
-// --- Music Manager ---
-cycleTimeout: null,
+const MusicManager = {
+    audio: new Audio(),
+    currentMomentId: null,
+    isPlaying: false,
+    fadeInterval: null,
+    originalVolume: 0.8,
+    isAutoplayAllowed: true,
+    cycleTimeout: null,
     isDucked: false,
 
-        async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
-    // Autoplay priming
-    if (isManual) {
-        this.audio.play().then(() => this.audio.pause()).catch(() => { });
-        if (voiceUrl) {
-            VoicePlayer.audio.play().then(() => VoicePlayer.audio.pause()).catch(() => { });
-        }
-    }
-
-    if (!url && !voiceUrl) {
-        this.stop(true);
-        return;
-    }
-
-    // Toggle logic: If same moment, pause/resume
-    if (this.currentMomentId === momentId && this.isPlaying) {
-        this.stop(true);
-        return;
-    }
-
-    this.stop(true);
-    this.currentMomentId = momentId;
-    this.isAutoplayAllowed = isManual || this.isAutoplayAllowed;
-
-    const runCycle = async () => {
-        if (this.currentMomentId !== momentId) return;
-
-        // 1. Music Start with Fade-in
-        if (url) {
-            this.audio.src = url;
-            this.audio.loop = false; // We handle loop manually for the 30s cycle
-            this.audio.volume = 0;
-            try {
-                await this.audio.play();
-                this.isPlaying = true;
-                this.fadeIn(1500);
-            } catch (e) {
-                console.warn("[MusicManager] Play failed:", e);
-                // Continue to voice even if music fails
+    async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
+        // Autoplay priming
+        if (isManual) {
+            this.audio.play().then(() => this.audio.pause()).catch(() => { });
+            if (voiceUrl) {
+                VoicePlayer.audio.play().then(() => VoicePlayer.audio.pause()).catch(() => { });
             }
         }
 
-        // 2. 3s Delay -> Voice Start + Ducking
-        this.cycleTimeout = setTimeout(() => {
+        if (!url && !voiceUrl) {
+            this.stop(true);
+            return;
+        }
+
+        // Toggle logic: If same moment, pause/resume
+        if (this.currentMomentId === momentId && this.isPlaying) {
+            this.stop(true);
+            return;
+        }
+
+        this.stop(true);
+        this.currentMomentId = momentId;
+        this.isAutoplayAllowed = isManual || this.isAutoplayAllowed;
+
+        const runCycle = async () => {
             if (this.currentMomentId !== momentId) return;
 
-            if (voiceUrl) {
-                VoicePlayer.play(voiceUrl, momentId);
-                if (this.isPlaying) {
-                    this.duck(0.25);
+            // 1. Music Start with Fade-in
+            if (url) {
+                this.audio.src = url;
+                this.audio.loop = false; // We handle loop manually for the 30s cycle
+                this.audio.volume = 0;
+                try {
+                    await this.audio.play();
+                    this.isPlaying = true;
+                    this.fadeIn(1500);
+                } catch (e) {
+                    console.warn("[MusicManager] Play failed:", e);
+                    // Continue to voice even if music fails
                 }
             }
-        }, 3000);
 
-        // 3. 28s Mark -> Fade-out
-        setTimeout(() => {
-            if (this.currentMomentId !== momentId) return;
-            this.fadeOut(2000, false); // Fade out over 2s but don't stop yet
-        }, 28000);
+            // 2. 3s Delay -> Voice Start + Ducking
+            this.cycleTimeout = setTimeout(() => {
+                if (this.currentMomentId !== momentId) return;
 
-        // 4. 30s Mark -> Restart Cycle
-        setTimeout(() => {
-            if (this.currentMomentId !== momentId) return;
-            runCycle();
-        }, 30000);
-    };
+                if (voiceUrl) {
+                    VoicePlayer.play(voiceUrl, momentId);
+                    if (this.isPlaying) {
+                        this.duck(0.25);
+                    }
+                }
+            }, 3000);
 
-    runCycle();
-    this.updateUI();
-},
+            // 3. 28s Mark -> Fade-out
+            setTimeout(() => {
+                if (this.currentMomentId !== momentId) return;
+                this.fadeOut(2000, false); // Fade out over 2s but don't stop yet
+            }, 28000);
 
-fadeIn(duration = 1000) {
-    clearInterval(this.fadeInterval);
-    const target = this.isDucked ? 0.25 : this.originalVolume;
-    const step = target / (duration / 50);
-    this.fadeInterval = setInterval(() => {
-        if (this.audio.volume + step >= target) {
-            this.audio.volume = target;
-            clearInterval(this.fadeInterval);
-        } else {
-            this.audio.volume += step;
+            // 4. 30s Mark -> Restart Cycle
+            setTimeout(() => {
+                if (this.currentMomentId !== momentId) return;
+                runCycle();
+            }, 30000);
+        };
+
+        runCycle();
+        this.updateUI();
+    },
+
+    fadeIn(duration = 1000) {
+        clearInterval(this.fadeInterval);
+        const target = this.isDucked ? 0.25 : this.originalVolume;
+        const step = target / (duration / 50);
+        this.fadeInterval = setInterval(() => {
+            if (this.audio.volume + step >= target) {
+                this.audio.volume = target;
+                clearInterval(this.fadeInterval);
+            } else {
+                this.audio.volume += step;
+            }
+        }, 50);
+    },
+
+    fadeOut(duration = 1000, stopAfter = true) {
+        clearInterval(this.fadeInterval);
+        const startVol = this.audio.volume;
+        const step = startVol / (duration / 50);
+        this.fadeInterval = setInterval(() => {
+            if (this.audio.volume - step <= 0) {
+                this.audio.volume = 0;
+                clearInterval(this.fadeInterval);
+                if (stopAfter) this.audio.pause();
+            } else {
+                this.audio.volume -= step;
+            }
+        }, 50);
+    },
+
+    duck(vol) {
+        this.isDucked = true;
+        this.audio.volume = vol;
+    },
+
+    restore() {
+        this.isDucked = false;
+        if (this.isPlaying) {
+            this.audio.volume = this.originalVolume;
         }
-    }, 50);
-},
+    },
 
-fadeOut(duration = 1000, stopAfter = true) {
-    clearInterval(this.fadeInterval);
-    const startVol = this.audio.volume;
-    const step = startVol / (duration / 50);
-    this.fadeInterval = setInterval(() => {
-        if (this.audio.volume - step <= 0) {
-            this.audio.volume = 0;
-            clearInterval(this.fadeInterval);
-            if (stopAfter) this.audio.pause();
-        } else {
-            this.audio.volume -= step;
-        }
-    }, 50);
-},
+    stop(immediate = false) {
+        clearTimeout(this.cycleTimeout);
+        this.cycleTimeout = null;
+        clearInterval(this.fadeInterval);
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.isPlaying = false;
+        this.isDucked = false;
+        VoicePlayer.stop();
+        this.updateUI();
+    },
 
-duck(vol) {
-    this.isDucked = true;
-    this.audio.volume = vol;
-},
-
-restore() {
-    this.isDucked = false;
-    if (this.isPlaying) {
-        this.audio.volume = this.originalVolume;
+    updateUI() {
+        document.querySelectorAll('.music-toggle-btn').forEach(btn => {
+            const card = btn.closest('.moment-card');
+            const mid = card ? card.dataset.id : btn.dataset.momentId;
+            if (mid === this.currentMomentId && (this.isPlaying || VoicePlayer.isPlaying)) {
+                btn.innerHTML = '⏸️';
+                btn.classList.add('playing');
+            } else {
+                btn.innerHTML = '▶️';
+                btn.classList.remove('playing');
+            }
+        });
     }
-},
-
-stop(immediate = false) {
-    clearTimeout(this.cycleTimeout);
-    this.cycleTimeout = null;
-    clearInterval(this.fadeInterval);
-    this.audio.pause();
-    this.audio.currentTime = 0;
-    this.isPlaying = false;
-    this.isDucked = false;
-    VoicePlayer.stop();
-    this.updateUI();
-},
-
-updateUI() {
-    document.querySelectorAll('.music-toggle-btn').forEach(btn => {
-        const card = btn.closest('.moment-card');
-        const mid = card ? card.dataset.id : btn.dataset.momentId;
-        if (mid === this.currentMomentId && (this.isPlaying || VoicePlayer.isPlaying)) {
-            btn.innerHTML = '⏸️';
-            btn.classList.add('playing');
-        } else {
-            btn.innerHTML = '▶️';
-            btn.classList.remove('playing');
-        }
-    });
-}
 };
 
 // --- Background Audio Control ---
