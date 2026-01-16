@@ -476,6 +476,7 @@ const MusicManager = {
 
         this.stop(true);
         this.currentMomentId = momentId;
+        this.voicePlayedThisActivation = false; // Reset for new card
         this.isAutoplayAllowed = isManual || this.isAutoplayAllowed;
 
         const runCycle = async () => {
@@ -484,6 +485,7 @@ const MusicManager = {
             // 1. Music Start with Fade-in
             if (url) {
                 this.audio.src = url;
+                this.audio.crossOrigin = "anonymous";
                 this.audio.loop = false; // We handle loop manually for the 30s cycle
                 this.audio.volume = 0;
                 try {
@@ -500,7 +502,8 @@ const MusicManager = {
             this.cycleTimeout = setTimeout(() => {
                 if (this.currentMomentId !== momentId) return;
 
-                if (voiceUrl) {
+                if (voiceUrl && !this.voicePlayedThisActivation) {
+                    this.voicePlayedThisActivation = true;
                     VoicePlayer.play(voiceUrl, momentId);
                     if (this.isPlaying) {
                         this.duck(0.25);
