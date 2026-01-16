@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v215-nav-revert';
+const CACHE_NAME = 'momentlog-v216-final-audio';
 const ASSETS = [
     './',
     './index.html',
