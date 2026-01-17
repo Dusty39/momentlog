@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v257-voice-reset-fix';
+const CACHE_NAME = 'momentlog-v258-cloudinary-profiles';
 const ASSETS = [
     './',
     './index.html',

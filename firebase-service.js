@@ -141,10 +141,9 @@ const DBService = {
         }
     },
 
-    // Profil Fotoğrafı - Base64 olarak döndür (Storage yerine Firestore'da sakla)
+    // Profil Fotoğrafı - Cloudinary'ye yükle (Firestore 1MB limitini aşmamak için)
     async uploadProfilePhoto(uid, base64Data) {
-        // Firebase Storage kullanmıyoruz, base64'ü direkt döndür
-        return base64Data;
+        return CloudinaryService.upload(base64Data, 'image');
     },
 
     // Takip Et / İstek Gönder
