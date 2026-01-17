@@ -117,59 +117,64 @@ function generateMiniCollage(media) {
     images.forEach((img, idx) => {
         const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
 
-        // Boundary-aware positioning with 8% margin on all sides
-        // Since position:absolute ignores padding, we calculate positions
-        // within the usable area: 8% to 92% horizontally and vertically
-        let top = 0, left = 0;
+        // Centered positioning - all positions are relative to center (50%, 50%)
+        let top = 50, left = 50;
+        let extraTransform = '';
 
         if (images.length === 1) {
-            // Single photo: perfectly centered (flexbox handles this)
-            top = 0; left = 0;
+            // Single photo: perfectly centered using transform
+            top = 50;
+            left = 50;
+            extraTransform = 'translate(-50%, -50%)';
         } else if (images.length === 2) {
-            // Two photos: diagonal arrangement within 8-92% bounds
+            // Two photos: diagonal arrangement, centered
             const positions = [
-                { t: 10, l: 18 },   // Top-left (within bounds)
-                { t: 42, l: 42 }    // Bottom-right (within bounds)
+                { t: 30, l: 35 },   // Top-left
+                { t: 60, l: 60 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
-            // Three photos: triangle formation within bounds
+            // Three photos: triangle formation, centered
             const positions = [
-                { t: 8, l: 28 },    // Top center
-                { t: 38, l: 14 },   // Bottom-left
-                { t: 40, l: 44 }    // Bottom-right
+                { t: 25, l: 50 },   // Top center
+                { t: 58, l: 32 },   // Bottom-left
+                { t: 60, l: 65 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            // Four photos: 2x2 grid within bounds
+            // Four photos: 2x2 grid, centered
             const positions = [
-                { t: 8, l: 16 },    // Top-left
-                { t: 10, l: 46 },   // Top-right
-                { t: 42, l: 18 },   // Bottom-left
-                { t: 44, l: 44 }    // Bottom-right
+                { t: 25, l: 33 },   // Top-left
+                { t: 27, l: 63 },   // Top-right
+                { t: 60, l: 35 },   // Bottom-left
+                { t: 62, l: 61 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
-            // 5-7 photos: organic cluster within bounds
+            // 5-7 photos: organic cluster, centered around 50%
             const positions = [
-                { t: 8, l: 18 },    // Top-left
-                { t: 10, l: 48 },   // Top-right
-                { t: 35, l: 12 },   // Mid-left
-                { t: 37, l: 42 },   // Mid-right
-                { t: 20, l: 32 },   // Center
-                { t: 55, l: 24 },   // Bottom-left
-                { t: 57, l: 54 }    // Bottom-right
+                { t: 25, l: 35 },   // Top-left
+                { t: 27, l: 65 },   // Top-right
+                { t: 52, l: 28 },   // Mid-left
+                { t: 54, l: 58 },   // Mid-right
+                { t: 37, l: 50 },   // Center
+                { t: 72, l: 40 },   // Bottom-left
+                { t: 74, l: 70 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         }
 
+        const transformStyle = extraTransform
+            ? `${extraTransform} rotate(${rotation}deg)`
+            : `rotate(${rotation}deg)`;
+
         html += `
             <div class="mini-img-wrapper" 
-                 style="transform: rotate(${rotation}deg); top: ${top}%; left: ${left}%; z-index: ${idx + 1};"
+                 style="transform: ${transformStyle}; top: ${top}%; left: ${left}%; z-index: ${idx + 1};"
                  onclick="window.bringPhotoToFront(event)">
                 <img src="${img.url || img.data}">
             </div>
