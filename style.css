@@ -1667,21 +1667,27 @@ textarea::placeholder {
     align-items: center;
     justify-content: center;
     overflow: visible;
+    padding: 8%;
+    /* Increased padding to ensure shadows don't overflow boundaries */
 }
 
 /* Single Photo - Much Larger & More Impactful */
 .mini-collage.count-1 {
     height: 320px;
+    padding: 5%;
+    /* Less padding for single photo to maximize size */
 }
 
 .mini-img-wrapper {
     position: absolute;
-    width: 50%;
-    max-width: 160px;
+    width: 48%;
+    /* Slightly reduced to account for shadows */
+    max-width: 155px;
     aspect-ratio: 1;
     background: white;
     padding: 4px 4px 14px 4px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    /* Reduced shadow spread to stay within bounds */
     border-radius: 4px;
     overflow: hidden;
     transition: transform 0.3s ease;
@@ -1691,7 +1697,8 @@ textarea::placeholder {
     width: 70%;
     max-width: 250px;
     padding: 6px 6px 20px 6px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    /* Controlled shadow for single photo */
     border-radius: 6px;
 }
 

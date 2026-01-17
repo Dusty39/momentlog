@@ -117,30 +117,59 @@ function generateMiniCollage(media) {
     images.forEach((img, idx) => {
         const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
 
+        // Boundary-aware positioning: positions are calculated to keep the entire
+        // photo cluster (including shadows) centered within the available space
+        // The 5% padding in CSS creates the boundaries from edges
         let top = 0, left = 0;
+
         if (images.length === 1) {
-            top = 0; left = 0; // Centered single photo (padding handles spacing)
+            // Single photo: perfectly centered
+            top = 0; left = 0;
         } else if (images.length === 2) {
-            top = idx === 0 ? 0 : 30;
-            left = idx === 0 ? 10 : 40; // Better centered pair
-        } else if (images.length === 3) {
-            const positions = [{ t: 0, l: 20 }, { t: 25, l: 5 }, { t: 35, l: 40 }];
-            top = positions[idx].t; left = positions[idx].l;
-        } else if (images.length === 4) {
-            const positions = [{ t: 0, l: 8 }, { t: 0, l: 42 }, { t: 35, l: 8 }, { t: 35, l: 42 }];
-            top = positions[idx].t; left = positions[idx].l;
-        } else {
-            // 5, 6, or 7 photos - Centered spread cluster within padded area
+            // Two photos: diagonal arrangement, centered as a group
+            // Cluster bounds: ~55% width, ~50% height
             const positions = [
-                { t: 0, l: 8 }, { t: 0, l: 45 },
-                { t: 30, l: 2 }, { t: 28, l: 38 },
-                { t: 10, l: 25 }, { t: 45, l: 22 },
-                { t: 40, l: 55 }
+                { t: 5, l: 15 },   // Top-left
+                { t: 35, l: 35 }   // Bottom-right
+            ];
+            top = positions[idx].t;
+            left = positions[idx].l;
+        } else if (images.length === 3) {
+            // Three photos: triangle formation, centered
+            // Cluster bounds: ~60% width, ~55% height
+            const positions = [
+                { t: 0, l: 22 },   // Top center
+                { t: 30, l: 8 },   // Bottom-left
+                { t: 32, l: 38 }   // Bottom-right
+            ];
+            top = positions[idx].t;
+            left = positions[idx].l;
+        } else if (images.length === 4) {
+            // Four photos: 2x2 grid, centered
+            // Cluster bounds: ~65% width, ~60% height
+            const positions = [
+                { t: 0, l: 10 },   // Top-left
+                { t: 2, l: 40 },   // Top-right
+                { t: 35, l: 12 },  // Bottom-left
+                { t: 37, l: 38 }   // Bottom-right
+            ];
+            top = positions[idx].t;
+            left = positions[idx].l;
+        } else {
+            // 5-7 photos: organic cluster, tightly centered
+            // Cluster bounds: ~70% width, ~65% height
+            const positions = [
+                { t: 0, l: 12 },   // Top-left
+                { t: 2, l: 42 },   // Top-right
+                { t: 28, l: 5 },   // Mid-left
+                { t: 30, l: 35 },  // Mid-right
+                { t: 12, l: 25 },  // Center
+                { t: 48, l: 18 },  // Bottom-left
+                { t: 50, l: 48 }   // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         }
-
 
         html += `
             <div class="mini-img-wrapper" 
