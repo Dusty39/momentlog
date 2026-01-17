@@ -804,18 +804,20 @@ const DBService = {
     async getJournals(uid) {
         const snapshot = await db.collection('journals')
             .where('userId', '==', uid)
-            .orderBy('createdAt', 'desc')
             .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Client-side sorting to avoid missing index errors
+        return docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     },
 
     // Koleksiyon İçindeki Anıları Getir
     async getMomentsByJournal(journalId) {
         const snapshot = await db.collection('moments')
             .where('journalId', '==', journalId)
-            .orderBy('createdAt', 'desc')
             .get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Client-side sorting to avoid missing index errors
+        return docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     },
 
     // Koleksiyona Üye Ekle (Collaborative)

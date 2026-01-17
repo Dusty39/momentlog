@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v258-cloudinary-profiles';
+const CACHE_NAME = 'momentlog-v259-collection-index-fix';
 const ASSETS = [
     './',
     './index.html',
