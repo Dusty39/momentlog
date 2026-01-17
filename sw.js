@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v253-scattered-collage';
+const CACHE_NAME = 'momentlog-v254-total-cache-refresh';
 const ASSETS = [
     './',
     './index.html',

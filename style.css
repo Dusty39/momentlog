@@ -116,62 +116,6 @@ header {
     background: rgba(245, 158, 11, 0.1);
 }
 
-@media (min-width: 768px) {
-    #app {
-        max-width: 680px;
-        /* Balanced width for tablets */
-        margin: 0 auto;
-    }
-
-    /* Web Photo Size Increase (Broadened to Tablet+) */
-    .mini-img-wrapper {
-        width: 85%;
-        max-width: 450px;
-    }
-
-    .mini-collage.count-1 .mini-img-wrapper {
-        max-width: 750px;
-    }
-}
-
-@media (min-width: 1025px) {
-    header {
-        padding: 20px 0;
-        gap: 15px;
-    }
-
-    .header-logo {
-        margin-bottom: 5px;
-    }
-
-    #app {
-        max-width: 720px;
-        margin: 0 auto;
-    }
-
-    /* Horizontal & Narrower Card Refinements */
-    .moment-card {
-        padding: 20px 0;
-        /* Reduced vertical padding for better screen fit */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        border-radius: 20px;
-    }
-
-    .card-header {
-        width: 100%;
-        justify-content: center;
-        padding: 10px 40px;
-    }
-
-    .user-details {
-        align-items: center;
-        text-align: center;
-    }
-
-}
 
 .card-content {
     width: 100%;
@@ -4508,4 +4452,39 @@ body.app-theme-vintage #exploreSearchInput {
 .theme-select-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--accent);
+}
+/* ====================================================
+   WEB & TABLET ENHANCEMENTS (FORCED OVERRIDES)
+   ==================================================== */
+@media (min-width: 768px) {
+    #app {
+        max-width: 720px !important; /* Increased from 680 */
+        margin: 0 auto;
+    }
+
+    /* Web Photo Size Increase (Aggressive Overrides) */
+    .mini-img-wrapper {
+        width: 85% !important;
+        max-width: 480px !important; /* Increased from 450 */
+    }
+
+    .mini-collage.count-1 .mini-img-wrapper {
+        max-width: 800px !important; /* Increased from 750 */
+    }
+}
+
+@media (min-width: 1025px) {
+    header {
+        padding: 20px 0;
+        gap: 15px;
+    }
+
+    #app {
+        max-width: 800px !important; /* Increased from 720 */
+    }
+
+    .moment-card {
+        padding: 24px 0;
+        border-radius: 24px;
+    }
 }
