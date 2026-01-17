@@ -115,62 +115,62 @@ function generateMiniCollage(media) {
 
     let html = `<div class="mini-collage count-${images.length}">`;
     images.forEach((img, idx) => {
-        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
+        // Reduced rotation range for more professional look
+        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 2);
 
-        // Centered positioning - all positions are relative to center (50%, 50%)
+        // Centered positioning - using a responsive bounded area
         let top = 50, left = 50;
-        let extraTransform = '';
+        let extraTransform = 'translate(-50%, -50%)';
 
         if (images.length === 1) {
-            // Single photo: perfectly centered using transform
+            // Single photo: perfectly centered
             top = 50;
             left = 50;
-            extraTransform = 'translate(-50%, -50%)';
         } else if (images.length === 2) {
-            // Two photos: diagonal arrangement, centered
+            // Two photos: spaced from center
+            const offset = 12;
             const positions = [
-                { t: 30, l: 35 },   // Top-left
-                { t: 60, l: 60 }    // Bottom-right
+                { t: 50 - offset, l: 50 - offset },
+                { t: 50 + offset, l: 50 + offset }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
-            // Three photos: triangle formation, centered
+            // Three photos: balanced triangle
             const positions = [
-                { t: 25, l: 50 },   // Top center
-                { t: 58, l: 32 },   // Bottom-left
-                { t: 60, l: 65 }    // Bottom-right
+                { t: 40, l: 50 },
+                { t: 62, l: 38 },
+                { t: 62, l: 62 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            // Four photos: 2x2 grid, centered
+            // Four photos: 2x2 grid centered
+            const offset = 14;
             const positions = [
-                { t: 25, l: 33 },   // Top-left
-                { t: 27, l: 63 },   // Top-right
-                { t: 60, l: 35 },   // Bottom-left
-                { t: 62, l: 61 }    // Bottom-right
+                { t: 50 - offset, l: 50 - offset },
+                { t: 50 - offset, l: 50 + offset },
+                { t: 50 + offset, l: 50 - offset },
+                { t: 50 + offset, l: 50 + offset }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
-            // 5-7 photos: organic cluster, centered around 50%
+            // 5-7 photos: refined organic cluster around center
             const positions = [
-                { t: 25, l: 35 },   // Top-left
-                { t: 27, l: 65 },   // Top-right
-                { t: 52, l: 28 },   // Mid-left
-                { t: 54, l: 58 },   // Mid-right
-                { t: 37, l: 50 },   // Center
-                { t: 72, l: 40 },   // Bottom-left
-                { t: 74, l: 70 }    // Bottom-right
+                { t: 40, l: 40 }, // Top-left
+                { t: 42, l: 60 }, // Top-right
+                { t: 60, l: 38 }, // Bottom-left
+                { t: 62, l: 62 }, // Bottom-right
+                { t: 48, l: 48 }, // Near-center
+                { t: 52, l: 52 }, // Near-center
+                { t: 50, l: 50 }  // Center
             ];
-            top = positions[idx].t;
-            left = positions[idx].l;
+            top = positions[idx % positions.length].t;
+            left = positions[idx % positions.length].l;
         }
 
-        const transformStyle = extraTransform
-            ? `${extraTransform} rotate(${rotation}deg)`
-            : `rotate(${rotation}deg)`;
+        const transformStyle = `${extraTransform} rotate(${rotation}deg)`;
 
         html += `
             <div class="mini-img-wrapper" 
@@ -734,6 +734,7 @@ function initializeSelectors() {
         exploreSearchWrapper: document.getElementById('exploreSearchWrapper'),
         exploreSearchInput: document.getElementById('exploreSearchInput'),
         clearSearchBtn: document.getElementById('clearSearchBtn'),
+        addLocationBtn: document.getElementById('addLocationBtn'),
     };
 }
 
@@ -742,6 +743,24 @@ let currentView = 'my-moments';
 let isRealLocationActive = false;
 const APP_THEMES = ['default', 'light', 'vintage'];
 let currentAppTheme = localStorage.getItem('appTheme') || 'light';
+
+// --- Music URL Helpers ---
+function getSpotifyTrackId(url) {
+    if (!url) return null;
+    const match = url.match(/track\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
+}
+
+async function getDeezerPreview(query) {
+    try {
+        const response = await fetch(`https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=1`);
+        const data = await response.json();
+        return data.data?.[0]?.preview || null;
+    } catch (e) {
+        console.warn('[MusicManager] Deezer fallback failed:', e);
+        return null;
+    }
+}
 
 const MusicManager = {
     audio: new Audio(),
@@ -798,15 +817,40 @@ const MusicManager = {
 
             // 1. Music Start with Fade-in
             if (url) {
-                console.log('[MusicManager] Attempting to play:', url);
-                this.audio.src = url;
+                let playableUrl = url;
+
+                // Spotify Link Transformation
+                if (url.includes('spotify.com')) {
+                    const trackId = getSpotifyTrackId(url);
+                    if (trackId) {
+                        playableUrl = `https://p.scdn.co/mp3-preview/${trackId}?cid=00000000000000000000000000000000`; // Note: Placeholder CID
+                        // Many Spotify previews require a specific CID or might be unavailable
+                        // Fallback to Deezer for quality preview
+                        const moment = moments.find(m => m.id === momentId);
+                        const fallbackUrl = await getDeezerPreview(moment?.musicText || "");
+                        if (fallbackUrl) playableUrl = fallbackUrl;
+                    }
+                } else if (url.includes('deezer.com')) {
+                    // Deezer links might need similar transformation or use the direct preview if provided
+                }
+
+                console.log('[MusicManager] Attempting to play:', playableUrl);
+                this.audio.src = playableUrl;
                 this.audio.crossOrigin = "anonymous";
                 this.audio.loop = false;
                 this.audio.volume = 0;
-                this.audio.load(); // Explicit load to ensure fresh start
+                this.audio.load();
 
-                this.audio.onerror = (e) => {
-                    console.error('[MusicManager] Audio error:', this.audio.error?.code, this.audio.error?.message, 'URL:', url);
+                this.audio.onerror = async (e) => {
+                    console.error('[MusicManager] Audio error, trying Deezer fallback:', playableUrl);
+                    const moment = moments.find(m => m.id === momentId);
+                    if (moment?.musicText) {
+                        const fallbackUrl = await getDeezerPreview(moment.musicText);
+                        if (fallbackUrl && fallbackUrl !== playableUrl) {
+                            this.audio.src = fallbackUrl;
+                            this.audio.play().catch(err => console.error("[MusicManager] Fallback failed:", err));
+                        }
+                    }
                 };
 
                 try {
@@ -1621,9 +1665,9 @@ function setupEventListeners() {
     };
 
     // Add Location Button
-    const addLocBtn = document.getElementById('addLocationBtn');
-    if (addLocBtn) {
-        addLocBtn.onclick = () => window.handleRealLocation();
+    // Location Button
+    if (dom.addLocationBtn) {
+        dom.addLocationBtn.onclick = () => window.handleRealLocation();
     }
 
     // Music Button (Simplified: Only Link Input)
@@ -2617,7 +2661,18 @@ window.deleteComment = async (momentId, commentId) => {
 
 // --- Location ---
 function fetchLocation() {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+        if (dom.locationStatus) {
+            dom.locationStatus.textContent = "📍 Tarayıcı konumu desteklemiyor";
+            dom.locationStatus.classList.remove('hidden');
+        }
+        return;
+    }
+
+    if (dom.locationStatus) {
+        dom.locationStatus.textContent = "📍 Konum alınıyor...";
+        dom.locationStatus.classList.remove('hidden');
+    }
 
     navigator.geolocation.getCurrentPosition(
         async (pos) => {
@@ -2627,17 +2682,17 @@ function fetchLocation() {
                 const data = await response.json();
 
                 const address = data.address;
+                if (!address) throw new Error("Adres bulunamadı");
+
                 // Format: İlçe, İl, Ülke
                 const parts = [];
-                if (address.town || address.village || address.suburb || address.district) {
-                    parts.push(address.town || address.village || address.suburb || address.district);
-                }
-                if (address.province || address.city || address.state) {
-                    parts.push(address.province || address.city || address.state);
-                }
-                if (address.country) {
-                    parts.push(address.country);
-                }
+                const district = address.town || address.village || address.suburb || address.district || address.city_district;
+                const city = address.province || address.city || address.state || address.admin_level_4;
+
+                if (district) parts.push(district);
+                if (city) parts.push(city);
+                if (address.country) parts.push(address.country);
+
                 currentLocation = parts.length > 0 ? parts.join(', ') : 'Bilinmeyen Konum';
 
                 if (dom.locationStatus) {
@@ -2646,33 +2701,40 @@ function fetchLocation() {
                 }
 
                 // Keep the button active if we successfully got a location
-                const btn = document.getElementById('addLocationBtn');
-                btn?.classList.add('active');
+                dom.addLocationBtn?.classList.add('active');
             } catch (e) {
-                console.error("Konum alınamadı:", e);
+                console.error("Konum ayrıştırma hatası:", e);
+                currentLocation = "Konum alınamadı";
+                if (dom.locationStatus) dom.locationStatus.textContent = "📍 Konum belirlenemedi";
                 isRealLocationActive = false;
-                const btn = document.getElementById('addLocationBtn');
-                btn?.classList.remove('active');
+                dom.addLocationBtn?.classList.remove('active');
             }
         },
         (err) => {
+            console.warn("Geolocation error:", err);
+            let msg = "Konum izni reddedildi";
+            if (err.code === 2) msg = "Konum servisleri kapalı";
+            if (err.code === 3) msg = "Konum zaman aşımı";
+
+            if (dom.locationStatus) {
+                dom.locationStatus.textContent = `📍 ${msg}`;
+            }
             isRealLocationActive = false;
-            const btn = document.getElementById('addLocationBtn');
-            btn?.classList.remove('active');
-        }
+            dom.addLocationBtn?.classList.remove('active');
+        },
+        { timeout: 10000, enableHighAccuracy: true }
     );
 }
 
 window.handleRealLocation = () => {
     // Check if the selected date is in the past
     const selectedDate = dom.momentDate?.value;
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
 
     if (!isRealLocationActive && selectedDate && selectedDate < today) {
         if (dom.locationStatus) {
             dom.locationStatus.textContent = "📍 Önce tarihi bugüne getirin";
             dom.locationStatus.classList.remove('hidden');
-            // Auto-hide error after 3 seconds
             setTimeout(() => {
                 if (dom.locationStatus.textContent === "📍 Önce tarihi bugüne getirin") {
                     dom.locationStatus.classList.add('hidden');
@@ -2683,13 +2745,12 @@ window.handleRealLocation = () => {
     }
 
     isRealLocationActive = !isRealLocationActive;
-    const btn = document.getElementById('addLocationBtn');
 
     if (isRealLocationActive) {
-        btn?.classList.add('active');
+        dom.addLocationBtn?.classList.add('active');
         fetchLocation();
     } else {
-        btn?.classList.remove('active');
+        dom.addLocationBtn?.classList.remove('active');
         if (dom.locationStatus) dom.locationStatus.classList.add('hidden');
         currentLocation = '';
         if (dom.venueInput) dom.venueInput.value = '';
