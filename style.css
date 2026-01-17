@@ -4445,3 +4445,75 @@ body.app-theme-vintage #exploreSearchInput {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 10px;
 }
+
+/* ====================================================
+   PREMIUM EDIT MOMENT FEATURE
+   ==================================================== */
+
+/* Edit Button */
+.edit-btn {
+    color: var(--accent) !important;
+}
+
+.edit-btn.premium-feature {
+    position: relative;
+}
+
+.edit-btn.premium-feature::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(45deg, var(--accent), #fbbf24);
+    opacity: 0.3;
+    z-index: -1;
+    animation: premiumGlow 2s ease-in-out infinite;
+}
+
+@keyframes premiumGlow {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.edit-btn:hover {
+    background: rgba(245, 158, 11, 0.1);
+    transform: scale(1.1);
+}
+
+/* Edit Modal */
+.edit-moment-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.premium-badge {
+    font-size: 0.7rem;
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 600;
+}
+
+.theme-select-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.theme-select-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+}

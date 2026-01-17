@@ -448,6 +448,126 @@ window.saveNewCollection = async () => {
     }
 };
 
+// --- Edit Moment (Premium Feature) ---
+window.openEditMomentModal = async (momentId) => {
+    const moment = moments.find(m => m.id === momentId);
+    if (!moment) return;
+
+    // Verify premium status
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    const profile = await DBService.getUserProfile(currentUser.uid);
+    if (!profile.isVerified && !profile.isEarlyUser) {
+        showModal('Premium Özellik', 'Anı düzenleme sadece premium üyeler içindir.');
+        return;
+    }
+
+    // Check 5-minute window
+    const timeDiff = Date.now() - new Date(moment.createdAt).getTime();
+    if (timeDiff > 5 * 60 * 1000) {
+        showModal('Süre Doldu', 'Anılar sadece ilk 5 dakika içinde düzenlenebilir.');
+        return;
+    }
+
+    // Pre-fill modal
+    document.getElementById('editMomentText').value = moment.text || '';
+    document.getElementById('editStickerText').value = moment.stickerText || '';
+    document.getElementById('editMusicText').value = moment.musicText || '';
+    document.getElementById('editMusicUrl').value = moment.musicUrl || '';
+
+    // Set theme
+    window.currentEditTheme = moment.theme || 'minimal';
+    const themeDisplay = document.getElementById('editThemeDisplay');
+    if (themeDisplay) {
+        const themeNames = {
+            'minimal': 'Minimal',
+            'vintage': 'Vintage',
+            'polaroid': 'Polaroid',
+            'album': 'Albüm',
+            'diary': 'Günlük',
+            'travel': 'Seyahat',
+            'love': 'Aşk',
+            'nature': 'Doğa',
+            'party': 'Parti',
+            'art': 'Sanat'
+        };
+        themeDisplay.textContent = themeNames[window.currentEditTheme] || 'Minimal';
+    }
+
+    // Store moment ID for save
+    window.editingMomentId = momentId;
+
+    // Show modal
+    document.getElementById('editMomentModal').classList.remove('hidden');
+};
+
+window.closeEditMomentModal = () => {
+    document.getElementById('editMomentModal').classList.add('hidden');
+    window.editingMomentId = null;
+    window.currentEditTheme = null;
+};
+
+window.saveEditedMoment = async () => {
+    const momentId = window.editingMomentId;
+    if (!momentId) return;
+
+    const updates = {
+        text: document.getElementById('editMomentText').value.trim(),
+        stickerText: document.getElementById('editStickerText').value.trim() || null,
+        musicText: document.getElementById('editMusicText').value.trim() || null,
+        musicUrl: document.getElementById('editMusicUrl').value.trim() || null,
+        theme: window.currentEditTheme || 'minimal'
+    };
+
+    try {
+        await DBService.updateMoment(momentId, updates);
+        await showModal('Başarılı', 'Anı güncellendi!', false, 1500);
+        window.closeEditMomentModal();
+
+        // Refresh timeline
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        console.error('Edit error:', e);
+        showModal('Hata', e.message);
+    }
+};
+
+window.openThemeSelectorForEdit = () => {
+    // Temporarily store that we're in edit mode
+    window.isEditingTheme = true;
+    window.openThemeSelector();
+};
+
+// Override selectTheme to handle edit mode
+const originalSelectTheme = window.selectTheme;
+window.selectTheme = (theme) => {
+    if (window.isEditingTheme) {
+        window.currentEditTheme = theme;
+        const themeDisplay = document.getElementById('editThemeDisplay');
+        if (themeDisplay) {
+            const themeNames = {
+                'minimal': 'Minimal',
+                'vintage': 'Vintage',
+                'polaroid': 'Polaroid',
+                'album': 'Albüm',
+                'diary': 'Günlük',
+                'travel': 'Seyahat',
+                'love': 'Aşk',
+                'nature': 'Doğa',
+                'party': 'Parti',
+                'art': 'Sanat'
+            };
+            themeDisplay.textContent = themeNames[theme] || 'Minimal';
+        }
+        document.getElementById('themePicker').classList.add('hidden');
+        window.isEditingTheme = false;
+    } else {
+        originalSelectTheme(theme);
+    }
+};
+
 // --- Custom Modal Helper ---
 function showModal(title, message, isConfirm = false, duration = 0) {
     return new Promise((resolve) => {
@@ -2026,6 +2146,12 @@ function renderTimeline(searchQuery = '') {
                     </button>
                     <div class="action-spacer"></div>
                     ${isOwner ? `
+                        ${(() => {
+                    const timeDiff = Date.now() - new Date(m.createdAt).getTime();
+                    const isPremium = m.isVerified || m.isEarlyUser;
+                    const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
+                    return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
+                })()}
                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
                             ${m.isPublic ? '🌐' : '🔒'}
                         </button>

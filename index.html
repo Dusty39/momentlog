@@ -13,7 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=228">
+    <link rel="stylesheet" href="style.css?v=229">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -333,6 +333,38 @@
         </div>
     </div>
 
+    <!-- Edit Moment Modal (Premium) -->
+    <div id="editMomentModal" class="modal-overlay hidden">
+        <div class="modal-content edit-moment-modal">
+            <h3>✏️ Anıyı Düzenle <span class="premium-badge">Premium</span></h3>
+            <div class="edit-field">
+                <label>Metin</label>
+                <textarea id="editMomentText" placeholder="Bugün ne oldu?" rows="5"></textarea>
+            </div>
+            <div class="edit-field">
+                <label>Manşet</label>
+                <input type="text" id="editStickerText" placeholder="Harika Bir Gün" maxlength="30">
+            </div>
+            <div class="edit-field">
+                <label>Şarkı Adı</label>
+                <input type="text" id="editMusicText" placeholder="Şarkı - Sanatçı">
+            </div>
+            <div class="edit-field">
+                <label>Spotify/Deezer Linki</label>
+                <input type="text" id="editMusicUrl" placeholder="https://...">
+            </div>
+            <div class="edit-field">
+                <label>Tema</label>
+                <button class="theme-select-btn" onclick="window.openThemeSelectorForEdit()">🎨 Tema Seç</button>
+                <span id="editThemeDisplay" style="margin-left: 10px; color: var(--text-secondary);">Minimal</span>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="window.closeEditMomentModal()">İptal</button>
+                <button class="modal-btn save" onclick="window.saveEditedMoment()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -340,9 +372,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
     <script src="firebase-config.js"></script>
-    <script src="firebase-service.js?v=225"></script>
+    <script src="firebase-service.js?v=229"></script>
     <script src="cloudinary-service.js"></script>
-    <script src="app.js?v=228"></script>
+    <script src="app.js?v=229"></script>
 </body>
 
 </html>

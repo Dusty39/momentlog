@@ -31,6 +31,25 @@ service cloud.firestore {
              (removed.size() <= 1 && (removed.size() == 0 || removed.hasAll([request.auth.uid])));
     }
     
+    // Premium user check
+    function isPremiumUser(userId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.data.isVerified == true || userDoc.data.isEarlyUser == true;
+    }
+    
+    // Premium edit check (5-minute window)
+    function canEditMoment() {
+      let moment = resource.data;
+      let timeDiff = request.time.toMillis() - moment.createdAt.toMillis();
+      let fiveMinutes = 5 * 60 * 1000;
+      let allowedFields = ['text', 'stickerText', 'musicText', 'musicUrl', 'theme', 'updatedAt'];
+      
+      return isOwner(moment.userId) 
+             && isPremiumUser(request.auth.uid)
+             && timeDiff < fiveMinutes
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
+    }
+    
     // =============================================
     // MOMENTS COLLECTION
     // =============================================
@@ -41,9 +60,8 @@ service cloud.firestore {
       allow create: if isAuthenticated() 
                     && request.resource.data.userId == request.auth.uid;
       
-      // Update protection: Only owner can edit content. 
-      // Others can only toggle THEIR OWN LIKE, and ONLY if the moment is accessible.
-      allow update: if isOwner(resource.data.userId) 
+      // Update protection: Owner can edit (premium only, 5min window) OR toggle likes
+      allow update: if canEditMoment()
                     || (isAuthenticated() 
                         && (isPublicMoment() || isFollower(resource.data.userId) || isOwner(resource.data.userId))
                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentsCount'])

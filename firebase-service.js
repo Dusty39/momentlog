@@ -849,6 +849,49 @@ const DBService = {
         });
     },
 
+    // Update Moment (Premium Feature - 5 minute window)
+    async updateMoment(momentId, updates) {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Giriş yapmalısınız!");
+
+        // Fetch user profile to check premium status
+        const profile = await this.getUserProfile(user.uid);
+        if (!profile.isVerified && !profile.isEarlyUser) {
+            throw new Error("Bu özellik sadece premium üyeler içindir!");
+        }
+
+        // Fetch moment to verify ownership and time
+        const momentRef = db.collection('moments').doc(momentId);
+        const momentDoc = await momentRef.get();
+
+        if (!momentDoc.exists) throw new Error("Anı bulunamadı!");
+
+        const moment = momentDoc.data();
+        if (moment.userId !== user.uid) throw new Error("Yetkisiz işlem!");
+
+        // Check 5-minute window
+        const createdAt = moment.createdAt?.toDate?.() || new Date(moment.createdAt);
+        const timeDiff = Date.now() - createdAt.getTime();
+        if (timeDiff > 5 * 60 * 1000) {
+            throw new Error("Düzenleme süresi doldu (5 dakika)!");
+        }
+
+        // Only allow specific fields to be updated
+        const allowedFields = ['text', 'stickerText', 'musicText', 'musicUrl', 'theme'];
+        const filteredUpdates = {};
+        for (const key of allowedFields) {
+            if (key in updates) {
+                filteredUpdates[key] = updates[key];
+            }
+        }
+
+        // Update moment
+        await momentRef.update({
+            ...filteredUpdates,
+            updatedAt: new Date().toISOString()
+        });
+    },
+
     // Alias for createMoment (backwards compatibility)
     createMoment: async function (data) {
         return this.addMoment(data);
