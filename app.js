@@ -2163,11 +2163,8 @@ function renderTimeline(searchQuery = '') {
                         <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
                             ${(() => {
-                    // Moving collage center significantly lower (80% down) as requested
+                    // Resetting to absolute middle (50%) as requested
                     let vCenter = 50;
-                    if (m.stickerText || m.musicText || m.voiceUrl) {
-                        vCenter = 60; // User requested 60%
-                    }
                     return generateMiniCollage(m.media, vCenter);
                 })()}
                             
