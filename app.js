@@ -1123,46 +1123,68 @@ const VoiceRecorder = {
         this.isProcessing = true;
         this.updateUI();
 
-        if (!auto) {
-            const confirmed = await showModal("Ses Kaydı", "Ses kaydını tamamlayıp anıya eklemek istiyor musunuz?", true);
-            if (!confirmed) {
-                // Cancel recording
-                this.mediaRecorder.onstop = null; // Ignore current stop
-                this.mediaRecorder.stop();
-                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                this.isRecording = false;
-                this.stopTimer();
-                if (MusicManager.isPlaying) {
-                    MusicManager.restore();
+        try {
+            if (!auto) {
+                const confirmed = await showModal("Ses Kaydı", "Ses kaydını tamamlayıp anıya eklemek istiyor musunuz?", true);
+                if (!confirmed) {
+                    // Cancel recording
+                    if (this.mediaRecorder.state !== 'inactive') {
+                        this.mediaRecorder.onstop = null; // Ignore current stop data
+                        this.mediaRecorder.stop();
+                    }
+                    if (this.mediaRecorder.stream) {
+                        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    }
+
+                    this.isRecording = false;
+                    this.stopTimer();
+                    if (MusicManager.isPlaying) {
+                        MusicManager.restore();
+                    }
+                    this.audioChunks = [];
+                    this.recordedBlob = null;
+                    this.tempBlob = null;
+                    return; // finally will handle updateUI and isProcessing
                 }
-                this.audioChunks = [];
-                this.recordedBlob = null;
-                this.updateUI();
-                this.isProcessing = false;
-                return;
             }
+
+            // Normal completion
+            if (this.mediaRecorder.state !== 'inactive') {
+                this.mediaRecorder.stop();
+            }
+            if (this.mediaRecorder.stream) {
+                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+
+            // Wait for onstop to finish (using promise approach for cleaner flow)
+            await new Promise(resolve => {
+                const timer = setTimeout(resolve, 1000); // Safety timeout
+                const originalOnStop = this.mediaRecorder.onstop;
+                this.mediaRecorder.onstop = () => {
+                    clearTimeout(timer);
+                    if (originalOnStop) originalOnStop();
+                    this.recordedBlob = this.tempBlob;
+                    resolve();
+                };
+                if (this.mediaRecorder.state === 'inactive') {
+                    clearTimeout(timer);
+                    this.recordedBlob = this.tempBlob;
+                    resolve();
+                }
+            });
+
+            if (MusicManager.isPlaying) {
+                MusicManager.restore();
+            }
+            showModal("Tamam", "Ses kaydı hazır.");
+        } catch (err) {
+            console.error("VoiceRecorder error:", err);
+            this.isRecording = false;
+            this.stopTimer();
+        } finally {
+            this.isProcessing = false;
+            this.updateUI();
         }
-
-        this.mediaRecorder.stop();
-        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-
-        // Wait for onstop to finish (using promise approach for cleaner flow)
-        await new Promise(resolve => {
-            const originalOnStop = this.mediaRecorder.onstop;
-            this.mediaRecorder.onstop = () => {
-                if (originalOnStop) originalOnStop();
-                this.recordedBlob = this.tempBlob;
-                resolve();
-            };
-            if (this.mediaRecorder.state === 'inactive') resolve();
-        });
-
-        if (MusicManager.isPlaying) {
-            MusicManager.restore();
-        }
-        showModal("Tamam", "Ses kaydı hazır.");
-        this.isProcessing = false;
-        this.updateUI();
     },
 
     async toggle() {
