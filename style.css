@@ -161,14 +161,14 @@ header {
         text-align: center;
     }
 
-    /* Web Photo Size Increase */
+    /* Web Photo Size Increase (Significant) */
     .mini-img-wrapper {
-        width: 55%;
-        max-width: 260px;
+        width: 75%;
+        max-width: 380px;
     }
 
     .mini-collage.count-1 .mini-img-wrapper {
-        max-width: 520px;
+        max-width: 650px;
     }
 }
 
