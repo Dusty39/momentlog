@@ -116,8 +116,8 @@ function generateMiniCollage(media, verticalOffset = 50) {
 
     let html = `<div class="mini-collage count-${images.length}">`;
     images.forEach((img, idx) => {
-        // Reduced rotation range for more professional look
-        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 2);
+        // Increased rotation range for a more natural "scattered" look
+        const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 12 + 4);
 
         // Centered positioning - using a responsive bounded area
         let top = verticalOffset, left = 50;
@@ -127,40 +127,43 @@ function generateMiniCollage(media, verticalOffset = 50) {
             top = verticalOffset;
             left = 50;
         } else if (images.length === 2) {
-            const offset = 12;
+            const offset = 14;
             const positions = [
-                { t: verticalOffset - offset, l: 50 - offset },
-                { t: verticalOffset + offset, l: 50 + offset }
+                { t: verticalOffset - offset, l: 50 - (offset * 0.8) },
+                { t: verticalOffset + (offset * 0.9), l: 50 + offset }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
+            // Asymmetric Triangle
             const positions = [
-                { t: verticalOffset - 10, l: 50 },
-                { t: verticalOffset + 12, l: 38 },
-                { t: verticalOffset + 12, l: 62 }
+                { t: verticalOffset - 16, l: 50 + 5 },
+                { t: verticalOffset + 12, l: 35 },
+                { t: verticalOffset + 15, l: 65 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            const offset = 14;
+            // Scattered Quadrant
             const positions = [
-                { t: verticalOffset - offset, l: 50 - offset },
-                { t: verticalOffset - offset, l: 50 + offset },
-                { t: verticalOffset + offset, l: 50 - offset },
-                { t: verticalOffset + offset, l: 50 + offset }
+                { t: verticalOffset - 18, l: 50 - 15 },
+                { t: verticalOffset - 12, l: 50 + 12 },
+                { t: verticalOffset + 15, l: 50 - 10 },
+                { t: verticalOffset + 10, l: 50 + 18 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
+            // Random-ish Spread for 5+ images
             const diff = verticalOffset - 50;
+            const seed = (idx * 137) % 100; // Deterministic pseudo-randomness
             const positions = [
-                { t: 40 + diff, l: 40 },
-                { t: 42 + diff, l: 60 },
-                { t: 60 + diff, l: 38 },
-                { t: 62 + diff, l: 62 },
-                { t: 48 + diff, l: 48 },
-                { t: 52 + diff, l: 52 },
+                { t: 35 + diff, l: 38 },
+                { t: 40 + diff, l: 65 },
+                { t: 65 + diff, l: 32 },
+                { t: 68 + diff, l: 68 },
+                { t: 52 + diff, l: 48 },
+                { t: 48 + diff, l: 55 },
                 { t: 50 + diff, l: 50 }
             ];
             top = positions[idx % positions.length].t;
