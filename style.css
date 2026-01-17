@@ -122,6 +122,16 @@ header {
         /* Balanced width for tablets */
         margin: 0 auto;
     }
+
+    /* Web Photo Size Increase (Broadened to Tablet+) */
+    .mini-img-wrapper {
+        width: 85%;
+        max-width: 450px;
+    }
+
+    .mini-collage.count-1 .mini-img-wrapper {
+        max-width: 750px;
+    }
 }
 
 @media (min-width: 1025px) {
@@ -161,15 +171,6 @@ header {
         text-align: center;
     }
 
-    /* Web Photo Size Increase (Significant) */
-    .mini-img-wrapper {
-        width: 75%;
-        max-width: 380px;
-    }
-
-    .mini-collage.count-1 .mini-img-wrapper {
-        max-width: 650px;
-    }
 }
 
 .card-content {
