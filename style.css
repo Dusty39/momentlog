@@ -1603,8 +1603,8 @@ textarea::placeholder {
     /* Slight increase for better visibility */
     aspect-ratio: 1;
     background: white;
-    padding: 12px 12px 32px;
-    /* Doubled from 6 6 16 */
+    padding: 7px 7px 19px;
+    /* Reduced by 40% from 12 12 32 */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     border-radius: 2px;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1655,8 +1655,8 @@ textarea::placeholder {
 .mini-collage.count-1 .mini-img-wrapper {
     width: 85%;
     max-width: 320px;
-    padding: 12px 12px 48px;
-    /* Doubled from 6 6 24 */
+    padding: 7px 7px 29px;
+    /* Reduced by 40% from 12 12 48 */
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     border-radius: 6px;
 }

@@ -2163,9 +2163,9 @@ function renderTimeline(searchQuery = '') {
                     <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)">
                         <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
-                            ${(() => {
-                    // Resetting to absolute middle (50%) as requested
-                    let vCenter = 50;
+                             ${(() => {
+                    // 60% for mobile as requested, 50% for larger screens
+                    let vCenter = window.innerWidth <= 768 ? 60 : 50;
                     return generateMiniCollage(m.media, vCenter);
                 })()}
                             

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v251-large-photos-all-web';
+const CACHE_NAME = 'momentlog-v252-padding-mobile-60';
 const ASSETS = [
     './',
     './index.html',
