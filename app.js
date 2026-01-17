@@ -119,27 +119,28 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 5; left = 2.5; // Centered
+            top = 5; left = 2.5; // Centered single photo
         } else if (images.length === 2) {
             top = idx === 0 ? 5 : 35;
-            left = idx === 0 ? -5 : 35;
+            left = idx === 0 ? 10 : 50; // Centered pair
         } else if (images.length === 3) {
-            const positions = [{ t: 5, l: 15 }, { t: 30, l: -5 }, { t: 40, l: 35 }];
+            const positions = [{ t: 5, l: 25 }, { t: 30, l: 5 }, { t: 40, l: 45 }];
             top = positions[idx].t; left = positions[idx].l;
         } else if (images.length === 4) {
-            const positions = [{ t: 5, l: -5 }, { t: 5, l: 35 }, { t: 40, l: -5 }, { t: 40, l: 35 }];
+            const positions = [{ t: 5, l: 5 }, { t: 5, l: 45 }, { t: 40, l: 5 }, { t: 40, l: 45 }];
             top = positions[idx].t; left = positions[idx].l;
         } else {
-            // 5, 6, or 7 photos - Spread cluster
+            // 5, 6, or 7 photos - Centered spread cluster
             const positions = [
-                { t: 2, l: 2 }, { t: 0, l: 40 },
-                { t: 35, l: -5 }, { t: 32, l: 32 },
-                { t: 15, l: 18 }, { t: 50, l: 15 },
-                { t: 45, l: 48 }
+                { t: 2, l: 12 }, { t: 0, l: 50 },
+                { t: 35, l: 5 }, { t: 32, l: 42 },
+                { t: 15, l: 28 }, { t: 50, l: 25 },
+                { t: 45, l: 58 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         }
+
 
         html += `
             <div class="mini-img-wrapper" 
