@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v254-total-cache-refresh';
+const CACHE_NAME = 'momentlog-v255-balanced-web-sizes';
 const ASSETS = [
     './',
     './index.html',

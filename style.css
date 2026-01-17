@@ -4453,23 +4453,27 @@ body.app-theme-vintage #exploreSearchInput {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--accent);
 }
+
 /* ====================================================
    WEB & TABLET ENHANCEMENTS (FORCED OVERRIDES)
    ==================================================== */
 @media (min-width: 768px) {
     #app {
-        max-width: 720px !important; /* Increased from 680 */
+        max-width: 720px !important;
+        /* Increased from 680 */
         margin: 0 auto;
     }
 
     /* Web Photo Size Increase (Aggressive Overrides) */
     .mini-img-wrapper {
-        width: 85% !important;
-        max-width: 480px !important; /* Increased from 450 */
+        width: 70% !important;
+        max-width: 380px !important;
+        /* Reduced from 480 */
     }
 
     .mini-collage.count-1 .mini-img-wrapper {
-        max-width: 800px !important; /* Increased from 750 */
+        max-width: 580px !important;
+        /* Reduced from 800 */
     }
 }
 
@@ -4480,7 +4484,8 @@ body.app-theme-vintage #exploreSearchInput {
     }
 
     #app {
-        max-width: 800px !important; /* Increased from 720 */
+        max-width: 800px !important;
+        /* Increased from 720 */
     }
 
     .moment-card {
