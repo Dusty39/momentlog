@@ -160,6 +160,16 @@ header {
         align-items: center;
         text-align: center;
     }
+
+    /* Web Photo Size Increase */
+    .mini-img-wrapper {
+        width: 55%;
+        max-width: 260px;
+    }
+
+    .mini-collage.count-1 .mini-img-wrapper {
+        max-width: 520px;
+    }
 }
 
 .card-content {
@@ -1592,7 +1602,8 @@ textarea::placeholder {
     /* Slight increase for better visibility */
     aspect-ratio: 1;
     background: white;
-    padding: 6px 6px 16px;
+    padding: 12px 12px 32px;
+    /* Doubled from 6 6 16 */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     border-radius: 2px;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1643,7 +1654,8 @@ textarea::placeholder {
 .mini-collage.count-1 .mini-img-wrapper {
     width: 85%;
     max-width: 320px;
-    padding: 6px 6px 24px 6px;
+    padding: 12px 12px 48px;
+    /* Doubled from 6 6 24 */
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     border-radius: 6px;
 }
