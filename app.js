@@ -13,7 +13,6 @@ window.onerror = function (msg, url, line) {
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
-const MAX_PHOTOS = 3;
 
 let moments = [];
 let currentMedia = [];
@@ -30,6 +29,15 @@ let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
 let currentCollection = null; // Selected collection for new moment
+let currentUserProfile = null; // Cache user profile for premium checks
+
+// Dynamic photo limit based on premium status
+function getMaxPhotos() {
+    if (currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser) {
+        return 7; // Premium users
+    }
+    return 3; // Regular users
+}
 
 // --- Image Compression for Fallback (WebP 2K Ready) ---
 async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
@@ -1724,6 +1732,12 @@ async function loadMoments() {
 
     try {
         const currentUser = AuthService.currentUser();
+
+        // Load user profile for premium checks (photo limit, edit, etc.)
+        if (currentUser && !currentUserProfile) {
+            currentUserProfile = await DBService.getUserProfile(currentUser.uid);
+        }
+
         let result;
 
         // Fetch own moments once for sidebar
@@ -2301,9 +2315,12 @@ window.handleSwipeDelete = async (id) => {
 // --- Photo Input ---
 function handlePhotoInput(e) {
     const files = Array.from(e.target.files);
+    const maxPhotos = getMaxPhotos();
+    const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
 
-    if (currentMedia.length + files.length > MAX_PHOTOS) {
-        showModal('Limit Aşıldı', `En fazla ${MAX_PHOTOS} fotoğraf ekleyebilirsiniz.`);
+    if (currentMedia.length + files.length > maxPhotos) {
+        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf)';
+        showModal('Limit Aşıldı', `En fazla ${maxPhotos} fotoğraf ekleyebilirsiniz.${premiumMsg}`);
         return;
     }
 
