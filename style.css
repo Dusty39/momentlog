@@ -1435,7 +1435,7 @@ textarea::placeholder {
 
 .collage-stickers-overlay {
     position: absolute;
-    top: 35px;
+    top: 40px;
     left: 0;
     right: 0;
     pointer-events: none;
@@ -1446,17 +1446,19 @@ textarea::placeholder {
 .collage-stickers-overlay .mini-time-sticker {
     position: absolute;
     left: 15px;
-    top: 5px;
-    /* Closer to top of overlay */
+    top: 10px;
+    /* Fixed & Higher */
     transform: rotate(0deg) !important;
+    /* Never rotated */
 }
 
 .collage-stickers-overlay .mini-brush-sticker {
     position: absolute;
     right: 15px;
-    top: 5px;
-    /* Aligned with time sticker */
+    top: 30px;
+    /* Slightly lower than time */
     transform: rotate(-3deg) !important;
+    /* Slanted/Yamuk */
 }
 
 .text-moment-stickers-wrapper {

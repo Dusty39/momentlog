@@ -2168,20 +2168,10 @@ function renderTimeline(searchQuery = '') {
                         <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
                             ${(() => {
-                    // Calculate center to start ~10px below sticker
-                    // Target Top Bound: ~80px from top of slide
+                    // Reverting to a simple lower vertical center as requested
                     let vCenter = 50;
                     if (m.stickerText || m.musicText || m.voiceUrl) {
-                        const images = m.media?.filter(med => med.type === 'image') || [];
-                        const imgCount = images.length;
-                        const isMobile = window.innerWidth <= 640;
-
-                        // Base center that aligns top-most photo with margin
-                        if (imgCount === 1) vCenter = isMobile ? 45 : 44;
-                        else if (imgCount === 2) vCenter = isMobile ? 48 : 46;
-                        else if (imgCount === 3) vCenter = isMobile ? 50 : 48;
-                        else if (imgCount === 4) vCenter = isMobile ? 52 : 50;
-                        else vCenter = isMobile ? 50 : 48;
+                        vCenter = 60; // Clearly lower (60% down)
                     }
                     return generateMiniCollage(m.media, vCenter);
                 })()}
