@@ -110,6 +110,7 @@ window.selectTheme = (theme) => {
 
 // --- Mini Collage Generator (for Feed Carousel) ---
 function generateMiniCollage(media, verticalOffset = 50) {
+    console.log(`[Collage] Rendering with vCenter: ${verticalOffset}%`);
     const images = media.filter(m => m.type === 'image').slice(0, 7);
     if (images.length === 0) return '';
 
