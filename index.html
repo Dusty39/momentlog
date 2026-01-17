@@ -13,7 +13,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=226">
+    <link rel="stylesheet" href="style.css?v=228">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="manifest" href="manifest.json">
@@ -158,6 +158,9 @@
                         <button id="themeBtn" class="tool-btn" title="Anı Teması"
                             onclick="window.openThemeSelector()">🎨</button>
 
+                        <!-- Koleksiyon -->
+                        <button id="collectionBtn" class="tool-btn" title="Koleksiyon Seç">📁</button>
+
                         <!-- Görünürlük -->
                         <button id="visibilityToggle" class="tool-btn" title="Görünürlük: Sadece Ben">
                             <span id="privateIcon">🔒</span>
@@ -298,6 +301,38 @@
         </div>
     </div>
 
+    <!-- Collection Selector Modal -->
+    <div id="collectionModal" class="modal-overlay hidden">
+        <div class="modal-content collection-modal">
+            <h3>📁 Koleksiyon Seç</h3>
+            <div id="collectionList" class="collection-list">
+                <!-- Collections will be loaded here -->
+            </div>
+            <button class="create-collection-btn" onclick="window.showCreateCollectionModal()">+ Yeni
+                Koleksiyon</button>
+            <button class="modal-btn cancel" onclick="window.closeCollectionModal()">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Create Collection Modal -->
+    <div id="createCollectionModal" class="modal-overlay hidden">
+        <div class="modal-content create-collection-modal">
+            <h3>Yeni Koleksiyon Oluştur</h3>
+            <div class="edit-field">
+                <label>Emoji</label>
+                <input type="text" id="collectionEmoji" placeholder="📁" maxlength="2" value="📁">
+            </div>
+            <div class="edit-field">
+                <label>Başlık</label>
+                <input type="text" id="collectionTitle" placeholder="Örn: Bali Tatili 2026" maxlength="30">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="window.closeCreateCollectionModal()">İptal</button>
+                <button class="modal-btn save" onclick="window.saveNewCollection()">Oluştur</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -307,7 +342,7 @@
     <script src="firebase-config.js"></script>
     <script src="firebase-service.js?v=225"></script>
     <script src="cloudinary-service.js"></script>
-    <script src="app.js?v=227"></script>
+    <script src="app.js?v=228"></script>
 </body>
 
 </html>

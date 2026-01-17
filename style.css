@@ -4272,3 +4272,176 @@ body.app-theme-vintage .search-input-container {
 body.app-theme-vintage #exploreSearchInput {
     color: #5d4037;
 }
+
+/* ====================================================
+   COLLECTIONS FEATURE STYLES
+   ==================================================== */
+
+/* Collection Modal */
+.collection-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.collection-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.collection-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.collection-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+}
+
+.collection-item.selected {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--accent);
+}
+
+.collection-emoji {
+    font-size: 1.5rem;
+}
+
+.collection-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.selected-badge {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.no-collections {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.create-collection-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.create-collection-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* Create Collection Modal */
+.create-collection-modal {
+    max-width: 400px;
+    width: 90%;
+}
+
+/* Profile Collections Grid */
+.profile-collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+.collection-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.collection-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.collection-emoji-large {
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+.collection-card .collection-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+    color: var(--text-primary);
+}
+
+.collection-count {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Collection Detail View */
+.collection-detail-view {
+    padding: 20px;
+}
+
+.collection-header {
+    margin-bottom: 30px;
+}
+
+.back-btn {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--accent);
+}
+
+.collection-info {
+    text-align: center;
+}
+
+.collection-info h2 {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    margin: 10px 0 5px;
+    color: var(--text-primary);
+}
+
+.collection-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.collection-moments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}

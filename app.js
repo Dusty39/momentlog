@@ -29,6 +29,7 @@ let myPrivateMoments = []; // Separate cache for own moments to ensure individua
 let currentLastDoc = null; // Pagination: track last visible document
 let hasMore = true; // Pagination: flag if more data exists
 let isLoadingNextPage = false; // Pagination: prevent multiple simultaneous loads
+let currentCollection = null; // Selected collection for new moment
 
 // --- Image Compression for Fallback (WebP 2K Ready) ---
 async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
@@ -361,6 +362,91 @@ function debounce(func, wait) {
     };
 }
 
+// --- Collection Management ---
+window.openCollectionModal = async () => {
+    const modal = document.getElementById('collectionModal');
+    const list = document.getElementById('collectionList');
+
+    if (!modal || !list) return;
+
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+
+    try {
+        const collections = await DBService.getJournals(currentUser.uid);
+
+        if (collections.length === 0) {
+            list.innerHTML = '<div class="no-collections">Henüz koleksiyon yok. Yeni bir tane oluştur!</div>';
+        } else {
+            list.innerHTML = collections.map(col => `
+                <div class="collection-item ${currentCollection?.id === col.id ? 'selected' : ''}" 
+                     onclick="window.selectCollection('${col.id}', '${escapeHTML(col.coverEmoji || '📁')}', '${escapeHTML(col.title)}')">
+                    <span class="collection-emoji">${col.coverEmoji || '📁'}</span>
+                    <span class="collection-title">${escapeHTML(col.title)}</span>
+                    ${currentCollection?.id === col.id ? '<span class="selected-badge">✓</span>' : ''}
+                </div>
+            `).join('');
+        }
+
+        modal.classList.remove('hidden');
+    } catch (e) {
+        console.error('Collection load error:', e);
+        showModal('Hata', 'Koleksiyonlar yüklenemedi.');
+    }
+};
+
+window.closeCollectionModal = () => {
+    const modal = document.getElementById('collectionModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.selectCollection = (id, emoji, title) => {
+    currentCollection = { id, emoji, title };
+    const btn = document.getElementById('collectionBtn');
+    if (btn) {
+        btn.innerHTML = emoji;
+        btn.classList.add('active');
+        btn.title = `Koleksiyon: ${title}`;
+    }
+    window.closeCollectionModal();
+};
+
+window.showCreateCollectionModal = () => {
+    window.closeCollectionModal();
+    const modal = document.getElementById('createCollectionModal');
+    if (modal) {
+        document.getElementById('collectionEmoji').value = '📁';
+        document.getElementById('collectionTitle').value = '';
+        modal.classList.remove('hidden');
+    }
+};
+
+window.closeCreateCollectionModal = () => {
+    const modal = document.getElementById('createCollectionModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.saveNewCollection = async () => {
+    const emoji = document.getElementById('collectionEmoji').value.trim() || '📁';
+    const title = document.getElementById('collectionTitle').value.trim();
+
+    if (!title) {
+        showModal('Hata', 'Lütfen koleksiyon başlığı girin.');
+        return;
+    }
+
+    try {
+        const docRef = await DBService.createJournal(title, emoji);
+        await showModal('Başarılı', 'Koleksiyon oluşturuldu!', false, 1500);
+        window.closeCreateCollectionModal();
+
+        // Auto-select the new collection
+        window.selectCollection(docRef.id, emoji, title);
+    } catch (e) {
+        console.error('Collection creation error:', e);
+        showModal('Hata', 'Koleksiyon oluşturulamadı: ' + e.message);
+    }
+};
 
 // --- Custom Modal Helper ---
 function showModal(title, message, isConfirm = false, duration = 0) {
@@ -1371,6 +1457,12 @@ function setupEventListeners() {
         dom.recordBtn.onclick = () => VoiceRecorder.toggle();
     }
 
+    // Collection Button
+    const collectionBtn = document.getElementById('collectionBtn');
+    if (collectionBtn) {
+        collectionBtn.onclick = () => window.openCollectionModal();
+    }
+
     // Save button
     if (dom.addBtn) {
         dom.addBtn.onclick = saveMoment;
@@ -1669,6 +1761,11 @@ async function saveMoment() {
 
         if (isRealLocationActive && locationString) {
             momentData.verifiedLocation = true;
+        }
+
+        // Add collection if selected
+        if (currentCollection) {
+            momentData.journalId = currentCollection.id;
         }
 
         try {
@@ -2522,6 +2619,34 @@ async function openProfileView(uid) {
             followBtn.onclick = () => window.handleFollowAction(uid);
         }
 
+        // Tab switching
+        const tabBtns = content.querySelectorAll('.tab-btn');
+        const momentsGrid = content.querySelector('.profile-moments-grid');
+        const privateNotice = content.querySelector('.private-profile-notice');
+
+        if (tabBtns.length > 0) {
+            tabBtns[0].onclick = () => {
+                // Anılar tab
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabBtns[0].classList.add('active');
+                if (momentsGrid) momentsGrid.style.display = 'grid';
+                if (privateNotice) privateNotice.style.display = 'flex';
+                const collectionsGrid = content.querySelector('.profile-collections-grid');
+                if (collectionsGrid) collectionsGrid.style.display = 'none';
+            };
+
+            tabBtns[1].onclick = async () => {
+                // Koleksiyonlar tab
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabBtns[1].classList.add('active');
+                if (momentsGrid) momentsGrid.style.display = 'none';
+                if (privateNotice) privateNotice.style.display = 'none';
+
+                // Load and show collections
+                await window.renderCollectionsGrid(uid, content);
+            };
+        }
+
     } catch (e) {
         console.error("Profil yükleme hatası:", e);
         content.innerHTML = '<div class="error" style="padding: 40px; text-align: center;">Profil yüklenemedi</div>';
@@ -2536,6 +2661,92 @@ async function openProfileView(uid) {
 }
 
 window.openProfileView = openProfileView;
+
+// Render Collections Grid
+window.renderCollectionsGrid = async (uid, profileContent) => {
+    try {
+        const collections = await DBService.getJournals(uid);
+
+        // Remove existing collections grid if any
+        let collectionsGrid = profileContent.querySelector('.profile-collections-grid');
+        if (!collectionsGrid) {
+            collectionsGrid = document.createElement('div');
+            collectionsGrid.className = 'profile-collections-grid';
+            profileContent.querySelector('.profile-scroll-content').appendChild(collectionsGrid);
+        }
+
+        collectionsGrid.style.display = 'grid';
+
+        if (collections.length === 0) {
+            collectionsGrid.innerHTML = '<div class="no-moments-msg">Henüz koleksiyon yok</div>';
+        } else {
+            // Get moment counts for each collection
+            const collectionsWithCounts = await Promise.all(
+                collections.map(async (col) => {
+                    const moments = await DBService.getMomentsByJournal(col.id);
+                    return { ...col, momentCount: moments.length };
+                })
+            );
+
+            collectionsGrid.innerHTML = collectionsWithCounts.map(col => `
+                <div class="collection-card" onclick="window.openCollectionDetail('${col.id}', '${escapeHTML(col.title)}', '${escapeHTML(col.coverEmoji || '📁')}')">
+                    <div class="collection-emoji-large">${col.coverEmoji || '📁'}</div>
+                    <div class="collection-title">${escapeHTML(col.title)}</div>
+                    <div class="collection-count">${col.momentCount} anı</div>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('Collections grid error:', e);
+    }
+};
+
+// Open Collection Detail View
+window.openCollectionDetail = async (collectionId, title, emoji) => {
+    const view = document.getElementById('profileView');
+    const content = document.getElementById('profileContent');
+
+    if (!view || !content) return;
+
+    try {
+        const moments = await DBService.getMomentsByJournal(collectionId);
+
+        content.innerHTML = `
+            <div class="collection-detail-view">
+                <div class="collection-header">
+                    <button class="back-btn" onclick="window.closeCollectionDetail()">← Geri</button>
+                    <div class="collection-info">
+                        <span class="collection-emoji-large">${emoji}</span>
+                        <h2>${escapeHTML(title)}</h2>
+                        <p>${moments.length} anı</p>
+                    </div>
+                </div>
+                <div class="collection-moments-grid">
+                    ${moments.length > 0 ? moments.map(m => {
+            const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+            const imgSrc = firstImg?.url || firstImg?.data || '';
+            return `<div class="grid-item" onclick="window.setView('my-moments', false, '${m.id}')">
+                            ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
+                        </div>`;
+        }).join('') : '<div class="no-moments-msg">Bu koleksiyonda henüz anı yok</div>'}
+                </div>
+            </div>
+        `;
+
+        view.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } catch (e) {
+        console.error('Collection detail error:', e);
+        showModal('Hata', 'Koleksiyon yüklenemedi.');
+    }
+};
+
+window.closeCollectionDetail = () => {
+    const currentUser = AuthService.currentUser();
+    if (currentUser) {
+        window.openProfileView(currentUser.uid);
+    }
+};
 
 // Profil fotoğrafını tam ekran gör
 window.viewFullSizePhoto = (url) => {
