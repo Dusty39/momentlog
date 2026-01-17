@@ -2168,10 +2168,10 @@ function renderTimeline(searchQuery = '') {
                         <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
                             ${(() => {
-                    // Reverting to a simple lower vertical center as requested
+                    // Moving collage center significantly lower (80% down) as requested
                     let vCenter = 50;
                     if (m.stickerText || m.musicText || m.voiceUrl) {
-                        vCenter = 60; // Clearly lower (60% down)
+                        vCenter = 80; // User requested 80%
                     }
                     return generateMiniCollage(m.media, vCenter);
                 })()}

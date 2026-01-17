@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v239-revert-stickers';
+const CACHE_NAME = 'momentlog-v240-vcenter-80';
 const ASSETS = [
     './',
     './index.html',
