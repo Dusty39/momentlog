@@ -123,11 +123,9 @@ function generateMiniCollage(media, verticalOffset = 50) {
         let extraTransform = 'translate(-50%, -50%)';
 
         if (images.length === 1) {
-            // Single photo: centered at verticalOffset
             top = verticalOffset;
             left = 50;
         } else if (images.length === 2) {
-            // Two photos: spaced from offset center
             const offset = 12;
             const positions = [
                 { t: verticalOffset - offset, l: 50 - offset },
@@ -136,7 +134,6 @@ function generateMiniCollage(media, verticalOffset = 50) {
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
-            // Three photos: balanced triangle
             const positions = [
                 { t: verticalOffset - 10, l: 50 },
                 { t: verticalOffset + 12, l: 38 },
@@ -145,7 +142,6 @@ function generateMiniCollage(media, verticalOffset = 50) {
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            // Four photos: 2x2 grid centered
             const offset = 14;
             const positions = [
                 { t: verticalOffset - offset, l: 50 - offset },
@@ -156,16 +152,15 @@ function generateMiniCollage(media, verticalOffset = 50) {
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
-            // 5-7 photos: refined organic cluster around center
             const diff = verticalOffset - 50;
             const positions = [
-                { t: 40 + diff, l: 40 }, // Top-left
-                { t: 42 + diff, l: 60 }, // Top-right
-                { t: 60 + diff, l: 38 }, // Bottom-left
-                { t: 62 + diff, l: 62 }, // Bottom-right
-                { t: 48 + diff, l: 48 }, // Near-center
-                { t: 52 + diff, l: 52 }, // Near-center
-                { t: 50 + diff, l: 50 }  // Center
+                { t: 40 + diff, l: 40 },
+                { t: 42 + diff, l: 60 },
+                { t: 60 + diff, l: 38 },
+                { t: 62 + diff, l: 62 },
+                { t: 48 + diff, l: 48 },
+                { t: 52 + diff, l: 52 },
+                { t: 50 + diff, l: 50 }
             ];
             top = positions[idx % positions.length].t;
             left = positions[idx % positions.length].l;

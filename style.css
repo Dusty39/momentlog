@@ -122,22 +122,6 @@ header {
         /* Balanced width for tablets */
         margin: 0 auto;
     }
-
-    .mini-collage {
-        height: 380px;
-        /* Intermediate height */
-    }
-
-    .mini-img-wrapper {
-        width: 60%;
-        max-width: 240px;
-        /* Slightly larger than mobile */
-    }
-
-    .mini-collage.count-1 .mini-img-wrapper {
-        width: 85%;
-        max-width: 420px;
-    }
 }
 
 @media (min-width: 1025px) {
@@ -176,63 +160,39 @@ header {
         align-items: center;
         text-align: center;
     }
-
-    .mini-collage {
-        width: 100% !important;
-        max-width: 620px !important;
-        margin: 15px auto !important;
-        height: 45vh !important;
-        /* Dynamic height based on screen height */
-        min-height: 300px !important;
-        max-height: 500px !important;
-        /* Stop it from getting too tall on giant screens */
-    }
-
-    /* Larger & More Centered Photo Look */
-    .mini-img-wrapper {
-        width: 70% !important;
-        max-width: 360px !important;
-        box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
-    }
-
-    .mini-collage.count-1 .mini-img-wrapper {
-        width: 95% !important;
-        max-width: 580px !important;
-    }
-
-    .card-content {
-        width: 100%;
-        text-align: center;
-        padding: 10px 50px;
-        font-size: 1.05rem;
-    }
-
-    .card-actions {
-        width: 100%;
-        justify-content: center;
-        gap: 30px;
-        padding: 10px 0;
-    }
-
-    /* Sticker Enlargement */
-    .mini-time-sticker {
-        font-size: 0.95rem;
-        padding: 6px 16px;
-        top: 25px;
-        left: 25px;
-    }
-
-    .brush-sticker {
-        font-size: 1.45rem;
-        padding: 15px 55px;
-    }
-
-    .mini-brush-sticker {
-        font-size: 1.1rem;
-        padding: 6px 20px;
-    }
 }
 
+.card-content {
+    width: 100%;
+    text-align: center;
+    padding: 10px 50px;
+    font-size: 1.05rem;
+}
+
+.card-actions {
+    width: 100%;
+    justify-content: center;
+    gap: 30px;
+    padding: 10px 0;
+}
+
+/* Sticker Enlargement */
+.mini-time-sticker {
+    font-size: 0.95rem;
+    padding: 6px 16px;
+    top: 25px;
+    left: 25px;
+}
+
+.brush-sticker {
+    font-size: 1.45rem;
+    padding: 15px 55px;
+}
+
+.mini-brush-sticker {
+    font-size: 1.1rem;
+    padding: 6px 20px;
+}
 
 /* Card Hover Effects */
 .moment-card {
@@ -1624,18 +1584,20 @@ textarea::placeholder {
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Base Mini Img Styles */
 .mini-img-wrapper {
     position: absolute;
-    width: 50%;
-    aspect-ratio: 4/5;
+    width: 45%;
+    max-width: 180px;
+    /* Slight increase for better visibility */
+    aspect-ratio: 1;
     background: white;
     padding: 6px 6px 16px;
-    /* Slightly reduced bottom padding */
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     border-radius: 2px;
-    /* Sharper edges for journal look */
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
+    z-index: 1;
 }
 
 .mini-img-wrapper:active {
@@ -1646,7 +1608,7 @@ textarea::placeholder {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 2px;
+    border-radius: 0;
 }
 
 .carousel-slide img {
@@ -1676,18 +1638,7 @@ textarea::placeholder {
     height: 100%;
 }
 
-.mini-img-wrapper {
-    position: absolute;
-    width: 45%;
-    max-width: 160px;
-    aspect-ratio: 1;
-    background: white;
-    padding: 4px 4px 14px 4px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-}
+/* Extra variants handled below */
 
 .mini-collage.count-1 .mini-img-wrapper {
     width: 85%;
