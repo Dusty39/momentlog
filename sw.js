@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v242-vcenter-60';
+const CACHE_NAME = 'momentlog-v243-ratio-4-5';
 const ASSETS = [
     './',
     './index.html',

@@ -1332,8 +1332,8 @@ textarea::placeholder {
 .carousel-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;
-    /* Square for Web */
+    aspect-ratio: 4 / 5;
+    /* Uniform Portrait Sizing */
     overflow: hidden;
     border-radius: 12px;
 }
@@ -1785,11 +1785,6 @@ textarea::placeholder {
 
     .immersive-date {
         font-size: 1.8rem;
-    }
-
-    .carousel-wrapper {
-        aspect-ratio: 4 / 5;
-        /* Maintain Portrait for Mobile */
     }
 }
 
