@@ -110,7 +110,7 @@ window.selectTheme = (theme) => {
 
 // --- Mini Collage Generator (for Feed Carousel) ---
 function generateMiniCollage(media) {
-    const images = media.filter(m => m.type === 'image').slice(0, 4);
+    const images = media.filter(m => m.type === 'image').slice(0, 7);
     if (images.length === 0) return '';
 
     let html = `<div class="mini-collage count-${images.length}">`;
@@ -119,24 +119,23 @@ function generateMiniCollage(media) {
 
         let top = 0, left = 0;
         if (images.length === 1) {
-            top = 25; left = 15; // Mathematically centered for 70% width
+            top = 5; left = 2.5; // Centered
         } else if (images.length === 2) {
-            top = idx === 0 ? 15 : 45;
-            left = idx === 0 ? 10 : 40;
+            top = idx === 0 ? 5 : 35;
+            left = idx === 0 ? -5 : 35;
         } else if (images.length === 3) {
+            const positions = [{ t: 5, l: 15 }, { t: 30, l: -5 }, { t: 40, l: 35 }];
+            top = positions[idx].t; left = positions[idx].l;
+        } else if (images.length === 4) {
+            const positions = [{ t: 5, l: -5 }, { t: 5, l: 35 }, { t: 40, l: -5 }, { t: 40, l: 35 }];
+            top = positions[idx].t; left = positions[idx].l;
+        } else {
+            // 5, 6, or 7 photos - Spread cluster
             const positions = [
-                { t: 10, l: 25 },
-                { t: 40, l: 10 },
-                { t: 55, l: 40 }
-            ];
-            top = positions[idx].t;
-            left = positions[idx].l;
-        } else { // 4 photos
-            const positions = [
-                { t: 10, l: 10 },
-                { t: 10, l: 40 },
-                { t: 50, l: 10 },
-                { t: 50, l: 40 }
+                { t: 2, l: 2 }, { t: 0, l: 40 },
+                { t: 35, l: -5 }, { t: 32, l: 32 },
+                { t: 15, l: 18 }, { t: 50, l: 15 },
+                { t: 45, l: 48 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
@@ -726,9 +725,16 @@ const MusicManager = {
     async play(url, momentId, skipFade = false, isManual = false, voiceUrl = null) {
         // Autoplay priming
         if (isManual) {
-            this.audio.play().then(() => this.audio.pause()).catch(() => { });
+            console.log('[MusicManager] Manual interaction detected, priming audio');
+            this.audio.play().then(() => {
+                console.log('[MusicManager] Music audio primed');
+                this.audio.pause();
+            }).catch((err) => { console.warn('[MusicManager] Music priming failed:', err); });
             if (voiceUrl) {
-                VoicePlayer.audio.play().then(() => VoicePlayer.audio.pause()).catch(() => { });
+                VoicePlayer.audio.play().then(() => {
+                    console.log('[MusicManager] Voice audio primed');
+                    VoicePlayer.audio.pause();
+                }).catch((err) => { console.warn('[MusicManager] Voice priming failed:', err); });
             }
         }
 
@@ -739,10 +745,12 @@ const MusicManager = {
 
         // Toggle logic: If same moment, pause/resume
         if (this.currentMomentId === momentId && this.isPlaying) {
+            console.log('[MusicManager] Same moment clicked while playing, stopping');
             this.stop(true);
             return;
         }
 
+        console.log('[MusicManager] Starting new playback for moment:', momentId);
         this.stop(true);
         this.currentMomentId = momentId;
         this.voicePlayedThisActivation = false; // Reset for new card
@@ -754,23 +762,38 @@ const MusicManager = {
             // Ensure no voice is left playing from previous cycle
             VoicePlayer.stop();
 
+            // RESET state for each loop
+            this.isDucked = false;
+
             // 1. Music Start with Fade-in
             if (url) {
+                console.log('[MusicManager] Attempting to play:', url);
                 this.audio.src = url;
                 this.audio.crossOrigin = "anonymous";
-                this.audio.loop = false; // We handle loop manually for the 30s cycle
+                this.audio.loop = false;
                 this.audio.volume = 0;
+                this.audio.load(); // Explicit load to ensure fresh start
+
+                this.audio.onerror = (e) => {
+                    console.error('[MusicManager] Audio error:', this.audio.error?.code, this.audio.error?.message, 'URL:', url);
+                };
+
                 try {
                     await this.audio.play();
                     this.isPlaying = true;
                     this.fadeIn(1500);
+                    console.log('[MusicManager] Playback started successfully');
                 } catch (e) {
-                    console.warn("[MusicManager] Play failed:", e);
-                    // Continue to voice even if music fails
+                    console.error("[MusicManager] Play failed:", e.message, 'URL:', url);
+                    // Fallback: If music fails but we have voice, continue to voice
+                    this.isPlaying = false;
                 }
+            } else {
+                console.warn('[MusicManager] No music URL provided');
+                this.isPlaying = false;
             }
 
-            // 2. 3s Delay -> Voice Start + Ducking (ONLY if not played yet)
+            // 2. 3s Delay -> Voice Start + Ducking (ONLY if not played yet in THIS ACTIVATION)
             this.cycleTimeouts.push(setTimeout(() => {
                 if (this.currentMomentId !== momentId) return;
 
@@ -1410,6 +1433,9 @@ function setupEventListeners() {
 
         currentView = viewName;
         localStorage.setItem('momentLog_lastView', currentView);
+
+        // Stop all audio when switching views
+        MusicManager.stop(true);
 
         // Reset pagination state on view change
         currentLastDoc = null;
