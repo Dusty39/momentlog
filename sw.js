@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v248-location-csp-fix';
+const CACHE_NAME = 'momentlog-v249-music-csp-fix';
 const ASSETS = [
     './',
     './index.html',
