@@ -117,55 +117,51 @@ function generateMiniCollage(media) {
     images.forEach((img, idx) => {
         const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 8 + 4);
 
-        // Boundary-aware positioning: positions are calculated to keep the entire
-        // photo cluster (including shadows) centered within the available space
-        // The 5% padding in CSS creates the boundaries from edges
+        // Boundary-aware positioning with 8% margin on all sides
+        // Since position:absolute ignores padding, we calculate positions
+        // within the usable area: 8% to 92% horizontally and vertically
         let top = 0, left = 0;
 
         if (images.length === 1) {
-            // Single photo: perfectly centered
+            // Single photo: perfectly centered (flexbox handles this)
             top = 0; left = 0;
         } else if (images.length === 2) {
-            // Two photos: diagonal arrangement, centered as a group
-            // Cluster bounds: ~55% width, ~50% height
+            // Two photos: diagonal arrangement within 8-92% bounds
             const positions = [
-                { t: 5, l: 15 },   // Top-left
-                { t: 35, l: 35 }   // Bottom-right
+                { t: 10, l: 18 },   // Top-left (within bounds)
+                { t: 42, l: 42 }    // Bottom-right (within bounds)
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
-            // Three photos: triangle formation, centered
-            // Cluster bounds: ~60% width, ~55% height
+            // Three photos: triangle formation within bounds
             const positions = [
-                { t: 0, l: 22 },   // Top center
-                { t: 30, l: 8 },   // Bottom-left
-                { t: 32, l: 38 }   // Bottom-right
+                { t: 8, l: 28 },    // Top center
+                { t: 38, l: 14 },   // Bottom-left
+                { t: 40, l: 44 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            // Four photos: 2x2 grid, centered
-            // Cluster bounds: ~65% width, ~60% height
+            // Four photos: 2x2 grid within bounds
             const positions = [
-                { t: 0, l: 10 },   // Top-left
-                { t: 2, l: 40 },   // Top-right
-                { t: 35, l: 12 },  // Bottom-left
-                { t: 37, l: 38 }   // Bottom-right
+                { t: 8, l: 16 },    // Top-left
+                { t: 10, l: 46 },   // Top-right
+                { t: 42, l: 18 },   // Bottom-left
+                { t: 44, l: 44 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
-            // 5-7 photos: organic cluster, tightly centered
-            // Cluster bounds: ~70% width, ~65% height
+            // 5-7 photos: organic cluster within bounds
             const positions = [
-                { t: 0, l: 12 },   // Top-left
-                { t: 2, l: 42 },   // Top-right
-                { t: 28, l: 5 },   // Mid-left
-                { t: 30, l: 35 },  // Mid-right
-                { t: 12, l: 25 },  // Center
-                { t: 48, l: 18 },  // Bottom-left
-                { t: 50, l: 48 }   // Bottom-right
+                { t: 8, l: 18 },    // Top-left
+                { t: 10, l: 48 },   // Top-right
+                { t: 35, l: 12 },   // Mid-left
+                { t: 37, l: 42 },   // Mid-right
+                { t: 20, l: 32 },   // Center
+                { t: 55, l: 24 },   // Bottom-left
+                { t: 57, l: 54 }    // Bottom-right
             ];
             top = positions[idx].t;
             left = positions[idx].l;

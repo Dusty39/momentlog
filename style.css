@@ -1667,15 +1667,12 @@ textarea::placeholder {
     align-items: center;
     justify-content: center;
     overflow: visible;
-    padding: 8%;
-    /* Increased padding to ensure shadows don't overflow boundaries */
+    /* No padding - positions will account for boundaries */
 }
 
 /* Single Photo - Much Larger & More Impactful */
 .mini-collage.count-1 {
     height: 320px;
-    padding: 5%;
-    /* Less padding for single photo to maximize size */
 }
 
 .mini-img-wrapper {
