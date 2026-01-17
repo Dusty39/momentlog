@@ -2261,7 +2261,7 @@ function renderTimeline(searchQuery = '') {
                         💬 ${m.commentsCount || 0}
                     </button>
                     <button class="action-btn" onclick="window.handleShare(event, '${m.id}')">
-                        🔗 Paylaş
+                        🔗
                     </button>
                     <div class="action-spacer"></div>
                     ${isOwner ? `
