@@ -2166,7 +2166,7 @@ function renderTimeline(searchQuery = '') {
                     // Moving collage center significantly lower (80% down) as requested
                     let vCenter = 50;
                     if (m.stickerText || m.musicText || m.voiceUrl) {
-                        vCenter = 80; // User requested 80%
+                        vCenter = 60; // User requested 60%
                     }
                     return generateMiniCollage(m.media, vCenter);
                 })()}
