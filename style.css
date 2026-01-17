@@ -1660,10 +1660,10 @@ textarea::placeholder {
 /* Mini Collage inside Carousel Slide 1 */
 .mini-collage {
     position: absolute;
-    top: 5%;
-    left: 5%;
-    width: 90%;
-    height: 90%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1672,8 +1672,8 @@ textarea::placeholder {
 
 /* Single Photo - Much Larger & More Impactful */
 .mini-collage.count-1 {
-    width: 90%;
-    height: 90%;
+    width: 100%;
+    height: 100%;
 }
 
 .mini-img-wrapper {

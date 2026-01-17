@@ -109,7 +109,7 @@ window.selectTheme = (theme) => {
 };
 
 // --- Mini Collage Generator (for Feed Carousel) ---
-function generateMiniCollage(media) {
+function generateMiniCollage(media, verticalOffset = 50) {
     const images = media.filter(m => m.type === 'image').slice(0, 7);
     if (images.length === 0) return '';
 
@@ -119,52 +119,53 @@ function generateMiniCollage(media) {
         const rotation = (idx % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 2);
 
         // Centered positioning - using a responsive bounded area
-        let top = 50, left = 50;
+        let top = verticalOffset, left = 50;
         let extraTransform = 'translate(-50%, -50%)';
 
         if (images.length === 1) {
-            // Single photo: perfectly centered
-            top = 50;
+            // Single photo: centered at verticalOffset
+            top = verticalOffset;
             left = 50;
         } else if (images.length === 2) {
-            // Two photos: spaced from center
+            // Two photos: spaced from offset center
             const offset = 12;
             const positions = [
-                { t: 50 - offset, l: 50 - offset },
-                { t: 50 + offset, l: 50 + offset }
+                { t: verticalOffset - offset, l: 50 - offset },
+                { t: verticalOffset + offset, l: 50 + offset }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 3) {
-            // Three photos: balanced triangle
+            // Three photos: balanced triangle around offset center
             const positions = [
-                { t: 40, l: 50 },
-                { t: 62, l: 38 },
-                { t: 62, l: 62 }
+                { t: verticalOffset - 10, l: 50 },
+                { t: verticalOffset + 12, l: 38 },
+                { t: verticalOffset + 12, l: 62 }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else if (images.length === 4) {
-            // Four photos: 2x2 grid centered
+            // Four photos: 2x2 grid centered around offset center
             const offset = 14;
             const positions = [
-                { t: 50 - offset, l: 50 - offset },
-                { t: 50 - offset, l: 50 + offset },
-                { t: 50 + offset, l: 50 - offset },
-                { t: 50 + offset, l: 50 + offset }
+                { t: verticalOffset - offset, l: 50 - offset },
+                { t: verticalOffset - offset, l: 50 + offset },
+                { t: verticalOffset + offset, l: 50 - offset },
+                { t: verticalOffset + offset, l: 50 + offset }
             ];
             top = positions[idx].t;
             left = positions[idx].l;
         } else {
-            // 5-7 photos: refined organic cluster around center
+            // 5-7 photos: refined organic cluster around offset center
+            const diff = verticalOffset - 50;
             const positions = [
-                { t: 40, l: 40 }, // Top-left
-                { t: 42, l: 60 }, // Top-right
-                { t: 60, l: 38 }, // Bottom-left
-                { t: 62, l: 62 }, // Bottom-right
-                { t: 48, l: 48 }, // Near-center
-                { t: 52, l: 52 }, // Near-center
-                { t: 50, l: 50 }  // Center
+                { t: 40 + diff, l: 40 }, // Top-left
+                { t: 42 + diff, l: 60 }, // Top-right
+                { t: 60 + diff, l: 38 }, // Bottom-left
+                { t: 62 + diff, l: 62 }, // Bottom-right
+                { t: 48 + diff, l: 48 }, // Near-center
+                { t: 52 + diff, l: 52 }, // Near-center
+                { t: 50 + diff, l: 50 }  // Center
             ];
             top = positions[idx % positions.length].t;
             left = positions[idx % positions.length].l;
@@ -2166,7 +2167,14 @@ function renderTimeline(searchQuery = '') {
                     <div class="card-media-carousel" onscroll="window._handleCarouselScroll(this)">
                         <!-- Slide 1: Mini Collage (Interactive & Stickered & Music) -->
                         <div class="carousel-slide collage-slide">
-                            ${generateMiniCollage(m.media)}
+                            ${(() => {
+                    // Shift collage center down if top overlaps exist
+                    let vCenter = 50;
+                    if (m.stickerText || m.musicText || m.voiceUrl) {
+                        vCenter = 55; // Shifted center for balance
+                    }
+                    return generateMiniCollage(m.media, vCenter);
+                })()}
                             
                             <!-- Music Marquee inside Collage (Top) -->
                             ${(m.musicText || m.voiceUrl) ? `

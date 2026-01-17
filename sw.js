@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v235-padding-fix';
+const CACHE_NAME = 'momentlog-v236-padding-fix';
 const ASSETS = [
     './',
     './index.html',
