@@ -2678,34 +2678,52 @@ function fetchLocation() {
         async (pos) => {
             try {
                 const { latitude, longitude } = pos.coords;
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr`);
+                // Complying with Nominatim usage policy by providing an identifier (email)
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr&email=serhataykis@gmail.com`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept-Language': 'tr'
+                    }
+                });
+
+                if (!response.ok) throw new Error("Servis yanıt vermedi");
                 const data = await response.json();
 
                 const address = data.address;
-                if (!address) throw new Error("Adres bulunamadı");
+                if (!address) {
+                    // Fallback to display name if address object is missing
+                    if (data.display_name) {
+                        currentLocation = data.display_name.split(',').slice(0, 3).join(', ');
+                    } else {
+                        throw new Error("Adres bulunamadı");
+                    }
+                } else {
+                    // Format: İlçe, İl, Ülke
+                    const parts = [];
+                    const district = address.town || address.village || address.suburb || address.district || address.city_district || address.neighbourhood;
+                    const city = address.province || address.city || address.state || address.admin_level_4;
 
-                // Format: İlçe, İl, Ülke
-                const parts = [];
-                const district = address.town || address.village || address.suburb || address.district || address.city_district;
-                const city = address.province || address.city || address.state || address.admin_level_4;
+                    if (district) parts.push(district);
+                    if (city) parts.push(city);
+                    if (address.country) parts.push(address.country);
 
-                if (district) parts.push(district);
-                if (city) parts.push(city);
-                if (address.country) parts.push(address.country);
-
-                currentLocation = parts.length > 0 ? parts.join(', ') : 'Bilinmeyen Konum';
+                    currentLocation = parts.length > 0 ? parts.join(', ') : (data.display_name ? data.display_name.split(',')[0] : 'Bilinmeyen Konum');
+                }
 
                 if (dom.locationStatus) {
                     dom.locationStatus.textContent = `📍 ${currentLocation}`;
                     dom.locationStatus.classList.remove('hidden');
                 }
 
-                // Keep the button active if we successfully got a location
                 dom.addLocationBtn?.classList.add('active');
             } catch (e) {
                 console.error("Konum ayrıştırma hatası:", e);
                 currentLocation = "Konum alınamadı";
-                if (dom.locationStatus) dom.locationStatus.textContent = "📍 Konum belirlenemedi";
+                // Show a more descriptive error based on the failure
+                if (dom.locationStatus) {
+                    dom.locationStatus.textContent = e.message === "Adres bulunamadı" ? "📍 Konum bulunamadı" : "📍 Servis hatası";
+                }
                 isRealLocationActive = false;
                 dom.addLocationBtn?.classList.remove('active');
             }
@@ -2722,7 +2740,7 @@ function fetchLocation() {
             isRealLocationActive = false;
             dom.addLocationBtn?.classList.remove('active');
         },
-        { timeout: 10000, enableHighAccuracy: true }
+        { timeout: 15000, enableHighAccuracy: true }
     );
 }
 
