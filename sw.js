@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v263-theme-relocation';
+const CACHE_NAME = 'momentlog-v264-theme-align-fix';
 const ASSETS = [
     './',
     './index.html',
