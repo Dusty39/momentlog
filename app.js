@@ -1348,6 +1348,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingSplash = document.getElementById('loadingSplash');
         const appDiv = document.getElementById('app');
 
+        // Safety: ensure splash is hidden eventually
+        const safetyTimeout = setTimeout(() => {
+            if (loadingSplash && !loadingSplash.classList.contains('hidden')) {
+                loadingSplash.classList.add('hidden');
+            }
+        }, 5000);
+
         try {
             if (user) {
                 if (loginOverlay) loginOverlay.classList.remove('active');
@@ -1395,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Auth state processing error:", error);
         } finally {
+            clearTimeout(safetyTimeout);
             if (loadingSplash) loadingSplash.classList.add('hidden');
         }
 
@@ -1408,22 +1416,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Login Button
-    document.getElementById('googleLoginBtn')?.addEventListener('click', async () => {
+    const loginBtn = document.getElementById('googleLoginBtn');
+    loginBtn?.addEventListener('click', async () => {
+        const originalHtml = loginBtn.innerHTML;
+        loginBtn.innerHTML = '<span>Lütfen bekleyin...</span>';
+        loginBtn.disabled = true;
+
         try {
             await AuthService.signInWithGoogle();
         } catch (err) {
             console.error("Giriş başlatma hatası:", err);
             showModal("Hata", "Giriş başlatılamadı: " + err.message);
+            loginBtn.innerHTML = originalHtml;
+            loginBtn.disabled = false;
         }
     });
 
-    // Handle Redirect Result (Catch errors after returning from Google)
-    AuthService.getRedirectResult().catch(err => {
-        if (err.code !== 'auth/popup-closed-by-user') { // Redirect won't usually have this, but safety first
-            console.error("Redirect login error:", err);
-            showModal("Giriş Hatası", "Giriş tamamlanamadı: " + err.message);
+    // Handle Redirect Result
+    (async () => {
+        try {
+            await AuthService.getRedirectResult();
+        } catch (err) {
+            if (err.code !== 'auth/popup-closed-by-user') {
+                console.error("Redirect login error:", err);
+                showModal("Giriş Hatası", "Giriş tamamlanamadı. Lütfen tekrar deneyin: " + err.message);
+            }
         }
-    });
+    })();
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
