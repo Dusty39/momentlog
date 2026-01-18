@@ -1371,18 +1371,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // 0. Initial Splash Management
-        const hideSplash = () => {
-            clearTimeout(window.splashTimeout);
-            const loadingSplash = document.getElementById('loadingSplash');
-            const appDiv = document.getElementById('app');
-            if (loadingSplash) loadingSplash.classList.add('hidden');
-            if (appDiv) {
-                appDiv.classList.remove('hidden');
-                appDiv.classList.add('fade-in');
-            }
-        };
-
         try {
             if (user) {
                 console.log("[Auth] User session active:", user.uid);
@@ -1463,7 +1451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw-v325.js')
+        navigator.serviceWorker.register('./sw.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
