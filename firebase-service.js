@@ -12,10 +12,16 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
+// Set persistence to LOCAL (persists despite browser restart)
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => console.log("[AuthService] Persistence set to LOCAL"))
+    .catch((error) => console.error("[AuthService] Persistence error:", error));
+
 // --- Auth Service ---
 const AuthService = {
     // Google ile Giriş
     signInWithGoogle: () => {
+        console.log("[AuthService] Initiating Google Sign-In redirect...");
         const provider = new firebase.auth.GoogleAuthProvider();
         return auth.signInWithRedirect(provider);
     },
@@ -27,6 +33,7 @@ const AuthService = {
 
     // Çıkış
     signOut: () => {
+        console.log("[AuthService] Signing out...");
         return auth.signOut();
     },
 

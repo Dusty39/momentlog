@@ -1422,6 +1422,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await window.setView(lastView || 'my-following', true);
                 setupNotifications();
+
+                // Re-bind profile click just in case
+                if (dom.profileBtn) {
+                    dom.profileBtn.onclick = () => openProfileView(user.uid);
+                }
             } else {
                 console.log("[Auth] No user found.");
                 if (loginOverlay) loginOverlay.classList.add('active');
