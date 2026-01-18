@@ -1371,21 +1371,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // CRITICAL: Hide splash IMMEDIATELY as soon as auth state is known
-        hideSplash();
-
-        // 0. Update UID Display
-        const uidDiv = document.getElementById('uidDisplay');
-        if (uidDiv) {
-            uidDiv.textContent = user ? `ID: ${user.uid.substring(0, 8)}...` : 'ID: Yok';
-        }
+        // 0. Initial Splash Management
+        const hideSplash = () => {
+            clearTimeout(window.splashTimeout);
+            const loadingSplash = document.getElementById('loadingSplash');
+            const appDiv = document.getElementById('app');
+            if (loadingSplash) loadingSplash.classList.add('hidden');
+            if (appDiv) {
+                appDiv.classList.remove('hidden');
+                appDiv.classList.add('fade-in');
+            }
+        };
 
         try {
             if (user) {
-                console.log("[Auth v325] Session active:", user.uid);
+                console.log("[Auth] User session active:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
+                hideSplash();
 
-                // 1. Immediate UI Setup
+                // 1. Immediate UI Updates
                 if (dom.profileBtn) {
                     dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     dom.profileBtn.onclick = () => openProfileView(user.uid);
@@ -1394,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
                 }
 
-                // 2. Load View
+                // 2. Load Content
                 let lastView = localStorage.getItem('momentLog_lastView');
                 if (!lastView || lastView === 'profile' || lastView === 'notifications') {
                     lastView = 'my-following';
@@ -1402,30 +1406,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.setView(lastView, true);
                 setupNotifications();
 
-                // 3. Background Profile Fetch (Enrich)
+                // 3. Background Enrichment
                 DBService.getUserProfile(user.uid).then(profile => {
                     if (profile) {
-                        console.log("[Auth v325] Firestore profile found.");
                         currentUserProfile = profile;
                         if (profile.username && dom.userNameSpan) {
                             dom.userNameSpan.textContent = profile.username;
                         }
+                        if (profile.photoURL && dom.profileBtn) {
+                            dom.profileBtn.innerHTML = `<img src="${profile.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        }
                     }
-                }).catch(e => console.warn("[Auth v325] Profile fetch failed:", e));
+                }).catch(e => console.warn("[Auth] Background profile load error:", e));
 
             } else {
-                console.log("[Auth v325] No session.");
+                console.log("[Auth] No session found.");
                 if (loginOverlay) loginOverlay.classList.add('active');
+                hideSplash();
                 moments = [];
                 renderTimeline();
             }
         } catch (error) {
-            console.error("[Auth v325] State error:", error);
+            console.error("[Auth] Fatal error:", error);
             hideSplash();
         }
     });
 
-    // Login Button & Emergency Reset
+    // Login Button
     const loginBtn = document.getElementById('googleLoginBtn');
     loginBtn?.addEventListener('click', async () => {
         const originalHtml = loginBtn.innerHTML;
@@ -1442,34 +1449,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const resetBtn = document.getElementById('emergencyResetBtn');
-    resetBtn?.addEventListener('click', async () => {
-        if (confirm("Uygulamadaki tüm veriler ve oturumlar temizlenecek. Devam edilsin mi?")) {
-            console.log("[App v325] Emergency Reset Triggered!");
-            // 1. Sign out
-            try { await AuthService.signOut(); } catch (e) { }
-            // 2. Clear Local Storage
-            localStorage.clear();
-            // 3. Unregister all service workers
-            if ('serviceWorker' in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for (let reg of regs) { await reg.unregister(); }
-            }
-            // 4. Force reload
-            window.location.reload(true);
-        }
-    });
-
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App v325] Checking redirect result...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[App v325] Redirect success:", result.user.uid);
+                console.log("[Auth] Redirect login successful:", result.user.uid);
             }
         } catch (err) {
-            console.error("[App v325] Redirect error:", err);
+            console.error("[Auth] Redirect check error:", err);
         }
     })();
 
