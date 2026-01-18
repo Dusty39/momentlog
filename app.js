@@ -376,9 +376,11 @@ window.saveProfileChanges = async () => {
 
         // Update Firebase Auth profile
         try {
-            await AuthService.updateProfile({
-                displayName: updateData.displayName
-            });
+            const authUpdate = { displayName: updateData.displayName };
+            if (updateData.photoURL) {
+                authUpdate.photoURL = updateData.photoURL;
+            }
+            await AuthService.updateProfile(authUpdate);
         } catch (authError) {
             console.warn("Auth profile update failed:", authError);
         }
