@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v330-persistence-fix';
+const CACHE_NAME = 'momentlog-v340-auth-fix';
 const ASSETS = [
     './',
     './index.html',
@@ -9,6 +9,16 @@ const ASSETS = [
     './cloudinary-service.js',
     './manifest.json',
     './icon.png'
+];
+
+// URLs that should NEVER be cached (Auth related)
+const AUTH_BYPASS_PATTERNS = [
+    'googleapis.com',
+    'firebaseapp.com',
+    'identitytoolkit',
+    'securetoken',
+    'accounts.google.com',
+    '__/auth/'
 ];
 
 // Install Event
@@ -26,9 +36,8 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    // Delete EVERY cache that isn't the current one
                     if (cacheName !== CACHE_NAME) {
-                        console.log('[Service Worker] Deleting old cache:', cacheName);
+                        console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -37,14 +46,22 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event - Network First Strategy
+// Fetch Event - CRITICAL: Bypass Auth requests completely
 self.addEventListener('fetch', (event) => {
-    // Skip cross-origin requests (like fonts) for simple network fallback
-    if (event.request.url.startsWith(self.location.origin)) {
+    const url = event.request.url;
+
+    // BYPASS: Never intercept auth-related requests
+    const isAuthRequest = AUTH_BYPASS_PATTERNS.some(pattern => url.includes(pattern));
+    if (isAuthRequest) {
+        // Let it go directly to network, no caching, no interception
+        return;
+    }
+
+    // For same-origin requests: Network First
+    if (url.startsWith(self.location.origin)) {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    // Update cache with new version
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
                     return response;
@@ -52,7 +69,7 @@ self.addEventListener('fetch', (event) => {
                 .catch(() => caches.match(event.request))
         );
     } else {
-        // External assets (like fonts) use Cache First
+        // External assets: Cache First
         event.respondWith(
             caches.match(event.request).then((res) => res || fetch(event.request))
         );
