@@ -297,14 +297,46 @@ h1 {
     /* Spacer from top */
 }
 
+.sticker-input-container {
+    position: relative;
+    width: 100%;
+}
+
 .sticker-input {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 12px;
+    padding-right: 45px;
+    /* Space for theme button */
     color: var(--text-primary);
     font-size: 0.95rem;
     width: 100%;
+    transition: all 0.2s ease;
+}
+
+.inline-theme-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.inline-theme-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-50%) scale(1.05);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .sticker-input:focus,

@@ -158,9 +158,6 @@
                         <!-- Şarkı Ekle -->
                         <button id="musicBtn" class="tool-btn" title="Şarkı Seç">🎵</button>
 
-                        <!-- Tema -->
-                        <button id="themeBtn" class="tool-btn" title="Anı Teması"
-                            onclick="window.openThemeSelector()">🎨</button>
 
                         <!-- Koleksiyon -->
                         <button id="collectionBtn" class="tool-btn" title="Koleksiyon Seç">📁</button>
@@ -174,8 +171,12 @@
 
                     <div class="input-actions">
                         <div class="location-input-wrapper">
-                            <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
-                                maxlength="30" class="sticker-input" autocomplete="off">
+                            <div class="sticker-input-container">
+                                <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
+                                    maxlength="30" class="sticker-input" autocomplete="off">
+                                <button id="themeBtn" class="inline-theme-btn" title="Tema Seç"
+                                    onclick="window.openThemeSelector()">🎨</button>
+                            </div>
                             <input type="text" id="musicInput" placeholder="Şarkı adı - Sanatçı"
                                 class="music-input hidden">
                             <input type="text" id="musicUrlInput" placeholder="Spotify linki yapıştır"
