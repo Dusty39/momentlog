@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v350-mobile-fix';
+const CACHE_NAME = 'momentlog-v360-FINAL-FIX';
 const ASSETS = [
     './',
     './index.html',
@@ -20,6 +20,13 @@ const AUTH_BYPASS_PATTERNS = [
     'accounts.google.com',
     '__/auth/'
 ];
+
+// Listen for message to skip waiting
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
 
 // Install Event
 self.addEventListener('install', (event) => {
