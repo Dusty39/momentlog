@@ -1412,8 +1412,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await AuthService.signInWithGoogle();
         } catch (err) {
-            console.error("Giriş hatası:", err);
-            showModal("Hata", "Giriş yapılırken bir hata oluştu: " + err.message);
+            console.error("Giriş başlatma hatası:", err);
+            showModal("Hata", "Giriş başlatılamadı: " + err.message);
+        }
+    });
+
+    // Handle Redirect Result (Catch errors after returning from Google)
+    AuthService.getRedirectResult().catch(err => {
+        if (err.code !== 'auth/popup-closed-by-user') { // Redirect won't usually have this, but safety first
+            console.error("Redirect login error:", err);
+            showModal("Giriş Hatası", "Giriş tamamlanamadı: " + err.message);
         }
     });
 

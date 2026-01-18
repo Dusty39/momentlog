@@ -17,7 +17,12 @@ const AuthService = {
     // Google ile Giriş
     signInWithGoogle: () => {
         const provider = new firebase.auth.GoogleAuthProvider();
-        return auth.signInWithPopup(provider);
+        return auth.signInWithRedirect(provider);
+    },
+
+    // Yönlendirme Sonucunu Yakala
+    getRedirectResult: () => {
+        return auth.getRedirectResult();
     },
 
     // Çıkış
