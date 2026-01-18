@@ -826,48 +826,56 @@ const MusicManager = {
             if (url) {
                 let playableUrl = url;
 
-                // Spotify Link Transformation
-                if (url.includes('spotify.com')) {
-                    const trackId = getSpotifyTrackId(url);
-                    if (trackId) {
-                        playableUrl = `https://p.scdn.co/mp3-preview/${trackId}?cid=00000000000000000000000000000000`; // Note: Placeholder CID
-                        // Many Spotify previews require a specific CID or might be unavailable
-                        // Fallback to Deezer for quality preview
-                        const moment = moments.find(m => m.id === momentId);
-                        const fallbackUrl = await getDeezerPreview(moment?.musicText || "");
-                        if (fallbackUrl) playableUrl = fallbackUrl;
+                // Spotify & Deezer Logic
+                if (url.includes('spotify.com') || !url.startsWith('http')) {
+                    // Spotify/Text-based: Always try to get a preview via Deezer search
+                    // The direct Spotify preview URL (p.scdn.co) is notoriously unreliable/deprecated
+                    const moment = moments.find(m => m.id === momentId);
+                    // Use musicText (Artist - Title) if valid, otherwise try to extract from URL (harder)
+                    const query = (moment && moment.musicText && moment.musicText !== 'Bir şarkı seç...')
+                        ? moment.musicText
+                        : (moment?.spotifyTitle || ""); // prompt metadata if available
+
+                    if (query) {
+                        console.log('[MusicManager] Searching Deezer for:', query);
+                        const fallbackUrl = await getDeezerPreview(query);
+                        if (fallbackUrl) {
+                            playableUrl = fallbackUrl;
+                        } else {
+                            console.warn('[MusicManager] No preview found for:', query);
+                            // If failed, we can't play anything meaningful for Spotify links
+                            // so we might set playableUrl to null to trigger error/voice-only flow
+                            playableUrl = null;
+                        }
+                    } else {
+                        playableUrl = null;
                     }
-                } else if (url.includes('deezer.com')) {
-                    // Deezer links might need similar transformation or use the direct preview if provided
                 }
 
-                console.log('[MusicManager] Attempting to play:', playableUrl);
-                this.audio.src = playableUrl;
-                this.audio.crossOrigin = "anonymous";
-                this.audio.loop = false;
-                this.audio.volume = 0;
-                this.audio.load();
+                if (playableUrl) {
+                    console.log('[MusicManager] Attempting to play:', playableUrl);
+                    this.audio.src = playableUrl;
+                    this.audio.crossOrigin = "anonymous";
+                    this.audio.loop = false;
+                    this.audio.volume = 0;
+                    this.audio.load();
 
-                this.audio.onerror = async (e) => {
-                    console.error('[MusicManager] Audio error, trying Deezer fallback:', playableUrl);
-                    const moment = moments.find(m => m.id === momentId);
-                    if (moment?.musicText) {
-                        const fallbackUrl = await getDeezerPreview(moment.musicText);
-                        if (fallbackUrl && fallbackUrl !== playableUrl) {
-                            this.audio.src = fallbackUrl;
-                            this.audio.play().catch(err => console.error("[MusicManager] Fallback failed:", err));
-                        }
+                    this.audio.onerror = async (e) => {
+                        console.error('[MusicManager] Audio error:', playableUrl);
+                        // If primary failed, we stop music part essentially
+                    };
+
+                    try {
+                        await this.audio.play();
+                        this.isPlaying = true;
+                        this.fadeIn(1500);
+                        console.log('[MusicManager] Playback started successfully');
+                    } catch (e) {
+                        console.error("[MusicManager] Play failed:", e.message);
+                        this.isPlaying = false;
                     }
-                };
-
-                try {
-                    await this.audio.play();
-                    this.isPlaying = true;
-                    this.fadeIn(1500);
-                    console.log('[MusicManager] Playback started successfully');
-                } catch (e) {
-                    console.error("[MusicManager] Play failed:", e.message, 'URL:', url);
-                    // Fallback: If music fails but we have voice, continue to voice
+                } else {
+                    console.warn('[MusicManager] No playable URL resolved.');
                     this.isPlaying = false;
                 }
             } else {
