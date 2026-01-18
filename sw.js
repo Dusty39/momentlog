@@ -1,35 +1,39 @@
-const CACHE_NAME = 'momentlog-v285-diagnostics';
+const CACHE_NAME = 'momentlog-v300-mobile-fix';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
-    './story-mode.js',
-    './icon.png',
+    './firebase-config.js',
+    './firebase-service.js',
+    './cloudinary-service.js',
     './manifest.json',
-    'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Permanent+Marker&family=Space+Mono&display=swap'
+    './icon.png'
 ];
 
 // Install Event
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // Force the waiting service worker to become the active service worker
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS);
-        })
+        }).then(() => self.skipWaiting())
     );
 });
 
-// Activate Event
+// Activate Event - Aggressive Cleanup
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) => {
+        caches.keys().then((cacheNames) => {
             return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+                cacheNames.map((cacheName) => {
+                    // Delete EVERY cache that isn't the current one
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('[Service Worker] Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
             );
-        }).then(() => {
-            return self.clients.claim(); // Take control of all clients immediately
-        })
+        }).then(() => self.clients.claim())
     );
 });
 

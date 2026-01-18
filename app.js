@@ -1376,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth] User detected! UID:", user.uid, "Email:", user.email);
+                console.log("[Auth v300] User detected! UID:", user.uid, "Email:", user.email);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // 1. IMMEDIATE UI UPDATE: Use Firebase Auth data (no wait)
@@ -1394,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Re-bind profile click just in case
                 if (dom.profileBtn) {
                     dom.profileBtn.onclick = () => {
-                        console.log("[App] Profile button clicked for UID:", user.uid);
+                        console.log("[App v300] Profile button clicked for UID:", user.uid);
                         openProfileView(user.uid);
                     };
                 }
@@ -1402,12 +1402,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 2. BACKGROUND: Load Firestore profile (optional enrich)
                 (async () => {
                     try {
-                        console.log("[Auth] Fetching Firestore profile for:", user.uid);
+                        console.log("[Auth v300] Fetching Firestore profile for:", user.uid);
                         const userProfile = await DBService.getUserProfile(user.uid);
                         currentUserProfile = userProfile;
 
                         if (userProfile) {
-                            console.log("[Auth] Firestore profile found. Username:", userProfile.username);
+                            console.log("[Auth v300] Firestore profile found. Username:", userProfile.username);
                             const displayPhoto = userProfile.photoURL || user.photoURL;
                             if (displayPhoto && dom.profileBtn) {
                                 dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
@@ -1418,10 +1418,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             isPublicState = !userProfile.isPrivateProfile;
                             window.updateVisibilityUI();
                         } else {
-                            console.warn("[Auth] No Firestore profile found for this UID.");
+                            console.warn("[Auth v300] No Firestore profile found for this UID.");
                         }
                     } catch (e) {
-                        console.warn("[Auth] Background profile load error:", e);
+                        console.warn("[Auth v300] Background profile load error:", e);
                     }
                 })();
 
@@ -1470,24 +1470,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App] Checking getRedirectResult...");
+            console.log("[App v300] Checking getRedirectResult (Aggressive)...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[App] Redirect login successful! UID:", result.user.uid);
+                console.log("[App v300] Redirect login success! UID:", result.user.uid);
             } else {
-                console.log("[App] No redirect result found.");
+                console.log("[App v300] No redirect result found. (URL:", window.location.search, ")");
+                // Safety: If we're logged in but UI didn't update, trigger an manual check
+                const user = AuthService.currentUser();
+                if (user) {
+                    console.log("[App v300] Manual check: User is already logged in as UID:", user.uid);
+                }
             }
         } catch (err) {
-            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                console.error("[App] Redirect login error:", err);
-                // Clear any potential hanging state
-                const loadingSplash = document.getElementById('loadingSplash');
-                if (loadingSplash) loadingSplash.classList.add('hidden');
-                const appDiv = document.getElementById('app');
-                if (appDiv) appDiv.classList.remove('hidden');
+            console.error("[App v300] Redirect login error:", err);
+            // Force reset on error
+            const loadingSplash = document.getElementById('loadingSplash');
+            if (loadingSplash) loadingSplash.classList.add('hidden');
+            const appDiv = document.getElementById('app');
+            if (appDiv) appDiv.classList.remove('hidden');
 
-                showModal("Giriş Hatası", "Giriş tamamlanamadı: " + err.message);
-            }
+            showModal("Giriş Hatası", "Yükleme tamamlanamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
         }
     })();
 
