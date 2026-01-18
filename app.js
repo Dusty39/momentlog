@@ -1535,6 +1535,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
     }
+    // Check if running in Standalone mode (PWA/TWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone ||
+        document.referrer.includes('android-app://');
+
+    if (isStandalone && loginDownloadBtn) {
+        loginDownloadBtn.style.display = 'none';
+        // Also hide install button if it was shown
+        if (installBtn) installBtn.classList.add('hidden');
+    }
 });
 
 
