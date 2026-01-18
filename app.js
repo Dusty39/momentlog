@@ -1334,6 +1334,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Always start with akış (my-moments) view - no persistence
     currentView = 'my-moments';
 
+    // Safety: ensure splash is hidden eventually (100% guarantee)
+    const splashTimeout = setTimeout(() => {
+        const loadingSplash = document.getElementById('loadingSplash');
+        if (loadingSplash && !loadingSplash.classList.contains('hidden')) {
+            console.warn("Splash safety timeout triggered. Forcing splash hide.");
+            loadingSplash.classList.add('hidden');
+        }
+    }, 4500);
+
     try {
         setupEventListeners();
         applyAppTheme(currentAppTheme);
@@ -1347,13 +1356,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginOverlay = document.getElementById('loginOverlay');
         const loadingSplash = document.getElementById('loadingSplash');
         const appDiv = document.getElementById('app');
-
-        // Safety: ensure splash is hidden eventually
-        const safetyTimeout = setTimeout(() => {
-            if (loadingSplash && !loadingSplash.classList.contains('hidden')) {
-                loadingSplash.classList.add('hidden');
-            }
-        }, 5000);
 
         try {
             if (user) {
@@ -1402,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Auth state processing error:", error);
         } finally {
-            clearTimeout(safetyTimeout);
+            clearTimeout(splashTimeout);
             if (loadingSplash) loadingSplash.classList.add('hidden');
         }
 
