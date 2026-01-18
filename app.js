@@ -1447,8 +1447,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("[Auth] No user. Checking shadow persistence...");
             const hasShadowSession = localStorage.getItem('momentLog_hasSession');
 
-            if (hasShadowSession === 'true') {
-                console.warn("[Auth] Shadow session detected. Waiting for Firebase...");
+            // Check if we just came back from a redirect login attempt
+            // If so, we should WAIT for the redirect result to be processed by Firebase
+            const isRedirecting = sessionStorage.getItem('momentLog_redirectPending');
+
+            if (hasShadowSession === 'true' || isRedirecting === 'true') {
+                console.warn("[Auth] Shadow session or Redirect pending. Waiting for Firebase...");
 
                 let attempts = 0;
                 const checkInterval = setInterval(() => {
@@ -1457,10 +1461,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (currentUser) {
                         console.log("[Auth] User restored during wait!");
                         clearInterval(checkInterval);
+                        sessionStorage.removeItem('momentLog_redirectPending');
                     } else if (attempts > 8) { // 4 seconds
+                        // Only give up if we really timed out
                         console.warn("[Auth] Shadow wait timed out. Showing login.");
                         clearInterval(checkInterval);
                         localStorage.removeItem('momentLog_hasSession');
+                        sessionStorage.removeItem('momentLog_redirectPending');
                         showLoginScreen();
                     }
                 }, 500);
@@ -1481,6 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.disabled = true;
 
         try {
+            sessionStorage.setItem('momentLog_redirectPending', 'true');
             await AuthService.signInWithGoogle();
         } catch (err) {
             console.error("Login start error:", err);
@@ -1570,13 +1578,23 @@ function setupEventListeners() {
         dom.photoInput.addEventListener('change', handlePhotoInput);
     }
 
-    // Profile button
-    if (dom.profileBtn) {
-        dom.profileBtn.onclick = () => {
+    // Profile button (Robust)
+    const pBtn = dom.profileBtn || document.getElementById('profileBtn');
+    if (pBtn) {
+        pBtn.onclick = () => {
             const user = AuthService.currentUser();
-            if (user) openProfileView(user.uid);
+            if (user) {
+                // Try-catch for safety
+                try {
+                    openProfileView(user.uid).catch(e => alert("Profil görünümü hatası: " + e));
+                } catch (err) {
+                    alert("Kritik Hata: " + err);
+                }
+            }
             else showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
         };
+    } else {
+        console.warn("Profil butonu bulunamadı!");
     }
 
     // Visibility toggle helper
