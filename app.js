@@ -11,16 +11,10 @@ window.onerror = function (msg, url, line) {
     return false;
 };
 
-// --- Shadow Persistence Check (Immediate) ---
-// This runs before anything else to prevent login flicker on mobile
-const hasShadowSession = localStorage.getItem('momentLog_hasSession');
-if (hasShadowSession === 'true') {
-    const splash = document.getElementById('loadingSplash');
-    const loginOverlay = document.getElementById('loginOverlay');
-    if (splash) splash.style.display = 'flex';
-    if (loginOverlay) loginOverlay.style.display = 'none';
-    console.log("[Init] Shadow session found, suppressed login screen.");
-}
+// --- Shadow Persistence Check (Removed for Simplicity) ---
+// We will rely on Firebase's fast local persistence check instead
+// const hasShadowSession = localStorage.getItem('momentLog_hasSession');
+// if (hasShadowSession === 'true') { ... }
 
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
@@ -1444,38 +1438,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             // --- LOGOUT / NO USER ---
-            console.log("[Auth] No user. Checking shadow persistence...");
-            const hasShadowSession = localStorage.getItem('momentLog_hasSession');
+            console.log("[Auth] No user detected. Resetting UI.");
 
-            // Check if we just came back from a redirect login attempt
-            // If so, we should WAIT for the redirect result to be processed by Firebase
-            const isRedirecting = sessionStorage.getItem('momentLog_redirectPending');
+            // Clean up any residual state
+            localStorage.removeItem('momentLog_hasSession');
+            sessionStorage.removeItem('momentLog_redirectPending');
 
-            if (hasShadowSession === 'true' || isRedirecting === 'true') {
-                console.warn("[Auth] Shadow session or Redirect pending. Waiting for Firebase...");
-
-                let attempts = 0;
-                const checkInterval = setInterval(() => {
-                    attempts++;
-                    const currentUser = AuthService.currentUser();
-                    if (currentUser) {
-                        console.log("[Auth] User restored during wait!");
-                        clearInterval(checkInterval);
-                        sessionStorage.removeItem('momentLog_redirectPending');
-                    } else if (attempts > 8) { // 4 seconds
-                        // Only give up if we really timed out
-                        console.warn("[Auth] Shadow wait timed out. Showing login.");
-                        clearInterval(checkInterval);
-                        localStorage.removeItem('momentLog_hasSession');
-                        sessionStorage.removeItem('momentLog_redirectPending');
-                        showLoginScreen();
-                    }
-                }, 500);
-
-            } else {
-                console.log("[Auth] No shadow session. Showing login.");
-                showLoginScreen();
-            }
+            showLoginScreen();
         }
     });
 
@@ -1488,7 +1457,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.disabled = true;
 
         try {
-            sessionStorage.setItem('momentLog_redirectPending', 'true');
             await AuthService.signInWithGoogle();
         } catch (err) {
             console.error("Login start error:", err);
