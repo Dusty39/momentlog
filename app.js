@@ -1406,11 +1406,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                // 3. UI Transition (Hide splash/overlay FIRST, show app)
+                // This ensures we never get stuck on "Wait..." even if data loading lags
                 initializeUI();
-                await window.setView(lastView, true);
-                setupNotifications();
-
-                // 4. UI Transition (Hide splash, show app)
                 if (splash) {
                     splash.style.opacity = '0';
                     setTimeout(() => splash.remove(), 500);
@@ -1420,6 +1418,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     app.classList.remove('hidden');
                     app.style.opacity = '1';
                 }
+
+                // 4. Load Data & View
+                await window.setView(lastView, true);
+                setupNotifications();
 
                 // 5. Background Enrichment
                 DBService.getUserProfile(user.uid).then(profile => {
