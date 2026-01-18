@@ -1768,7 +1768,12 @@ function setupEventListeners() {
     }
     if (profileBtn) profileBtn.onclick = () => {
         const currentUser = AuthService.currentUser();
-        if (currentUser) window.openProfileView(currentUser.uid);
+        if (currentUser) {
+            window.openProfileView(currentUser.uid).catch(e => alert("Profil hatası: " + e));
+        } else {
+            alert("Hata: Oturum kapalı görünüyor (currentUser is null). Lütfen sayfayı yenileyin.");
+            // Optional: Force re-check or show login
+        }
     };
 
     // Add Location Button
@@ -1940,6 +1945,7 @@ async function loadMoments() {
 
     try {
         const currentUser = AuthService.currentUser();
+        console.log("[loadMoments] Current User:", currentUser ? currentUser.uid : "NULL");
 
         // Load user profile for premium checks (photo limit, edit, etc.)
         if (currentUser && !currentUserProfile) {
