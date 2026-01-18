@@ -19,12 +19,22 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
 
 // --- Auth Service ---
 const AuthService = {
-    // Google ile Giriş
-    signInWithGoogle: () => {
-        console.log("[AuthService] Redirecting to Google...");
+    // Google ile Giriş - Popup first, Redirect fallback
+    signInWithGoogle: async () => {
+        console.log("[AuthService] Starting Google Sign-In...");
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        return auth.signInWithRedirect(provider);
+
+        try {
+            // Try popup first (works better on some browsers)
+            const result = await auth.signInWithPopup(provider);
+            console.log("[AuthService] Popup login success:", result.user.uid);
+            return result;
+        } catch (popupError) {
+            console.warn("[AuthService] Popup blocked or failed, trying redirect:", popupError.code);
+            // Fallback to redirect
+            return auth.signInWithRedirect(provider);
+        }
     },
 
     // Handle Redirect
