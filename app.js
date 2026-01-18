@@ -1553,11 +1553,7 @@ function setupEventListeners() {
         if (profileTarget) {
             const user = AuthService.currentUser();
             if (user) {
-                try {
-                    openProfileView(user.uid).catch(err => alert("Profil hatası: " + err));
-                } catch (err) {
-                    alert("Kritik Hata: " + err);
-                }
+                openProfileView(user.uid).catch(console.error);
             } else {
                 showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
             }
@@ -1941,7 +1937,6 @@ async function loadMoments() {
 
     try {
         const currentUser = AuthService.currentUser();
-        console.log("[loadMoments] Current User:", currentUser ? currentUser.uid : "NULL");
 
         // Load user profile for premium checks (photo limit, edit, etc.)
         if (currentUser && !currentUserProfile) {
