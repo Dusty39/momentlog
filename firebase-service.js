@@ -44,9 +44,9 @@ const AuthService = {
         return auth.getRedirectResult();
     },
 
-    // Çıkış
     signOut: () => {
         console.log("[AuthService] Signing out...");
+        localStorage.removeItem('momentLog_hasSession');
         return auth.signOut();
     },
 

@@ -1359,11 +1359,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth Listener
     AuthService.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
-        const loadingSplash = document.getElementById('loadingSplash');
-        const appDiv = document.getElementById('app');
-
         const hideSplash = () => {
-            clearTimeout(splashTimeout);
+            clearTimeout(window.splashTimeout);
+            const loadingSplash = document.getElementById('loadingSplash');
+            const appDiv = document.getElementById('app');
             if (loadingSplash) loadingSplash.classList.add('hidden');
             if (appDiv) {
                 appDiv.classList.remove('hidden');
@@ -1373,7 +1372,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth] User session active:", user.uid);
+                console.log("[Auth] Session active for:", user.uid);
+                // Mark shadow persistence
+                localStorage.setItem('momentLog_hasSession', 'true');
+
                 if (loginOverlay) loginOverlay.classList.remove('active');
                 hideSplash();
 
@@ -1405,17 +1407,34 @@ document.addEventListener('DOMContentLoaded', () => {
                             dom.profileBtn.innerHTML = `<img src="${profile.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         }
                     }
-                }).catch(e => console.warn("[Auth] Background profile load error:", e));
+                }).catch(e => console.warn("[Auth] Profile fetch failed:", e));
 
             } else {
-                console.log("[Auth] No session found.");
-                if (loginOverlay) loginOverlay.classList.add('active');
-                hideSplash();
-                moments = [];
-                renderTimeline();
+                console.log("[Auth] No Firebase session detected.");
+
+                // Shadow Persistence check: If we think we have a session, wait longer
+                const hasShadowSession = localStorage.getItem('momentLog_hasSession') === 'true';
+
+                if (hasShadowSession) {
+                    console.log("[Auth] Shadow session found. Waiting for Firebase to catch up...");
+                    // Do nothing, let the splash persist while Firebase tries to recover
+                    // If after 8 seconds still no user, then show login
+                    setTimeout(() => {
+                        if (!AuthService.currentUser()) {
+                            console.log("[Auth] Firebase failed to recover shadow session. Redirecting to login.");
+                            if (loginOverlay) loginOverlay.classList.add('active');
+                            hideSplash();
+                        }
+                    }, 8000);
+                } else {
+                    if (loginOverlay) loginOverlay.classList.add('active');
+                    hideSplash();
+                    moments = [];
+                    renderTimeline();
+                }
             }
         } catch (error) {
-            console.error("[Auth] Fatal error:", error);
+            console.error("[Auth] Fatal error in state listener:", error);
             hideSplash();
         }
     });
