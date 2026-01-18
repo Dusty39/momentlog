@@ -11,6 +11,17 @@ window.onerror = function (msg, url, line) {
     return false;
 };
 
+// --- Shadow Persistence Check (Immediate) ---
+// This runs before anything else to prevent login flicker on mobile
+const hasShadowSession = localStorage.getItem('momentLog_hasSession');
+if (hasShadowSession === 'true') {
+    const splash = document.getElementById('loadingSplash');
+    const loginOverlay = document.getElementById('loginOverlay');
+    if (splash) splash.style.display = 'flex';
+    if (loginOverlay) loginOverlay.style.display = 'none';
+    console.log("[Init] Shadow session found, suppressed login screen.");
+}
+
 // --- Constants & State ---
 const STORAGE_KEY = 'momentLog_data_v2';
 
@@ -1357,67 +1368,107 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Auth Listener
+    // --- Auth State Listener (Robust Mobile Persistence) ---
+    // --- Auth State Listener (Robust Mobile Persistence) ---
     AuthService.onAuthStateChanged(async (user) => {
-        const loginOverlay = document.getElementById('loginOverlay');
-        const loadingSplash = document.getElementById('loadingSplash');
-        const appDiv = document.getElementById('app');
+        console.log("[Auth] State changed. User:", user ? user.uid : "null");
 
-        const initializeUI = () => {
-            if (loadingSplash) loadingSplash.classList.add('hidden');
-            if (appDiv) {
-                appDiv.classList.remove('hidden');
-                appDiv.classList.add('fade-in');
+        const splash = document.getElementById('loadingSplash');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const app = document.getElementById('app');
+
+        const showLoginScreen = () => {
+            if (splash) splash.style.display = 'none';
+            if (app) app.classList.add('hidden');
+            if (loginOverlay) {
+                loginOverlay.style.display = 'flex';
+                setTimeout(() => loginOverlay.classList.add('active'), 100);
             }
+            initializeUI();
+            moments = [];
+            renderTimeline();
         };
 
-        try {
-            if (user) {
-                console.log("[Auth] User recognized:", user.uid);
-                if (loginOverlay) loginOverlay.classList.remove('active');
+        if (user) {
+            // --- LOGIN SUCCESS ---
+            console.log("[Auth] User detected:", user.uid);
 
-                // 1. Setup Profile UI
-                if (dom.profileBtn) {
-                    dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                    dom.profileBtn.onclick = () => openProfileView(user.uid);
-                }
-                if (dom.userNameSpan) {
-                    dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
-                }
+            // 1. Set Shadow Persistence
+            localStorage.setItem('momentLog_hasSession', 'true');
 
-                // 2. Load Initial View
-                let lastView = localStorage.getItem('momentLog_lastView');
-                if (!lastView || lastView === 'profile' || lastView === 'notifications') {
-                    lastView = 'my-following';
-                }
+            // 2. Setup Basic Profile UI
+            if (dom.profileBtn) {
+                dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                dom.profileBtn.onclick = () => openProfileView(user.uid);
+            }
+            if (dom.userNameSpan) {
+                dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
+            }
 
-                // Load view and THEN hide splash
+            // 3. Determine View & Initialize
+            let lastView = localStorage.getItem('momentLog_lastView');
+            if (!lastView || lastView === 'profile' || lastView === 'notifications') {
+                lastView = 'my-following';
+            }
+
+            try {
+                initializeUI();
                 await window.setView(lastView, true);
                 setupNotifications();
-                initializeUI();
 
-                // 3. Background Enrichment
+                // 4. UI Transition (Hide splash, show app)
+                if (splash) {
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.remove(), 500);
+                }
+                if (loginOverlay) loginOverlay.style.display = 'none';
+                if (app) {
+                    app.classList.remove('hidden');
+                    app.style.opacity = '1';
+                }
+
+                // 5. Background Enrichment
                 DBService.getUserProfile(user.uid).then(profile => {
                     if (profile) {
                         currentUserProfile = profile;
-                        if (profile.username && dom.userNameSpan) {
-                            dom.userNameSpan.textContent = profile.username;
-                        }
+                        if (profile.username && dom.userNameSpan) dom.userNameSpan.textContent = profile.username;
                         if (profile.photoURL && dom.profileBtn) {
                             dom.profileBtn.innerHTML = `<img src="${profile.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         }
                     }
                 }).catch(e => console.warn("[Auth] Profile enrichment error:", e));
 
-            } else {
-                console.log("[Auth] No user session. Showing login.");
-                if (loginOverlay) loginOverlay.classList.add('active');
-                initializeUI();
-                moments = [];
-                renderTimeline();
+            } catch (initErr) {
+                console.error("[Auth] App init failed:", initErr);
             }
-        } catch (error) {
-            console.error("[Auth] Initialization error:", error);
-            initializeUI();
+
+        } else {
+            // --- LOGOUT / NO USER ---
+            console.log("[Auth] No user. Checking shadow persistence...");
+            const hasShadowSession = localStorage.getItem('momentLog_hasSession');
+
+            if (hasShadowSession === 'true') {
+                console.warn("[Auth] Shadow session detected. Waiting for Firebase...");
+
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    const currentUser = AuthService.currentUser();
+                    if (currentUser) {
+                        console.log("[Auth] User restored during wait!");
+                        clearInterval(checkInterval);
+                    } else if (attempts > 8) { // 4 seconds
+                        console.warn("[Auth] Shadow wait timed out. Showing login.");
+                        clearInterval(checkInterval);
+                        localStorage.removeItem('momentLog_hasSession');
+                        showLoginScreen();
+                    }
+                }, 500);
+
+            } else {
+                console.log("[Auth] No shadow session. Showing login.");
+                showLoginScreen();
+            }
         }
     });
 
@@ -3283,6 +3334,9 @@ window.handleLogout = async () => {
     const confirmed = await showModal('Çıkış', 'Çıkış yapmak istediğinize emin misiniz?', true);
     if (confirmed) {
         try {
+            // Clear shadow persistence
+            localStorage.removeItem('momentLog_hasSession');
+
             await AuthService.signOut();
             const view = document.getElementById('profileView');
             if (view) {
