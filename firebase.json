@@ -8,6 +8,15 @@
     ],
     "headers": [
       {
+        "source": "sw-v325.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "sw-v320.js",
         "headers": [
           {

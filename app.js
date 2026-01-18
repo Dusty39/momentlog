@@ -1374,9 +1374,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // CRITICAL: Hide splash IMMEDIATELY as soon as auth state is known
         hideSplash();
 
+        // 0. Update UID Display
+        const uidDiv = document.getElementById('uidDisplay');
+        if (uidDiv) {
+            uidDiv.textContent = user ? `ID: ${user.uid.substring(0, 8)}...` : 'ID: Yok';
+        }
+
         try {
             if (user) {
-                console.log("[Auth v320] Active session:", user.uid);
+                console.log("[Auth v325] Session active:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // 1. Immediate UI Setup
@@ -1399,27 +1405,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 3. Background Profile Fetch (Enrich)
                 DBService.getUserProfile(user.uid).then(profile => {
                     if (profile) {
-                        console.log("[Auth v311] Firestore profile found.");
+                        console.log("[Auth v325] Firestore profile found.");
                         currentUserProfile = profile;
                         if (profile.username && dom.userNameSpan) {
                             dom.userNameSpan.textContent = profile.username;
                         }
                     }
-                }).catch(e => console.warn("[Auth v320] Profile fetch failed:", e));
+                }).catch(e => console.warn("[Auth v325] Profile fetch failed:", e));
 
             } else {
-                console.log("[Auth v311] No user session found.");
+                console.log("[Auth v325] No session.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 renderTimeline();
             }
         } catch (error) {
-            console.error("[Auth v311] Critical error in state listener:", error);
+            console.error("[Auth v325] State error:", error);
             hideSplash();
         }
     });
 
-    // Login Button
+    // Login Button & Emergency Reset
     const loginBtn = document.getElementById('googleLoginBtn');
     loginBtn?.addEventListener('click', async () => {
         const originalHtml = loginBtn.innerHTML;
@@ -1436,22 +1442,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const resetBtn = document.getElementById('emergencyResetBtn');
+    resetBtn?.addEventListener('click', async () => {
+        if (confirm("Uygulamadaki tüm veriler ve oturumlar temizlenecek. Devam edilsin mi?")) {
+            console.log("[App v325] Emergency Reset Triggered!");
+            // 1. Sign out
+            try { await AuthService.signOut(); } catch (e) { }
+            // 2. Clear Local Storage
+            localStorage.clear();
+            // 3. Unregister all service workers
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let reg of regs) { await reg.unregister(); }
+            }
+            // 4. Force reload
+            window.location.reload(true);
+        }
+    });
+
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App v320] Checking redirect result...");
+            console.log("[App v325] Checking redirect result...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[App v311] Redirect success for UID:", result.user.uid);
+                console.log("[App v325] Redirect success:", result.user.uid);
             }
         } catch (err) {
-            console.error("[App v311] Redirect processing error:", err);
+            console.error("[App v325] Redirect error:", err);
         }
     })();
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw-v320.js')
+        navigator.serviceWorker.register('./sw-v325.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
