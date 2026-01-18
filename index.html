@@ -369,6 +369,56 @@
         </div>
     </div>
 
+    <!-- Photo Filter Modal -->
+    <div id="photoFilterModal" class="modal hidden">
+        <div class="modal-content photo-filter-content">
+            <div class="filter-header">
+                <h3>✨ Fotoğraf Filtrele</h3>
+                <button class="close-modal" onclick="window.closeFilterModal()">×</button>
+            </div>
+
+            <!-- Carousel for Photo Preview -->
+            <div class="filter-carousel-wrapper">
+                <div id="filterCarousel" class="filter-carousel"></div>
+                <button class="carousel-nav prev" onclick="window.prevFilterPhoto()">❮</button>
+                <button class="carousel-nav next" onclick="window.nextFilterPhoto()">❯</button>
+            </div>
+
+            <!-- Filter Selection Tabs -->
+            <div class="filter-options-scroll">
+                <div class="filter-option active" onclick="window.setFilter('none')" data-filter="none">
+                    <div class="filter-preview none"></div>
+                    <span>Normal</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('retro')" data-filter="retro">
+                    <div class="filter-preview retro"></div>
+                    <span>Retro</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('bw')" data-filter="bw">
+                    <div class="filter-preview bw"></div>
+                    <span>S&B</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('warm')" data-filter="warm">
+                    <div class="filter-preview warm"></div>
+                    <span>Sıcak</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('cool')" data-filter="cool">
+                    <div class="filter-preview cool"></div>
+                    <span>Soğuk</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('nostalgia')" data-filter="nostalgia">
+                    <div class="filter-preview nostalgia"></div>
+                    <span>Nostalji</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="window.closeFilterModal()">Vazgeç</button>
+                <button class="modal-btn save" onclick="window.applyFiltersToAll()">Tümüne Uygula</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>

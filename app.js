@@ -2504,18 +2504,177 @@ function hideUploadProgress() {
 function renderMediaPreview() {
     if (!dom.previewArea) return;
 
-    dom.previewArea.innerHTML = currentMedia.map((m, i) => `
+    const hasImages = currentMedia.some(m => m.type === 'image');
+
+    let html = currentMedia.map((m, i) => `
         <div class="preview-item">
-            ${m.type === 'image' ? `<img src="${m.data}">` : `<audio src="${m.data}" controls></audio>`}
+            ${m.type === 'image' ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">` : `<audio src="${m.data}" controls></audio>`}
             <button class="remove-btn" onclick="removeMedia(${i})">×</button>
         </div>
     `).join('');
+
+    if (hasImages) {
+        html += `
+            <div class="filter-trigger-container">
+                <button class="btn-filter-trigger" onclick="window.openFilterModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    Filtrele & Önizle
+                </button>
+            </div>
+        `;
+    }
+
+    dom.previewArea.innerHTML = html;
 }
 
 window.removeMedia = (index) => {
     currentMedia.splice(index, 1);
     renderMediaPreview();
 };
+
+/* --- Photo Filter Logic --- */
+let currentFilterIndex = 0;
+let activeFilter = 'none';
+
+window.openFilterModal = () => {
+    const images = currentMedia.filter(m => m.type === 'image');
+    if (images.length === 0) return;
+
+    currentFilterIndex = 0;
+    activeFilter = 'none'; // Start fresh or keep current? Let's start fresh.
+
+    const modal = document.getElementById('photoFilterModal');
+    modal.classList.remove('hidden');
+
+    renderFilterCarousel();
+    updateFilterOptionsUI();
+};
+
+window.closeFilterModal = () => {
+    document.getElementById('photoFilterModal').classList.add('hidden');
+};
+
+function renderFilterCarousel() {
+    const carousel = document.getElementById('filterCarousel');
+    const images = currentMedia.filter(m => m.type === 'image');
+
+    carousel.innerHTML = images.map((img, i) => `
+        <div class="carousel-slide">
+            <img src="${img.data}" class="f-${activeFilter}" id="filterSlide-${i}">
+        </div>
+    `).join('');
+
+    updateCarouselPosition();
+}
+
+function updateCarouselPosition() {
+    const carousel = document.getElementById('filterCarousel');
+    carousel.style.transform = `translateX(-${currentFilterIndex * 100}%)`;
+}
+
+window.nextFilterPhoto = () => {
+    const images = currentMedia.filter(m => m.type === 'image');
+    if (currentFilterIndex < images.length - 1) {
+        currentFilterIndex++;
+        updateCarouselPosition();
+    }
+};
+
+window.prevFilterPhoto = () => {
+    if (currentFilterIndex > 0) {
+        currentFilterIndex--;
+        updateCarouselPosition();
+    }
+};
+
+window.setFilter = (filterName) => {
+    activeFilter = filterName;
+
+    // Apply to all slides preview
+    const slides = document.querySelectorAll('.carousel-slide img');
+    slides.forEach(img => {
+        img.className = filterName === 'none' ? '' : `f-${filterName}`;
+    });
+
+    updateFilterOptionsUI();
+};
+
+function updateFilterOptionsUI() {
+    const options = document.querySelectorAll('.filter-option');
+    options.forEach(opt => {
+        const isMatch = opt.getAttribute('data-filter') === activeFilter;
+        opt.classList.toggle('active', isMatch);
+    });
+}
+
+window.applyFiltersToAll = async () => {
+    if (activeFilter === 'none') {
+        // Just clear any existing filters from memory objects
+        currentMedia.forEach(m => {
+            if (m.type === 'image') delete m.filter;
+        });
+        renderMediaPreview();
+        window.closeFilterModal();
+        return;
+    }
+
+    const saveBtn = document.querySelector('.photo-filter-content .modal-btn.save');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Uygulanıyor...';
+    saveBtn.disabled = true;
+
+    try {
+        const filterStr = getCSSFilterString(activeFilter);
+
+        for (let i = 0; i < currentMedia.length; i++) {
+            if (currentMedia[i].type === 'image') {
+                currentMedia[i].data = await processImageWithFilter(currentMedia[i].data, filterStr);
+                currentMedia[i].filter = activeFilter; // Store name for preview class
+            }
+        }
+
+        renderMediaPreview();
+        window.closeFilterModal();
+    } catch (err) {
+        console.error("Filter apply error:", err);
+        showModal('Hata', 'Filtre uygulanırken bir sorun oluştu.');
+    } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+};
+
+function getCSSFilterString(filterName) {
+    switch (filterName) {
+        case 'retro': return 'sepia(0.5) contrast(1.1) brightness(0.95)';
+        case 'bw': return 'grayscale(1) contrast(1.1)';
+        case 'warm': return 'sepia(0.25) saturate(1.3) hue-rotate(-10deg)';
+        case 'cool': return 'saturate(1.1) hue-rotate(180deg) brightness(1.05)';
+        case 'nostalgia': return 'sepia(0.35) saturate(0.7) contrast(0.95)';
+        default: return 'none';
+    }
+}
+
+async function processImageWithFilter(base64Data, filterStr) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            ctx.filter = filterStr;
+            ctx.drawImage(img, 0, 0);
+
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = base64Data;
+    });
+}
 
 // Delete moment confirmation
 window.deleteMomentConfirm = async (momentId) => {

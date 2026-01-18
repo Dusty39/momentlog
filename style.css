@@ -4507,3 +4507,197 @@ body.app-theme-vintage #exploreSearchInput {
         border-radius: 24px;
     }
 }
+
+/* --- Photo Filter Modal --- */
+.photo-filter-content {
+    max-width: 95vw !important;
+    width: 600px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: rgba(18, 18, 20, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filter-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filter-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.filter-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.filter-carousel {
+    display: flex;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    width: 100%;
+}
+
+.carousel-slide {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-slide img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: filter 0.3s ease;
+}
+
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    padding: 15px 10px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    z-index: 10;
+    border-radius: 4px;
+}
+
+.carousel-nav.prev {
+    left: 10px;
+}
+
+.carousel-nav.next {
+    right: 10px;
+}
+
+.filter-options-scroll {
+    display: flex;
+    gap: 15px;
+    padding: 15px 20px;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filter-option {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    width: 65px;
+}
+
+.filter-preview {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background-color: #333;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.filter-option.active .filter-preview {
+    border-color: var(--accent-primary);
+    transform: scale(1.05);
+}
+
+.filter-option span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.filter-option.active span {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+/* --- Specific Filter Effects --- */
+.f-retro {
+    filter: sepia(0.5) contrast(1.1) brightness(0.95);
+}
+
+.f-bw {
+    filter: grayscale(1) contrast(1.1);
+}
+
+.f-warm {
+    filter: sepia(0.25) saturate(1.3) hue-rotate(-10deg);
+}
+
+.f-cool {
+    filter: saturate(1.1) hue-rotate(180deg) brightness(1.05);
+}
+
+.f-nostalgia {
+    filter: sepia(0.35) saturate(0.7) contrast(0.95);
+}
+
+/* Apply to previews as well */
+.preview-item img.filtered-retro {
+    filter: sepia(0.5) contrast(1.1) brightness(0.95);
+}
+
+.preview-item img.filtered-bw {
+    filter: grayscale(1) contrast(1.1);
+}
+
+.preview-item img.filtered-warm {
+    filter: sepia(0.25) saturate(1.3) hue-rotate(-10deg);
+}
+
+.preview-item img.filtered-cool {
+    filter: saturate(1.1) hue-rotate(180deg) brightness(1.05);
+}
+
+.preview-item img.filtered-nostalgia {
+    filter: sepia(0.35) saturate(0.7) contrast(0.95);
+}
+
+/* Add Filtrele button to media preview area */
+.filter-trigger-container {
+    padding: 10px 0;
+    margin-top: -5px;
+}
+
+.btn-filter-trigger {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    width: max-content;
+}
+
+.btn-filter-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+}
