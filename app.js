@@ -1359,10 +1359,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth Listener
     AuthService.onAuthStateChanged(async (user) => {
         const loginOverlay = document.getElementById('loginOverlay');
-        const hideSplash = () => {
-            clearTimeout(window.splashTimeout);
-            const loadingSplash = document.getElementById('loadingSplash');
-            const appDiv = document.getElementById('app');
+        const loadingSplash = document.getElementById('loadingSplash');
+        const appDiv = document.getElementById('app');
+
+        const initializeUI = () => {
             if (loadingSplash) loadingSplash.classList.add('hidden');
             if (appDiv) {
                 appDiv.classList.remove('hidden');
@@ -1372,14 +1372,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth] Session active for:", user.uid);
-                // Mark shadow persistence
-                localStorage.setItem('momentLog_hasSession', 'true');
-
+                console.log("[Auth] User recognized:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
-                hideSplash();
 
-                // 1. Immediate UI Updates
+                // 1. Setup Profile UI
                 if (dom.profileBtn) {
                     dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     dom.profileBtn.onclick = () => openProfileView(user.uid);
@@ -1388,13 +1384,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
                 }
 
-                // 2. Load Content
+                // 2. Load Initial View
                 let lastView = localStorage.getItem('momentLog_lastView');
                 if (!lastView || lastView === 'profile' || lastView === 'notifications') {
                     lastView = 'my-following';
                 }
-                window.setView(lastView, true);
+
+                // Load view and THEN hide splash
+                await window.setView(lastView, true);
                 setupNotifications();
+                initializeUI();
 
                 // 3. Background Enrichment
                 DBService.getUserProfile(user.uid).then(profile => {
@@ -1407,64 +1406,48 @@ document.addEventListener('DOMContentLoaded', () => {
                             dom.profileBtn.innerHTML = `<img src="${profile.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         }
                     }
-                }).catch(e => console.warn("[Auth] Profile fetch failed:", e));
+                }).catch(e => console.warn("[Auth] Profile enrichment error:", e));
 
             } else {
-                console.log("[Auth] No Firebase session detected.");
-
-                // Shadow Persistence check: If we think we have a session, wait longer
-                const hasShadowSession = localStorage.getItem('momentLog_hasSession') === 'true';
-
-                if (hasShadowSession) {
-                    console.log("[Auth] Shadow session found. Waiting for Firebase to catch up...");
-                    // Do nothing, let the splash persist while Firebase tries to recover
-                    // If after 8 seconds still no user, then show login
-                    setTimeout(() => {
-                        if (!AuthService.currentUser()) {
-                            console.log("[Auth] Firebase failed to recover shadow session. Redirecting to login.");
-                            if (loginOverlay) loginOverlay.classList.add('active');
-                            hideSplash();
-                        }
-                    }, 8000);
-                } else {
-                    if (loginOverlay) loginOverlay.classList.add('active');
-                    hideSplash();
-                    moments = [];
-                    renderTimeline();
-                }
+                console.log("[Auth] No user session. Showing login.");
+                if (loginOverlay) loginOverlay.classList.add('active');
+                initializeUI();
+                moments = [];
+                renderTimeline();
             }
         } catch (error) {
-            console.error("[Auth] Fatal error in state listener:", error);
-            hideSplash();
+            console.error("[Auth] Initialization error:", error);
+            initializeUI();
         }
     });
 
     // Login Button
     const loginBtn = document.getElementById('googleLoginBtn');
     loginBtn?.addEventListener('click', async () => {
-        const originalHtml = loginBtn.innerHTML;
-        loginBtn.innerHTML = '<span>Lütfen bekleyin...</span>';
+        const btnText = loginBtn.querySelector('span');
+        const originalText = btnText ? btnText.textContent : 'Giriş Yap';
+        if (btnText) btnText.textContent = 'Bekleyin...';
         loginBtn.disabled = true;
 
         try {
             await AuthService.signInWithGoogle();
         } catch (err) {
-            console.error("Giriş başlatma hatası:", err);
-            showModal("Hata", "Giriş başlatılamadı: " + err.message);
-            loginBtn.innerHTML = originalHtml;
+            console.error("Login start error:", err);
+            if (btnText) btnText.textContent = originalText;
             loginBtn.disabled = false;
+            showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.");
         }
     });
 
-    // Handle Redirect Result
+    // Handle Redirect Results Once
     (async () => {
         try {
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[Auth] Redirect login successful:", result.user.uid);
+                console.log("[Auth] Redirect success for:", result.user.uid);
             }
         } catch (err) {
-            console.error("[Auth] Redirect check error:", err);
+            console.error("[Auth] Redirect result error:", err);
         }
     })();
 

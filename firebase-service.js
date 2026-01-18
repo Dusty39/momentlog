@@ -12,38 +12,27 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Set persistence to LOCAL (persists despite browser restart)
-// We set it globally and in specific methods for redundancy
-(async () => {
-    try {
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        console.log("[AuthService] Global Persistence: LOCAL");
-    } catch (e) {
-        console.error("[AuthService] Persistence setup error:", e);
-    }
-})();
+// Set persistence to LOCAL immediately
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => console.log("[AuthService] Persistence: LOCAL"))
+    .catch((error) => console.error("[AuthService] Persistence Error:", error));
 
 // --- Auth Service ---
 const AuthService = {
     // Google ile Giriş
-    signInWithGoogle: async () => {
-        console.log("[AuthService] Initiating Google Sign-In...");
-        try {
-            await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-            return auth.signInWithRedirect(provider);
-        } catch (error) {
-            console.error("[AuthService] Login initiation error:", error);
-            throw error;
-        }
+    signInWithGoogle: () => {
+        console.log("[AuthService] Redirecting to Google...");
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        return auth.signInWithRedirect(provider);
     },
 
-    // Yönlendirme Sonucunu Yakala
+    // Handle Redirect
     getRedirectResult: () => {
         return auth.getRedirectResult();
     },
 
+    // Çıkış
     signOut: () => {
         console.log("[AuthService] Signing out...");
         localStorage.removeItem('momentLog_hasSession');
