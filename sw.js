@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v275-persistence-fix';
+const CACHE_NAME = 'momentlog-v280-select-account';
 const ASSETS = [
     './',
     './index.html',

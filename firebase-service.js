@@ -21,8 +21,10 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
 const AuthService = {
     // Google ile Giriş
     signInWithGoogle: () => {
-        console.log("[AuthService] Initiating Google Sign-In redirect...");
+        console.log("[AuthService] Initiating Google Sign-In redirect with account selection...");
         const provider = new firebase.auth.GoogleAuthProvider();
+        // Force account selection screen every time
+        provider.setCustomParameters({ prompt: 'select_account' });
         return auth.signInWithRedirect(provider);
     },
 
