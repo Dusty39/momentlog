@@ -1376,77 +1376,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth v300] User detected! UID:", user.uid, "Email:", user.email);
+                console.log("[Auth v310] Active session:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                // 1. IMMEDIATE UI UPDATE: Use Firebase Auth data (no wait)
-                const authPhoto = user.photoURL;
-                const authName = user.displayName || 'Kullanıcı';
-
-                if (authPhoto && dom.profileBtn) {
-                    dom.profileBtn.innerHTML = `<img src="${authPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                    dom.profileBtn.classList.add('has-avatar');
-                }
-                if (dom.userNameSpan) {
-                    dom.userNameSpan.textContent = authName;
-                }
-
-                // Re-bind profile click just in case
+                // 1. Immediate UI Setup
                 if (dom.profileBtn) {
-                    dom.profileBtn.onclick = () => {
-                        console.log("[App v300] Profile button clicked for UID:", user.uid);
-                        openProfileView(user.uid);
-                    };
-                }
-
-                // 2. BACKGROUND: Load Firestore profile (optional enrich)
-                (async () => {
-                    try {
-                        console.log("[Auth v300] Fetching Firestore profile for:", user.uid);
-                        const userProfile = await DBService.getUserProfile(user.uid);
-                        currentUserProfile = userProfile;
-
-                        if (userProfile) {
-                            console.log("[Auth v300] Firestore profile found. Username:", userProfile.username);
-                            const displayPhoto = userProfile.photoURL || user.photoURL;
-                            if (displayPhoto && dom.profileBtn) {
-                                dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                            }
-                            if (dom.userNameSpan) {
-                                dom.userNameSpan.textContent = userProfile.username || user.displayName || 'Kullanıcı';
-                            }
-                            isPublicState = !userProfile.isPrivateProfile;
-                            window.updateVisibilityUI();
-                        } else {
-                            console.warn("[Auth v300] No Firestore profile found for this UID.");
-                        }
-                    } catch (e) {
-                        console.warn("[Auth v300] Background profile load error:", e);
-                    }
-                })();
-
-                // 3. Initial View Load
-                let lastView = localStorage.getItem('momentLog_lastView');
-                if (lastView === 'profile' || lastView === 'notifications') {
-                    lastView = 'my-following';
-                }
-
-                await window.setView(lastView || 'my-following', true);
-                setupNotifications();
-
-                // Re-bind profile click just in case
-                if (dom.profileBtn) {
+                    dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                     dom.profileBtn.onclick = () => openProfileView(user.uid);
                 }
+                if (dom.userNameSpan) {
+                    dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
+                }
+
+                // 2. Load View
+                let lastView = localStorage.getItem('momentLog_lastView');
+                if (!lastView || lastView === 'profile' || lastView === 'notifications') {
+                    lastView = 'my-following';
+                }
+                window.setView(lastView, true);
+                setupNotifications();
+
+                // 3. Background Profile Fetch (Enrich)
+                DBService.getUserProfile(user.uid).then(profile => {
+                    if (profile) {
+                        console.log("[Auth v310] Firestore profile found.");
+                        currentUserProfile = profile;
+                        if (profile.username && dom.userNameSpan) {
+                            dom.userNameSpan.textContent = profile.username;
+                        }
+                    }
+                }).catch(e => console.warn("[Auth v310] Profile fetch failed:", e));
+
             } else {
-                console.log("[Auth] No user found.");
+                console.log("[Auth v310] No user session found.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
-                myPrivateMoments = [];
                 renderTimeline();
             }
         } catch (error) {
-            console.error("[Auth] Processing error:", error);
+            console.error("[Auth v310] Critical error in state listener:", error);
+            hideSplash();
         }
     });
 
@@ -1470,27 +1439,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App v300] Checking getRedirectResult (Aggressive)...");
+            console.log("[App v310] Checking redirect result...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[App v300] Redirect login success! UID:", result.user.uid);
-            } else {
-                console.log("[App v300] No redirect result found. (URL:", window.location.search, ")");
-                // Safety: If we're logged in but UI didn't update, trigger an manual check
-                const user = AuthService.currentUser();
-                if (user) {
-                    console.log("[App v300] Manual check: User is already logged in as UID:", user.uid);
-                }
+                console.log("[App v310] Redirect success for UID:", result.user.uid);
             }
         } catch (err) {
-            console.error("[App v300] Redirect login error:", err);
-            // Force reset on error
-            const loadingSplash = document.getElementById('loadingSplash');
-            if (loadingSplash) loadingSplash.classList.add('hidden');
-            const appDiv = document.getElementById('app');
-            if (appDiv) appDiv.classList.remove('hidden');
-
-            showModal("Giriş Hatası", "Yükleme tamamlanamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
+            console.error("[App v310] Redirect processing error:", err);
         }
     })();
 
