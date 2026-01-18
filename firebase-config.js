@@ -1,7 +1,10 @@
 // Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDpXGB1z3sr0JcIknVBaSVtI8c67IjvSzM",
-    authDomain: "momentlog-social.firebaseapp.com",
+    // Use the current domain for auth if we are on the custom domain (prevents redirect loops)
+    authDomain: window.location.hostname === 'momentlog.com.tr' || window.location.hostname === 'www.momentlog.com.tr'
+        ? "momentlog.com.tr"
+        : "momentlog-social.firebaseapp.com",
     projectId: "momentlog-social",
     storageBucket: "momentlog-social.firebasestorage.app",
     messagingSenderId: "644402735978",
