@@ -1399,22 +1399,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 3. Background Profile Fetch (Enrich)
                 DBService.getUserProfile(user.uid).then(profile => {
                     if (profile) {
-                        console.log("[Auth v310] Firestore profile found.");
+                        console.log("[Auth v311] Firestore profile found.");
                         currentUserProfile = profile;
                         if (profile.username && dom.userNameSpan) {
                             dom.userNameSpan.textContent = profile.username;
                         }
                     }
-                }).catch(e => console.warn("[Auth v310] Profile fetch failed:", e));
+                }).catch(e => console.warn("[Auth v311] Profile fetch failed:", e));
 
             } else {
-                console.log("[Auth v310] No user session found.");
+                console.log("[Auth v311] No user session found.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 renderTimeline();
             }
         } catch (error) {
-            console.error("[Auth v310] Critical error in state listener:", error);
+            console.error("[Auth v311] Critical error in state listener:", error);
             hideSplash();
         }
     });
@@ -1439,13 +1439,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App v310] Checking redirect result...");
+            console.log("[App v311] Checking redirect result...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("[App v310] Redirect success for UID:", result.user.uid);
+                console.log("[App v311] Redirect success for UID:", result.user.uid);
             }
         } catch (err) {
-            console.error("[App v310] Redirect processing error:", err);
+            console.error("[App v311] Redirect processing error:", err);
         }
     })();
 
