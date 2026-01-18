@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v260-total-refresh';
+const CACHE_NAME = 'momentlog-v261-login-footer';
 const ASSETS = [
     './',
     './index.html',

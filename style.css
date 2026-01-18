@@ -2269,6 +2269,20 @@ h1 {
     color: var(--text-secondary);
 }
 
+.login-credits {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    opacity: 0.4;
+    font-size: 0.70rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.login-credits p {
+    margin: 2px 0;
+}
+
 .profile-page,
 .noti-page {
     width: 100%;
