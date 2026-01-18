@@ -209,13 +209,31 @@ h1 {
 }
 
 .download-apk-btn {
-    width: 100%;
-    margin-top: 15px;
-    display: flex;
+    margin-top: 25px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-size: 0.95rem;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 50px;
+    /* Pill shape */
+    transition: all 0.2s ease;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    width: auto;
+    /* Not full width */
+}
+
+.download-apk-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
 }
 
 .install-btn {
