@@ -1362,7 +1362,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingSplash = document.getElementById('loadingSplash');
         const appDiv = document.getElementById('app');
 
-        // Early hiding of splash for better responsiveness
         const hideSplash = () => {
             clearTimeout(splashTimeout);
             if (loadingSplash) loadingSplash.classList.add('hidden');
@@ -1372,37 +1371,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        // CRITICAL: Hide splash immediately as soon as auth state is known
-        // We don't want to wait for profile data or setView to hide the logo
+        // CRITICAL: Hide splash IMMEDIATELY as soon as auth state is known
         hideSplash();
 
         try {
             if (user) {
+                console.log("[Auth] User logged in:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                // Get full profile from Firestore - background load
-                let userProfile = null;
-                try {
-                    userProfile = await DBService.getUserProfile(user.uid);
-                    currentUserProfile = userProfile; // Update global cache
+                // 1. IMMEDIATE UI UPDATE: Use Firebase Auth data (no wait)
+                const authPhoto = user.photoURL;
+                const authName = user.displayName || 'Kullanıcı';
 
-                    // Update UI with profile info if it loaded
-                    if (userProfile) {
-                        const displayPhoto = userProfile.photoURL || user.photoURL;
-                        if (displayPhoto && dom.profileBtn) {
-                            dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                            dom.profileBtn.classList.add('has-avatar');
-                        }
-                        if (dom.userNameSpan) {
-                            dom.userNameSpan.textContent = userProfile.username || user.displayName || 'Kullanıcı';
-                        }
-                        isPublicState = !userProfile.isPrivateProfile;
-                        window.updateVisibilityUI();
-                    }
-                } catch (profileError) {
-                    console.error("Profile load error:", profileError);
+                if (authPhoto && dom.profileBtn) {
+                    dom.profileBtn.innerHTML = `<img src="${authPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                    dom.profileBtn.classList.add('has-avatar');
+                }
+                if (dom.userNameSpan) {
+                    dom.userNameSpan.textContent = authName;
                 }
 
+                // 2. BACKGROUND: Load Firestore profile (optional enrich)
+                (async () => {
+                    try {
+                        const userProfile = await DBService.getUserProfile(user.uid);
+                        currentUserProfile = userProfile;
+
+                        if (userProfile) {
+                            console.log("[Auth] Firestore profile loaded.");
+                            const displayPhoto = userProfile.photoURL || user.photoURL;
+                            if (displayPhoto && dom.profileBtn) {
+                                dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                            }
+                            if (dom.userNameSpan) {
+                                dom.userNameSpan.textContent = userProfile.username || user.displayName || 'Kullanıcı';
+                            }
+                            isPublicState = !userProfile.isPrivateProfile;
+                            window.updateVisibilityUI();
+                        }
+                    } catch (e) {
+                        console.warn("[Auth] Background profile load error:", e);
+                    }
+                })();
+
+                // 3. Initial View Load
                 let lastView = localStorage.getItem('momentLog_lastView');
                 if (lastView === 'profile' || lastView === 'notifications') {
                     lastView = 'my-following';
@@ -1411,13 +1423,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 await window.setView(lastView || 'my-following', true);
                 setupNotifications();
             } else {
+                console.log("[Auth] No user found.");
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 myPrivateMoments = [];
                 renderTimeline();
             }
         } catch (error) {
-            console.error("Auth state processing error:", error);
+            console.error("[Auth] Processing error:", error);
         }
     });
 

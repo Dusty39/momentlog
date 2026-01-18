@@ -57,10 +57,12 @@ const DBService = {
         const doc = await docRef.get();
         if (doc.exists) {
             const profile = doc.data();
+            console.log("[DBService] User profile found for uid:", uid);
             // Security cleanup: Remove email if it somehow still exists in public profile
             if (profile.email) delete profile.email;
             return profile;
         } else {
+            console.warn("[DBService] User profile NOT found for uid:", uid);
             // Only create profile if it's the current user
             const user = auth.currentUser;
             if (user && user.uid === uid) {
@@ -323,6 +325,8 @@ const DBService = {
             const snapshot = await query.limit(5).get();
             const moments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+            console.log(`[DBService] MyMoments fetched: ${moments.length} posts.`);
 
             // Enrich with fresh profile
             const profileDoc = await db.collection('users').doc(user.uid).get();
