@@ -4575,6 +4575,25 @@ body.app-theme-vintage #exploreSearchInput {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+@media (max-width: 768px) {
+    .photo-filter-content {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-carousel-wrapper {
+        aspect-ratio: auto !important;
+        /* Let it fill available space */
+        flex-grow: 1;
+    }
+}
+
 .filter-header {
     padding: 15px 20px;
     display: flex;
