@@ -1521,18 +1521,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginDownloadBtn) {
         loginDownloadBtn.onclick = () => {
             // Priority 1: If PWA prompt is available, use it.
-            // Priority 2: Fallback to APK download (if exists) or instructions.
             if (deferredPrompt) {
                 triggerInstall();
             } else {
-                // User mentioned GitHub link - we can link to it or a local APK
-                // For now, let's provide a helpful modal or a direct link if known.
-                showModal("Uygulamayı İndir", "Android (.apk) sürümü indirilmeye hazırlanıyor... \n\nEğer indirme başlamazsa tarayıcı menüsünden 'Yükle' seçeneğini deneyebilirsiniz.", true).then(confirmed => {
-                    if (confirmed) {
-                        // Attempt to download a local APK if the user provides it later
-                        window.location.href = 'momentlog.apk';
-                    }
-                });
+                // Priority 2: Safe Fallback - Instructional Modal
+                // Do NOT navigate to APK directly as it breaks PWA context
+                showModal("Uygulamayı Yükle",
+                    "Otomatik yükleme başlatılamadı.\n\n" +
+                    "Lütfen tarayıcı menüsünden (üç nokta) 'Ana Ekrana Ekle' veya 'Yükle' seçeneğini kullanın."
+                );
             }
         };
     }
@@ -3198,6 +3195,7 @@ async function openProfileView(uid) {
         content.innerHTML = '<div class="error" style="padding: 40px; text-align: center;">Profil yüklenemedi</div>';
     }
 
+    const closeBtn = view.querySelector('.close-modal-btn');
     if (closeBtn) {
         closeBtn.onclick = () => {
             view.classList.add('hidden');
