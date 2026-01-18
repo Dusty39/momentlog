@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v265-login-redirect-fix';
+const CACHE_NAME = 'momentlog-v266-forced-refresh';
 const ASSETS = [
     './',
     './index.html',
