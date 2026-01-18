@@ -1366,44 +1366,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const hideSplash = () => {
             clearTimeout(splashTimeout);
             if (loadingSplash) loadingSplash.classList.add('hidden');
-            setTimeout(() => {
-                if (appDiv) {
-                    appDiv.classList.remove('hidden');
-                    appDiv.classList.add('fade-in');
-                }
-            }, 50);
+            if (appDiv) {
+                appDiv.classList.remove('hidden');
+                appDiv.classList.add('fade-in');
+            }
         };
+
+        // CRITICAL: Hide splash immediately as soon as auth state is known
+        // We don't want to wait for profile data or setView to hide the logo
+        hideSplash();
 
         try {
             if (user) {
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                // Get full profile from Firestore - but don't let it block splash hide too long
+                // Get full profile from Firestore - background load
                 let userProfile = null;
                 try {
                     userProfile = await DBService.getUserProfile(user.uid);
                     currentUserProfile = userProfile; // Update global cache
+
+                    // Update UI with profile info if it loaded
+                    if (userProfile) {
+                        const displayPhoto = userProfile.photoURL || user.photoURL;
+                        if (displayPhoto && dom.profileBtn) {
+                            dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                            dom.profileBtn.classList.add('has-avatar');
+                        }
+                        if (dom.userNameSpan) {
+                            dom.userNameSpan.textContent = userProfile.username || user.displayName || 'Kullanıcı';
+                        }
+                        isPublicState = !userProfile.isPrivateProfile;
+                        window.updateVisibilityUI();
+                    }
                 } catch (profileError) {
                     console.error("Profile load error:", profileError);
-                }
-
-                // Hide splash as soon as we have enough info to show SOMETHING
-                hideSplash();
-
-                const displayPhoto = userProfile?.photoURL || user.photoURL;
-
-                if (displayPhoto && dom.profileBtn) {
-                    dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                    dom.profileBtn.classList.add('has-avatar');
-                }
-
-                if (dom.userNameSpan) {
-                    dom.userNameSpan.textContent = userProfile?.username || user.displayName || 'Kullanıcı';
-                }
-
-                if (userProfile) {
-                    isPublicState = !userProfile.isPrivateProfile;
-                    window.updateVisibilityUI();
                 }
 
                 let lastView = localStorage.getItem('momentLog_lastView');
@@ -1418,11 +1415,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 moments = [];
                 myPrivateMoments = [];
                 renderTimeline();
-                hideSplash();
             }
         } catch (error) {
             console.error("Auth state processing error:", error);
-            hideSplash();
         }
     });
 

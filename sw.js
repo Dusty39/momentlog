@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v268-hardened-init';
+const CACHE_NAME = 'momentlog-v270-hardened-login';
 const ASSETS = [
     './',
     './index.html',
