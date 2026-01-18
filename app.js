@@ -1376,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth v310] Active session:", user.uid);
+                console.log("[Auth v320] Active session:", user.uid);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // 1. Immediate UI Setup
@@ -1405,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             dom.userNameSpan.textContent = profile.username;
                         }
                     }
-                }).catch(e => console.warn("[Auth v311] Profile fetch failed:", e));
+                }).catch(e => console.warn("[Auth v320] Profile fetch failed:", e));
 
             } else {
                 console.log("[Auth v311] No user session found.");
@@ -1439,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
-            console.log("[App v311] Checking redirect result...");
+            console.log("[App v320] Checking redirect result...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
                 console.log("[App v311] Redirect success for UID:", result.user.uid);
@@ -1451,7 +1451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
+        navigator.serviceWorker.register('./sw-v320.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
