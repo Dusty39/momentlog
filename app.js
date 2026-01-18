@@ -1337,11 +1337,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Safety: ensure splash is hidden eventually (100% guarantee)
     const splashTimeout = setTimeout(() => {
         const loadingSplash = document.getElementById('loadingSplash');
+        const appDiv = document.getElementById('app');
         if (loadingSplash && !loadingSplash.classList.contains('hidden')) {
             console.warn("Splash safety timeout triggered. Forcing splash hide.");
             loadingSplash.classList.add('hidden');
+            if (appDiv) {
+                appDiv.classList.remove('hidden');
+                appDiv.classList.add('fade-in');
+            }
         }
-    }, 4500);
+    }, 3000); // Reduced to 3s for better mobile UX
 
     try {
         setupEventListeners();
@@ -1357,12 +1362,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const loadingSplash = document.getElementById('loadingSplash');
         const appDiv = document.getElementById('app');
 
+        // Early hiding of splash for better responsiveness
+        const hideSplash = () => {
+            clearTimeout(splashTimeout);
+            if (loadingSplash) loadingSplash.classList.add('hidden');
+            setTimeout(() => {
+                if (appDiv) {
+                    appDiv.classList.remove('hidden');
+                    appDiv.classList.add('fade-in');
+                }
+            }, 50);
+        };
+
         try {
             if (user) {
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
-                // Get full profile from Firestore
-                const userProfile = await DBService.getUserProfile(user.uid);
+                // Get full profile from Firestore - but don't let it block splash hide too long
+                let userProfile = null;
+                try {
+                    userProfile = await DBService.getUserProfile(user.uid);
+                    currentUserProfile = userProfile; // Update global cache
+                } catch (profileError) {
+                    console.error("Profile load error:", profileError);
+                }
+
+                // Hide splash as soon as we have enough info to show SOMETHING
+                hideSplash();
+
                 const displayPhoto = userProfile?.photoURL || user.photoURL;
 
                 if (displayPhoto && dom.profileBtn) {
@@ -1374,47 +1401,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = userProfile?.username || user.displayName || 'Kullanıcı';
                 }
 
-                // Set initial view and load data
                 if (userProfile) {
-                    // Default post visibility matches profile privacy
-                    // Profile Private (true) -> isPublicState false
-                    // Profile Public (false) -> isPublicState true
                     isPublicState = !userProfile.isPrivateProfile;
                     window.updateVisibilityUI();
                 }
 
-                // Set initial view and load data
                 let lastView = localStorage.getItem('momentLog_lastView');
-
-                // Safety: On init, if last view was profile or notifications, 
-                // go back home because we don't store UID/context for these.
                 if (lastView === 'profile' || lastView === 'notifications') {
                     lastView = 'my-following';
                 }
 
                 await window.setView(lastView || 'my-following', true);
-
                 setupNotifications();
             } else {
                 if (loginOverlay) loginOverlay.classList.add('active');
                 moments = [];
                 myPrivateMoments = [];
                 renderTimeline();
+                hideSplash();
             }
         } catch (error) {
             console.error("Auth state processing error:", error);
-        } finally {
-            clearTimeout(splashTimeout);
-            if (loadingSplash) loadingSplash.classList.add('hidden');
+            hideSplash();
         }
-
-        // Show app with a slight delay
-        setTimeout(() => {
-            if (appDiv) {
-                appDiv.classList.remove('hidden');
-                appDiv.classList.add('fade-in');
-            }
-        }, 100);
     });
 
     // Login Button
@@ -1437,10 +1446,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
-            await AuthService.getRedirectResult();
+            const result = await AuthService.getRedirectResult();
+            if (result && result.user) {
+                console.log("Redirect login successful:", result.user.uid);
+            }
         } catch (err) {
-            if (err.code !== 'auth/popup-closed-by-user') {
+            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
                 console.error("Redirect login error:", err);
+                // Clear any potential hanging state
+                const loadingSplash = document.getElementById('loadingSplash');
+                if (loadingSplash) loadingSplash.classList.add('hidden');
+                const appDiv = document.getElementById('app');
+                if (appDiv) appDiv.classList.remove('hidden');
+
                 showModal("Giriş Hatası", "Giriş tamamlanamadı. Lütfen tekrar deneyin: " + err.message);
             }
         }
