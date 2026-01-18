@@ -1393,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Setup Basic Profile UI
             if (dom.profileBtn) {
                 dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                dom.profileBtn.onclick = () => openProfileView(user.uid);
+                // onclick handled by delegated listener in setupEventListeners
             }
             if (dom.userNameSpan) {
                 dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
@@ -1546,24 +1546,34 @@ function setupEventListeners() {
         dom.photoInput.addEventListener('change', handlePhotoInput);
     }
 
-    // Profile button (Robust)
-    const pBtn = dom.profileBtn || document.getElementById('profileBtn');
-    if (pBtn) {
-        pBtn.onclick = () => {
+    // --- ROBUST DELEGATED EVENTS (Fixes "Dead Button" issues) ---
+    document.body.addEventListener('click', (e) => {
+        // 1. Profile Button
+        const profileTarget = e.target.closest('#profileBtn');
+        if (profileTarget) {
             const user = AuthService.currentUser();
             if (user) {
-                // Try-catch for safety
                 try {
-                    openProfileView(user.uid).catch(e => alert("Profil görünümü hatası: " + e));
+                    openProfileView(user.uid).catch(err => alert("Profil hatası: " + err));
                 } catch (err) {
                     alert("Kritik Hata: " + err);
                 }
+            } else {
+                showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
             }
-            else showModal('Giriş Gerekli', "Lütfen önce giriş yapın.");
-        };
-    } else {
-        console.warn("Profil butonu bulunamadı!");
-    }
+            return;
+        }
+
+        // 2. Notifications Button
+        const notifTarget = e.target.closest('#notificationsBtn');
+        if (notifTarget) {
+            window.setView('notifications');
+            return;
+        }
+
+        // 3. Home / Explore / Add (Bottom Nav is usually static, but good to be safe)
+        // ... (Keep existing specific listeners if they are outside this function)
+    });
 
     // Visibility toggle helper
     window.updateVisibilityUI = () => {
