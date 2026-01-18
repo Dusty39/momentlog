@@ -1376,7 +1376,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (user) {
-                console.log("[Auth] User logged in:", user.uid);
+                console.log("[Auth] User detected! UID:", user.uid, "Email:", user.email);
                 if (loginOverlay) loginOverlay.classList.remove('active');
 
                 // 1. IMMEDIATE UI UPDATE: Use Firebase Auth data (no wait)
@@ -1391,14 +1391,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     dom.userNameSpan.textContent = authName;
                 }
 
+                // Re-bind profile click just in case
+                if (dom.profileBtn) {
+                    dom.profileBtn.onclick = () => {
+                        console.log("[App] Profile button clicked for UID:", user.uid);
+                        openProfileView(user.uid);
+                    };
+                }
+
                 // 2. BACKGROUND: Load Firestore profile (optional enrich)
                 (async () => {
                     try {
+                        console.log("[Auth] Fetching Firestore profile for:", user.uid);
                         const userProfile = await DBService.getUserProfile(user.uid);
                         currentUserProfile = userProfile;
 
                         if (userProfile) {
-                            console.log("[Auth] Firestore profile loaded.");
+                            console.log("[Auth] Firestore profile found. Username:", userProfile.username);
                             const displayPhoto = userProfile.photoURL || user.photoURL;
                             if (displayPhoto && dom.profileBtn) {
                                 dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
@@ -1408,6 +1417,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             isPublicState = !userProfile.isPrivateProfile;
                             window.updateVisibilityUI();
+                        } else {
+                            console.warn("[Auth] No Firestore profile found for this UID.");
                         }
                     } catch (e) {
                         console.warn("[Auth] Background profile load error:", e);
@@ -1459,20 +1470,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Redirect Result
     (async () => {
         try {
+            console.log("[App] Checking getRedirectResult...");
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
-                console.log("Redirect login successful:", result.user.uid);
+                console.log("[App] Redirect login successful! UID:", result.user.uid);
+            } else {
+                console.log("[App] No redirect result found.");
             }
         } catch (err) {
             if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                console.error("Redirect login error:", err);
+                console.error("[App] Redirect login error:", err);
                 // Clear any potential hanging state
                 const loadingSplash = document.getElementById('loadingSplash');
                 if (loadingSplash) loadingSplash.classList.add('hidden');
                 const appDiv = document.getElementById('app');
                 if (appDiv) appDiv.classList.remove('hidden');
 
-                showModal("Giriş Hatası", "Giriş tamamlanamadı. Lütfen tekrar deneyin: " + err.message);
+                showModal("Giriş Hatası", "Giriş tamamlanamadı: " + err.message);
             }
         }
     })();
