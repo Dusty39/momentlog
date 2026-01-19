@@ -155,6 +155,14 @@ service cloud.firestore {
     // =============================================
     // NOTIFICATIONS COLLECTION
     // =============================================
+    // =============================================
+    // REPORTS COLLECTION
+    // =============================================
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if false; // Only admins (via backend) can read
+    }
+
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && (resource.data.targetUid == request.auth.uid || resource.data.userId == request.auth.uid);
       

@@ -302,6 +302,46 @@ const DBService = {
         });
     },
 
+    // --- REPORT & BLOCK (Market Compliance) ---
+    async reportMoment(momentId, reason) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        return db.collection('reports').add({
+            reporterId: currentUser.uid,
+            momentId: momentId,
+            reason: reason,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'pending'
+        });
+    },
+
+    async blockUser(targetUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        // Add to blocked list
+        await db.collection('users').doc(currentUser.uid).update({
+            blocked: firebase.firestore.FieldValue.arrayUnion(targetUid)
+        });
+
+        // Auto unfollow/remove friend to ensure separation
+        try {
+            await this.unfollowUser(targetUid);
+        } catch (e) {
+            // Ignore if not following
+        }
+    },
+
+    async unblockUser(targetUid) {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        return db.collection('users').doc(currentUser.uid).update({
+            blocked: firebase.firestore.FieldValue.arrayRemove(targetUid)
+        });
+    },
+
     // Dosya Yükle (Storage) - Disabled for cost saving, using optimized Base64
     uploadMedia: async (fileData, type) => {
         // Firebase Storage yerine döküman içine base64 olarak gömüyoruz (maliyet ve basitlik için)
