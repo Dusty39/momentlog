@@ -1791,7 +1791,7 @@ function setupEventListeners() {
             dom.timeline?.classList.remove('hidden-mode');
         }
 
-        await loadMoments();
+        await loadMoments(explicitUser);
         renderTimeline();
         if (currentView === 'write') renderMyRecentMoments();
 
