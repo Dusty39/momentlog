@@ -827,14 +827,36 @@ const MusicManager = {
                 let playableUrl = url;
 
                 // Spotify & Deezer Logic
+                // Spotify & Deezer Logic
                 if (url.includes('spotify.com') || !url.startsWith('http')) {
-                    // Spotify/Text-based: Always try to get a preview via Deezer search
-                    // The direct Spotify preview URL (p.scdn.co) is notoriously unreliable/deprecated
                     const moment = moments.find(m => m.id === momentId);
-                    // Use musicText (Artist - Title) if valid, otherwise try to extract from URL (harder)
-                    const query = (moment && moment.musicText && moment.musicText !== 'Bir şarkı seç...')
+
+                    // 1. Try existing metadata
+                    let query = (moment && moment.musicText && moment.musicText !== 'Bir şarkı seç...')
                         ? moment.musicText
-                        : (moment?.spotifyTitle || ""); // prompt metadata if available
+                        : (moment?.spotifyTitle || "");
+
+                    // 2. If NO text, try to fetch from Spotify oEmbed (Magic Fix for Old Links)
+                    if (!query && url.includes('spotify.com')) {
+                        console.log('[MusicManager] No musicText, fetching from Spotify oEmbed...');
+                        // Show a temporary loading toast if possible, or just log
+                        try {
+                            // Using a format that doesn't trigger CORS issues if possible, or using a proxy?
+                            // Spotify oEmbed usually headers allow. Let's try direct.
+                            const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`;
+                            const res = await fetch(oembedUrl);
+                            const data = await res.json();
+                            if (data.title) {
+                                query = data.title; // "Artist - Title" usually
+                                console.log('[MusicManager] Resolved from oEmbed:', query);
+
+                                // Optionally save this back to DB/Local to avoid re-fetching? 
+                                // For now, just play.
+                            }
+                        } catch (e) {
+                            console.warn('[MusicManager] oEmbed fetch failed:', e);
+                        }
+                    }
 
                     if (query) {
                         console.log('[MusicManager] Searching Deezer for:', query);
@@ -843,8 +865,6 @@ const MusicManager = {
                             playableUrl = fallbackUrl;
                         } else {
                             console.warn('[MusicManager] No preview found for:', query);
-                            // If failed, we can't play anything meaningful for Spotify links
-                            // so we might set playableUrl to null to trigger error/voice-only flow
                             playableUrl = null;
                         }
                     } else {
