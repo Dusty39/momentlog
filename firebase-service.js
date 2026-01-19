@@ -431,18 +431,18 @@ const DBService = {
     },
 
     // Takip Edilenlerin Anılarını Getir (Following Feed)
-    async getFollowingMoments(lastVisible = null) {
+    async getFollowingMoments(lastVisible = null, userId = null) {
         try {
-            const currentUser = auth.currentUser;
-            if (!currentUser) return { moments: [], lastVisible: null };
+            const uid = userId || auth.currentUser?.uid;
+            if (!uid) return { moments: [], lastVisible: null };
 
             // Get user's following list
-            const userDoc = await db.collection('users').doc(currentUser.uid).get();
+            const userDoc = await db.collection('users').doc(uid).get();
             let following = userDoc.data()?.following || [];
 
             // Include current user's own posts in the feed
-            if (!following.includes(currentUser.uid)) {
-                following = [currentUser.uid, ...following];
+            if (!following.includes(uid)) {
+                following = [uid, ...following];
             }
 
             if (following.length === 0) {

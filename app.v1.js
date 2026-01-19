@@ -2031,7 +2031,7 @@ async function loadMoments() {
         } else if (currentView === 'my-moments') {
             result = await DBService.getMyMoments(currentLastDoc);
         } else {
-            result = await DBService.getFollowingMoments(currentLastDoc);
+            result = await DBService.getFollowingMoments(currentLastDoc, currentUser?.uid);
         }
 
         if (result) {
