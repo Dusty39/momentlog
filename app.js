@@ -1400,161 +1400,147 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Set Shadow Persistence
             localStorage.setItem('momentLog_hasSession', 'true');
 
-            // 2. Setup Basic Profile UI
+            // 2. Setup Basic Profile UI (Prioritize Local Cache to avoid Google Photo revert)
+            const cachedPhoto = localStorage.getItem('momentLog_cachedPhoto');
+            const displayPhoto = cachedPhoto || user.photoURL || '👤';
+
             if (dom.profileBtn) {
-                dom.profileBtn.innerHTML = `<img src="${user.photoURL || '👤'}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                // onclick handled by delegated listener in setupEventListeners
+                dom.profileBtn.innerHTML = `<img src="${displayPhoto}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
             }
             if (dom.userNameSpan) {
                 dom.userNameSpan.textContent = user.displayName || 'Kullanıcı';
             }
 
-            // 3. Determine View & Initialize
-            let lastView = localStorage.getItem('momentLog_lastView');
-            if (!lastView || lastView === 'profile' || lastView === 'notifications') {
-                lastView = 'my-following';
-            }
+            // ... (rest of init) ...
 
-            try {
-                // 3. UI Transition (Hide splash/overlay FIRST, show app)
-                // This ensures we never get stuck on "Wait..." even if data loading lags
-                initializeUI();
-                if (splash) {
-                    splash.style.opacity = '0';
-                    setTimeout(() => splash.remove(), 500);
-                }
-                if (loginOverlay) loginOverlay.style.display = 'none';
-                if (app) {
-                    app.classList.remove('hidden');
-                    app.style.opacity = '1';
-                }
+            // 5. Background Enrichment
+            DBService.getUserProfile(user.uid).then(profile => {
+                if (profile) {
+                    currentUserProfile = profile;
 
-                // 4. Load Data & View
-                await window.setView(lastView, true);
-                setupNotifications();
-
-                // 5. Background Enrichment
-                DBService.getUserProfile(user.uid).then(profile => {
-                    if (profile) {
-                        currentUserProfile = profile;
-                        if (profile.username && dom.userNameSpan) dom.userNameSpan.textContent = profile.username;
-                        if (profile.photoURL && dom.profileBtn) {
+                    // Update Cache
+                    if (profile.photoURL) {
+                        localStorage.setItem('momentLog_cachedPhoto', profile.photoURL);
+                        if (dom.profileBtn) {
                             dom.profileBtn.innerHTML = `<img src="${profile.photoURL}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         }
                     }
-                }).catch(e => console.warn("[Auth] Profile enrichment error:", e));
 
-            } catch (initErr) {
-                console.error("[Auth] App init failed:", initErr);
-            }
+                    if (profile.username && dom.userNameSpan) dom.userNameSpan.textContent = profile.username;
+                }
+            }).catch(e => console.warn("[Auth] Profile enrichment error:", e));
 
-        } else {
-            // --- LOGOUT / NO USER ---
-            console.log("[Auth] No user detected. Resetting UI.");
-
-            // Clean up any residual state
-            localStorage.removeItem('momentLog_hasSession');
-            sessionStorage.removeItem('momentLog_redirectPending');
-
-            showLoginScreen();
+        } catch (initErr) {
+            console.error("[Auth] App init failed:", initErr);
         }
-    });
 
-    // Login Button
-    const loginBtn = document.getElementById('googleLoginBtn');
-    loginBtn?.addEventListener('click', async () => {
-        const btnText = loginBtn.querySelector('span');
-        const originalText = btnText ? btnText.textContent : 'Giriş Yap';
-        if (btnText) btnText.textContent = 'Bekleyin...';
-        loginBtn.disabled = true;
+    } else {
+        // --- LOGOUT / NO USER ---
+        console.log("[Auth] No user detected. Resetting UI.");
 
-        try {
-            await AuthService.signInWithGoogle();
-        } catch (err) {
-            console.error("Login start error:", err);
-            if (btnText) btnText.textContent = originalText;
-            loginBtn.disabled = false;
-            showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.");
-        }
-    });
+        // Clean up any residual state
+        localStorage.removeItem('momentLog_hasSession');
+        sessionStorage.removeItem('momentLog_redirectPending');
 
-    // Handle Redirect Results Once
-    (async () => {
-        try {
-            const result = await AuthService.getRedirectResult();
-            if (result && result.user) {
-                console.log("[Auth] Redirect success for:", result.user.uid);
-            }
-        } catch (err) {
-            console.error("[Auth] Redirect result error:", err);
-        }
-    })();
-
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            refreshing = true;
-            window.location.reload();
-        });
+        showLoginScreen();
     }
-
-    // --- PWA & Mobile Download Logic ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('installBtn');
-    const loginDownloadBtn = document.getElementById('loginDownloadBtn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        e.preventDefault();
-        // Stash the event so it can be triggered later.
-        deferredPrompt = e;
-        // Update UI notify the user they can add to home screen
-        if (installBtn) installBtn.classList.remove('hidden');
     });
 
-    const triggerInstall = async () => {
-        if (!deferredPrompt) {
-            showModal("Yükle", "Uygulamayı yüklemek için tarayıcı menüsünden 'Ana Ekrana Ekle' seçeneğini kullanabilirsiniz.");
-            return;
-        }
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            if (installBtn) installBtn.classList.add('hidden');
-        }
-        deferredPrompt = null;
-    };
+// Login Button
+const loginBtn = document.getElementById('googleLoginBtn');
+loginBtn?.addEventListener('click', async () => {
+    const btnText = loginBtn.querySelector('span');
+    const originalText = btnText ? btnText.textContent : 'Giriş Yap';
+    if (btnText) btnText.textContent = 'Bekleyin...';
+    loginBtn.disabled = true;
 
-    if (installBtn) installBtn.onclick = triggerInstall;
-    if (loginDownloadBtn) {
-        loginDownloadBtn.onclick = () => {
-            // Priority 1: If PWA prompt is available, use it.
-            if (deferredPrompt) {
-                triggerInstall();
-            } else {
-                // Priority 2: Safe Fallback - Instructional Modal
-                // Do NOT navigate to APK directly as it breaks PWA context
-                showModal("Uygulamayı Yükle",
-                    "Otomatik yükleme başlatılamadı.\n\n" +
-                    "Lütfen tarayıcı menüsünden (üç nokta) 'Ana Ekrana Ekle' veya 'Yükle' seçeneğini kullanın."
-                );
-            }
-        };
+    try {
+        await AuthService.signInWithGoogle();
+    } catch (err) {
+        console.error("Login start error:", err);
+        if (btnText) btnText.textContent = originalText;
+        loginBtn.disabled = false;
+        showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.");
     }
-    // Check if running in Standalone mode (PWA/TWA)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-        window.navigator.standalone ||
-        document.referrer.includes('android-app://');
+});
 
-    if (isStandalone && loginDownloadBtn) {
-        loginDownloadBtn.style.display = 'none';
-        // Also hide install button if it was shown
+// Handle Redirect Results Once
+(async () => {
+    try {
+        const result = await AuthService.getRedirectResult();
+        if (result && result.user) {
+            console.log("[Auth] Redirect success for:", result.user.uid);
+        }
+    } catch (err) {
+        console.error("[Auth] Redirect result error:", err);
+    }
+})();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+    });
+}
+
+// --- PWA & Mobile Download Logic ---
+let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+const loginDownloadBtn = document.getElementById('loginDownloadBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    // Update UI notify the user they can add to home screen
+    if (installBtn) installBtn.classList.remove('hidden');
+});
+
+const triggerInstall = async () => {
+    if (!deferredPrompt) {
+        showModal("Yükle", "Uygulamayı yüklemek için tarayıcı menüsünden 'Ana Ekrana Ekle' seçeneğini kullanabilirsiniz.");
+        return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
         if (installBtn) installBtn.classList.add('hidden');
     }
+    deferredPrompt = null;
+};
+
+if (installBtn) installBtn.onclick = triggerInstall;
+if (loginDownloadBtn) {
+    loginDownloadBtn.onclick = () => {
+        // Priority 1: If PWA prompt is available, use it.
+        if (deferredPrompt) {
+            triggerInstall();
+        } else {
+            // Priority 2: Safe Fallback - Instructional Modal
+            // Do NOT navigate to APK directly as it breaks PWA context
+            showModal("Uygulamayı Yükle",
+                "Otomatik yükleme başlatılamadı.\n\n" +
+                "Lütfen tarayıcı menüsünden (üç nokta) 'Ana Ekrana Ekle' veya 'Yükle' seçeneğini kullanın."
+            );
+        }
+    };
+}
+// Check if running in Standalone mode (PWA/TWA)
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone ||
+    document.referrer.includes('android-app://');
+
+if (isStandalone && loginDownloadBtn) {
+    loginDownloadBtn.style.display = 'none';
+    // Also hide install button if it was shown
+    if (installBtn) installBtn.classList.add('hidden');
+}
 });
 
 
