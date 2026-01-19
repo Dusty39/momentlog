@@ -376,7 +376,7 @@
         <div class="modal-content photo-filter-content">
             <div class="filter-header">
                 <h3>✨ Fotoğraf Filtrele</h3>
-                <button class="close-modal" onclick="window.closeFilterModal()">×</button>
+                <!-- Close button removed as requested -->
             </div>
 
             <!-- Carousel for Photo Preview -->
@@ -392,13 +392,29 @@
                     <div class="filter-preview none"></div>
                     <span>Normal</span>
                 </div>
-                <div class="filter-option" onclick="window.setFilter('retro')" data-filter="retro">
-                    <div class="filter-preview retro"></div>
-                    <span>Retro</span>
+                <div class="filter-option" onclick="window.setFilter('soft')" data-filter="soft">
+                    <div class="filter-preview soft"></div>
+                    <span>Soft</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('vintage')" data-filter="vintage">
+                    <div class="filter-preview vintage"></div>
+                    <span>Vintage</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('dramatic')" data-filter="dramatic">
+                    <div class="filter-preview dramatic"></div>
+                    <span>Dramatik</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('cinema')" data-filter="cinema">
+                    <div class="filter-preview cinema"></div>
+                    <span>Sinema</span>
                 </div>
                 <div class="filter-option" onclick="window.setFilter('bw')" data-filter="bw">
                     <div class="filter-preview bw"></div>
-                    <span>S&B</span>
+                    <span>Siyah Beyaz</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('retro')" data-filter="retro">
+                    <div class="filter-preview retro"></div>
+                    <span>Retro</span>
                 </div>
                 <div class="filter-option" onclick="window.setFilter('warm')" data-filter="warm">
                     <div class="filter-preview warm"></div>
@@ -414,9 +430,9 @@
                 </div>
             </div>
 
-            <div class="modal-actions">
-                <button class="modal-btn cancel" onclick="window.closeFilterModal()">Vazgeç</button>
-                <button class="modal-btn save" onclick="window.applyFiltersToAll()">Tümüne Uygula</button>
+            <div class="modal-actions filter-actions">
+                <button class="modal-btn secondary small-btn" onclick="window.closeFilterModal()">Vazgeç</button>
+                <button class="modal-btn primary small-btn" onclick="window.applyFiltersToAll()">Uygula</button>
             </div>
         </div>
     </div>

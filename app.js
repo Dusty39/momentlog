@@ -2735,11 +2735,15 @@ window.applyFiltersToAll = async () => {
 
 function getCSSFilterString(filterName) {
     switch (filterName) {
-        case 'retro': return 'sepia(0.5) contrast(1.1) brightness(0.95)';
+        case 'soft': return 'brightness(1.1) contrast(0.9) saturate(0.9)';
+        case 'vintage': return 'sepia(0.4) contrast(1.2) brightness(0.9)';
+        case 'dramatic': return 'contrast(1.4) saturate(0.9) brightness(0.9)';
+        case 'cinema': return 'contrast(1.1) brightness(1.1) saturate(1.3) sepia(0.2)';
         case 'bw': return 'grayscale(1) contrast(1.1)';
+        case 'nostalgia': return 'sepia(0.35) saturate(0.7) contrast(0.95)';
+        case 'retro': return 'sepia(0.5) contrast(1.1) brightness(0.95)';
         case 'warm': return 'sepia(0.25) saturate(1.3) hue-rotate(-10deg)';
         case 'cool': return 'saturate(1.1) hue-rotate(180deg) brightness(1.05)';
-        case 'nostalgia': return 'sepia(0.35) saturate(0.7) contrast(0.95)';
         default: return 'none';
     }
 }
