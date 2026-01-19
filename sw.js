@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v812-VIEW-INIT';
+const CACHE_NAME = 'momentlog-v813-HOME-FIX';
 const ASSETS = [
     './',
     './index.html',
