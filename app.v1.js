@@ -1371,6 +1371,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('dateBtn')?.addEventListener('click', refreshTodayDate);
     dom.momentDate?.addEventListener('focus', refreshTodayDate);
 
+    // Logic: If date changes to past -> Clear verified location
+    dom.momentDate?.addEventListener('change', (e) => {
+        const selected = new Date(e.target.value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        selected.setHours(0, 0, 0, 0);
+
+        // If selected date is in the past AND we have a verified location
+        if (selected < today && isRealLocationActive) {
+            isRealLocationActive = false;
+            currentLocation = null;
+
+            if (dom.locationStatus) {
+                dom.locationStatus.textContent = '';
+                dom.locationStatus.classList.add('hidden');
+            }
+            if (dom.addLocationBtn) dom.addLocationBtn.classList.remove('active');
+
+            showModal('Konum Sıfırlandı', 'Geçmiş tarihli anılar için aktif konum kullanılamaz. Konum bilgisi kaldırıldı.');
+        }
+    });
+
     // Always start with akış (my-moments) view - no persistence
     currentView = 'my-moments';
 
