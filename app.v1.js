@@ -1675,7 +1675,7 @@ function setupEventListeners() {
     const dashboardFooter = document.getElementById('dashboardFooter');
     const myRecentMoments = document.getElementById('myRecentMoments');
 
-    window.setView = async (viewName, force = false, scrollId = null) => {
+    window.setView = async (viewName, force = false, scrollId = null, explicitUser = null) => {
         if (!force && currentView === viewName) return;
 
         currentView = viewName;
