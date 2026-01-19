@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v500-NUCLEAR-REFRESH';
+const CACHE_NAME = 'momentlog-v501-RECOVERY';
 const ASSETS = [
     './',
     './index.html',
