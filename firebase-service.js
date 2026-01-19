@@ -843,20 +843,31 @@ const DBService = {
 
     // Kullanıcının Koleksiyonlarını Getir
     async getJournals(uid) {
-        const snapshot = await db.collection('journals')
-            .where('userId', '==', uid)
-            .get();
-        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Robust sorting for mixed types (Timestamp, Date, String)
-        return docs.sort((a, b) => {
-            const getMs = (t) => {
-                if (!t) return 0;
-                if (typeof t.toMillis === 'function') return t.toMillis();
-                if (t instanceof Date) return t.getTime();
-                return new Date(t).getTime();
-            };
-            return getMs(b.createdAt) - getMs(a.createdAt);
-        });
+        try {
+            const snapshot = await db.collection('journals')
+                .where('userId', '==', uid)
+                .get();
+
+            const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Robust sorting for mixed types (Timestamp, Date, String)
+            return docs.sort((a, b) => {
+                const getMs = (t) => {
+                    if (!t) return 0;
+                    try {
+                        if (typeof t.toMillis === 'function') return t.toMillis();
+                        if (t instanceof Date) return t.getTime();
+                        return new Date(t).getTime();
+                    } catch (e) {
+                        return 0; // Fallback for invalid dates
+                    }
+                };
+                return getMs(b.createdAt) - getMs(a.createdAt);
+            });
+        } catch (e) {
+            console.error("Journals Fetch Error:", e);
+            throw e; // Propagate to caller for handling
+        }
     },
 
     // Koleksiyon İçindeki Anıları Getir
