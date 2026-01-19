@@ -1259,7 +1259,7 @@ window.toggleMusic = (url, momentId, voiceUrl) => {
 };
 
 window.toggleVoiceMemo = (url, momentId) => {
-    VoicePlayer.play(url, momentId);
+    VoicePlayer.play(url, momentId, true);
 };
 
 window.handleCardClick = (e, momentId, musicUrl, voiceUrl) => {
@@ -1296,6 +1296,7 @@ const VoicePlayer = {
             this.updateVoiceIcons(true);
         } catch (e) {
             console.warn("Voice play failed:", e);
+            showModal('Hata', 'Ses dosyası oynatılamadı: ' + e.message);
             this.isPlaying = false;
         }
 
