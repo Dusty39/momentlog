@@ -1393,8 +1393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Always start with explore (safest default) - avoids leaking hidden moments on refresh
-    currentView = 'explore';
+    // Default to Home (my-following)
+    currentView = 'my-following';
 
     // Safety: ensure splash is hidden eventually (100% guarantee)
     const splashTimeout = setTimeout(() => {
@@ -1460,9 +1460,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Determine View & Initialize
             let lastView = localStorage.getItem('momentLog_lastView');
-            // FIX: Default to explore (safer) instead of my-following if no valid last view
+            // Revert default to 'my-following' (Home) now that race condition is fixed
             if (!lastView || lastView === 'profile' || lastView === 'notifications') {
-                lastView = 'explore';
+                lastView = 'my-following';
             }
 
             try {
