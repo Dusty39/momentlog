@@ -62,9 +62,12 @@ service cloud.firestore {
 
     // --- DATA VALIDATION ---
     function isValidMoment(data) {
-      let limit = isPremiumUser(request.auth.uid) ? 500 : 250;
+      let isPrem = isPremiumUser(request.auth.uid);
+      let textLimit = isPrem ? 500 : 250;
+      let photoLimit = isPrem ? 7 : 3;
       
-      return (!('text' in data) || data.text.size() <= limit)
+      return (!('text' in data) || data.text.size() <= textLimit)
+             && (!('media' in data) || data.media.size() <= photoLimit)
              && (!('stickerText' in data) || data.stickerText == null || data.stickerText.size() <= 50)
              && (!('musicText' in data) || data.musicText == null || data.musicText.size() <= 100)
              && (!('theme' in data) || data.theme in ['minimal', 'dark', 'vintage', 'love', 'nature', 'party']);
