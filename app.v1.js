@@ -2751,7 +2751,7 @@ window.applyFiltersToAll = async () => {
         return;
     }
 
-    const saveBtn = document.querySelector('.photo-filter-content .modal-btn.primary');
+    const saveBtn = document.getElementById('btn-apply-filters');
     const originalText = saveBtn ? saveBtn.textContent : 'Uygula';
     if (saveBtn) {
         saveBtn.textContent = 'Uygulanıyor...';

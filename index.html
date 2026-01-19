@@ -427,6 +427,18 @@
                     <div class="filter-preview dramatic"></div>
                     <span>Dramatik</span>
                 </div>
+                <div class="filter-option" onclick="window.setFilter('soft')" data-filter="soft">
+                    <div class="filter-preview soft"></div>
+                    <span>Yumuşak</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('vintage')" data-filter="vintage">
+                    <div class="filter-preview vintage"></div>
+                    <span>Vintage</span>
+                </div>
+                <div class="filter-option" onclick="window.setFilter('dramatic')" data-filter="dramatic">
+                    <div class="filter-preview dramatic"></div>
+                    <span>Dramatik</span>
+                </div>
                 <div class="filter-option" onclick="window.setFilter('cinema')" data-filter="cinema">
                     <div class="filter-preview cinema"></div>
                     <span>Sinema</span>
@@ -455,7 +467,8 @@
 
             <div class="modal-actions filter-actions">
                 <button class="modal-btn secondary small-btn" onclick="window.closeFilterModal()">Vazgeç</button>
-                <button class="modal-btn primary small-btn" onclick="window.applyFiltersToAll()">Uygula</button>
+                <button class="modal-btn primary small-btn" id="btn-apply-filters"
+                    onclick="window.applyFiltersToAll()">Uygula</button>
             </div>
         </div>
     </div>
