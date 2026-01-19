@@ -2001,7 +2001,7 @@ async function loadMoments() {
         }
 
         if (currentView === 'explore') {
-            result = await DBService.getPublicMoments(currentLastDoc);
+            result = await DBService.getPublicMoments(currentLastDoc, currentUser?.uid);
             console.log(`[App] Explore moments loaded: ${result?.moments?.length || 0}`);
         } else if (currentView === 'write') {
             result = { moments: myPrivateMoments, lastVisible: null };

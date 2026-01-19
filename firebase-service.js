@@ -519,9 +519,11 @@ const DBService = {
     },
 
     // Genel Anıları Getir (Social Feed)
-    async getPublicMoments(lastVisible = null) {
+    async getPublicMoments(lastVisible = null, excludedUserId = null) {
         try {
-            const user = auth.currentUser;
+            // Robust user check: Use passed ID or fallback to current auth
+            const currentUid = excludedUserId || auth.currentUser?.uid;
+
             let query = db.collection('moments')
                 .where('isPublic', '==', true)
                 .where('isPrivateProfile', '==', false)
@@ -545,8 +547,9 @@ const DBService = {
             // Filter out current user's moments and moments from users who might have private profiles
             // Note: firestore.rules already handles the heavy lifting, but we filter userId here for UX.
             const filteredMoments = rawMoments
-                .filter(m => !user || m.userId !== user.uid)
+                .filter(m => !currentUid || m.userId !== currentUid)
                 .filter(m => m.isPrivateProfile !== true)
+                .filter(m => m.isPublic === true) // DOUBLE CHECK: Explicitly remove hidden ones even if cache returns them
                 .slice(0, 10); // Return up to 10 for the UI
 
             const lastDoc = snapshot.docs[snapshot.docs.length - 1];
