@@ -1459,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 3. Determine View & Initialize
-            let lastView = localStorage.getItem('momentLog_lastView');
+            let lastView = localStorage.getItem('momentLog_lastView_v2');
             // Revert default to 'my-following' (Home) now that race condition is fixed
             if (!lastView || lastView === 'profile' || lastView === 'notifications') {
                 lastView = 'my-following';
@@ -1679,7 +1679,8 @@ function setupEventListeners() {
         if (!force && currentView === viewName) return;
 
         currentView = viewName;
-        localStorage.setItem('momentLog_lastView', currentView);
+        // Bump storage key to reset sticky 'explore' state from previous versions
+        localStorage.setItem('momentLog_lastView_v2', currentView);
 
         // Stop all audio when switching views
         MusicManager.stop(true);
