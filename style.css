@@ -4578,7 +4578,7 @@ body.app-theme-vintage #exploreSearchInput {
 @media (max-width: 768px) {
 
     /* Target the specific modal container to remove padding */
-    #photoFilterModal.custom-modal {
+    #photoFilterModal {
         padding: 0 !important;
         align-items: flex-end;
         /* Mobile Bottom Sheet style or just full */
