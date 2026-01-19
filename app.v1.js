@@ -2746,10 +2746,12 @@ window.applyFiltersToAll = async () => {
         return;
     }
 
-    const saveBtn = document.querySelector('.photo-filter-content .modal-btn.save');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Uygulanıyor...';
-    saveBtn.disabled = true;
+    const saveBtn = document.querySelector('.photo-filter-content .modal-btn.primary');
+    const originalText = saveBtn ? saveBtn.textContent : 'Uygula';
+    if (saveBtn) {
+        saveBtn.textContent = 'Uygulanıyor...';
+        saveBtn.disabled = true;
+    }
 
     try {
         const filterStr = getCSSFilterString(activeFilter);
@@ -2767,8 +2769,10 @@ window.applyFiltersToAll = async () => {
         console.error("Filter apply error:", err);
         showModal('Hata', 'Filtre uygulanırken bir sorun oluştu.');
     } finally {
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
+        if (saveBtn) {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+        }
     }
 };
 
