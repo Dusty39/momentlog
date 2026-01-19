@@ -25,14 +25,22 @@ const AuthService = {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
+        // Detect Mobile/Tablet
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            // Mobile: Always use redirect (Popups are flaky in PWAs/WebViews)
+            console.log("[AuthService] Mobile detected, using redirect...");
+            return auth.signInWithRedirect(provider);
+        }
+
         try {
-            // Try popup first (works better on some browsers)
+            // Desktop: Try popup first
             const result = await auth.signInWithPopup(provider);
             console.log("[AuthService] Popup login success:", result.user.uid);
             return result;
         } catch (popupError) {
             console.warn("[AuthService] Popup blocked or failed, trying redirect:", popupError.code);
-            // Fallback to redirect
             return auth.signInWithRedirect(provider);
         }
     },
