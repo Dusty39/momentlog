@@ -1372,7 +1372,6 @@ textarea::placeholder {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-snap-stop: always;
     overscroll-behavior-x: contain;
     gap: 0;
     width: 100%;
@@ -1393,6 +1392,7 @@ textarea::placeholder {
     position: relative;
     /* Anchor for stickers */
     scroll-snap-align: start;
+    scroll-snap-stop: always;
     display: flex;
     align-items: center;
     justify-content: center;

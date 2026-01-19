@@ -463,6 +463,38 @@
         </div>
     </div>
 
+    <!-- Premium Modal -->
+    <div id="premiumModal" class="modal-overlay hidden">
+        <div class="modal-content premium-modal-content">
+            <div class="premium-header-icon">💎</div>
+            <h3>Premium Ayrıcalıkları</h3>
+            <p style="color:#888; font-size: 0.9rem; margin-bottom: 15px;">Anılarını bir üst seviyeye taşı.</p>
+
+            <div class="feature-list">
+                <div class="feature-row">
+                    <span class="feature-name">Karakter Limiti</span>
+                    <span class="feature-val gold">500 Harf</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Anı Düzenleme</span>
+                    <span class="feature-val gold">✅ 5 Dakika</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Onay Rozeti</span>
+                    <span class="feature-val gold">✓ Rozet</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Erken Erişim</span>
+                    <span class="feature-val gold">Early User</span>
+                </div>
+            </div>
+
+            <button class="coming-soon-btn">Çok Yakında</button>
+            <button class="modal-btn cancel" onclick="document.getElementById('premiumModal').classList.add('hidden')"
+                style="margin-top:10px; background:transparent; border:1px solid #333;">Kapat</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
