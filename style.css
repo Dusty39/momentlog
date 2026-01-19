@@ -4576,15 +4576,24 @@ body.app-theme-vintage #exploreSearchInput {
 }
 
 @media (max-width: 768px) {
+
+    /* Target the specific modal container to remove padding */
+    #photoFilterModal.custom-modal {
+        padding: 0 !important;
+        align-items: flex-end;
+        /* Mobile Bottom Sheet style or just full */
+    }
+
     .photo-filter-content {
-        width: 100% !important;
-        height: 100% !important;
+        width: 100vw !important;
+        height: 100vh !important;
         max-width: none !important;
         max-height: none !important;
         border-radius: 0 !important;
         border: none !important;
         display: flex;
         flex-direction: column;
+        margin: 0 !important;
     }
 
     .filter-carousel-wrapper {
