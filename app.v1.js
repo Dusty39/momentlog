@@ -915,7 +915,7 @@ const MusicManager = {
                     this.voicePlayedThisActivation = true;
                     VoicePlayer.play(voiceUrl, momentId);
                     if (this.isPlaying) {
-                        this.duck(0.25);
+                        this.duck(0.40);
                     }
                 }
             }, 3000));
@@ -1112,7 +1112,7 @@ const VoiceRecorder = {
             this.isRecording = true;
             this.startTimer();
             if (MusicManager.isPlaying) {
-                MusicManager.duck(0.25);
+                MusicManager.duck(0.40);
             }
             this.updateUI();
 

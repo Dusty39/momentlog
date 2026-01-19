@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v806-VOICE-PRIME-FIX';
+const CACHE_NAME = 'momentlog-v807-VOL-TWEAK';
 const ASSETS = [
     './',
     './index.html',
