@@ -1460,8 +1460,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Determine View & Initialize
             let lastView = localStorage.getItem('momentLog_lastView');
+            // FIX: Default to explore (safer) instead of my-following if no valid last view
             if (!lastView || lastView === 'profile' || lastView === 'notifications') {
-                lastView = 'my-following';
+                lastView = 'explore';
             }
 
             try {
@@ -1478,7 +1479,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // 5. Load Data & View
-                await window.setView(lastView, true);
+                // FIX: Pass user explicitly to prevent empty load race condition
+                await window.setView(lastView, true, null, user);
                 setupNotifications();
 
                 // 6. Background Enrichment
@@ -2002,12 +2004,13 @@ function applyAppTheme(theme) {
 }
 
 // --- Data Operations ---
-async function loadMoments() {
+async function loadMoments(explicitUser = null) {
     if (isLoadingNextPage || !hasMore) return;
     isLoadingNextPage = true;
 
     try {
-        const currentUser = AuthService.currentUser();
+        // Use explicit user if provided (safer during init), otherwise fallback to auth service
+        const currentUser = explicitUser || AuthService.currentUser();
 
         // Load user profile for premium checks (photo limit, edit, etc.)
         if (currentUser && !currentUserProfile) {
