@@ -1,9 +1,9 @@
-const CACHE_NAME = 'momentlog-v700-STABLE';
+const CACHE_NAME = 'momentlog-v800-HARD-RENAME';
 const ASSETS = [
     './',
     './index.html',
-    './style.css',
-    './app.js',
+    './style.v1.css',
+    './app.v1.js',
     './firebase-config.js',
     './firebase-service.js',
     './cloudinary-service.js',
