@@ -2181,7 +2181,7 @@ async function saveMoment() {
             currentMedia = [];
             VoiceRecorder.recordedBlob = null;
             VoiceRecorder.updateUI();
-            renderPreview();
+            renderMediaPreview();
             if (dom.previewArea) dom.previewArea.innerHTML = '';
             isRealLocationActive = false;
 
