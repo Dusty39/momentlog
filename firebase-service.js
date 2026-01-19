@@ -206,6 +206,20 @@ const DBService = {
             await db.collection('users').doc(currentUser.uid).update({
                 following: firebase.firestore.FieldValue.arrayUnion(targetUid)
             });
+
+            // Check for mutual follow (Friendship)
+            const myDoc = await db.collection('users').doc(currentUser.uid).get();
+            if (myDoc.exists && myDoc.data().followers && myDoc.data().followers.includes(targetUid)) {
+                // It's a match! Add to friends list for both
+                await db.collection('users').doc(currentUser.uid).update({
+                    friends: firebase.firestore.FieldValue.arrayUnion(targetUid)
+                });
+                await targetRef.update({
+                    friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                });
+                this.addNotification(targetUid, { type: 'friend_connected', text: 'Artık arkadaşsınız!' });
+            }
+
             return this.addNotification(targetUid, { type: 'follow' });
         }
     },
@@ -215,12 +229,17 @@ const DBService = {
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error("Giriş yapmalısınız!");
 
+        // Remove from followers, pending
         await db.collection('users').doc(targetUid).update({
             followers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
-            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
+            friends: firebase.firestore.FieldValue.arrayRemove(currentUser.uid) // Break friendship
         });
+
+        // Remove from following
         return db.collection('users').doc(currentUser.uid).update({
-            following: firebase.firestore.FieldValue.arrayRemove(targetUid)
+            following: firebase.firestore.FieldValue.arrayRemove(targetUid),
+            friends: firebase.firestore.FieldValue.arrayRemove(targetUid) // Break friendship
         });
     },
 
@@ -254,6 +273,22 @@ const DBService = {
         await db.collection('users').doc(requestUid).update({
             following: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
         });
+
+        // Check for mutual follow (Friendship) from the other side
+        // If I (currentUser) am accepting, I am now followed by RequestUid.
+        // If I ALREADY follow RequestUid, then it is mutual.
+        const myDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (myDoc.exists && myDoc.data().following && myDoc.data().following.includes(requestUid)) {
+            // Mutual!
+            await db.collection('users').doc(currentUser.uid).update({
+                friends: firebase.firestore.FieldValue.arrayUnion(requestUid)
+            });
+            await db.collection('users').doc(requestUid).update({
+                friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+            });
+            this.addNotification(requestUid, { type: 'friend_connected', text: 'Artık arkadaşsınız!' });
+        }
+
         return this.addNotification(requestUid, { type: 'follow' });
     },
 

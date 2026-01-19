@@ -745,7 +745,7 @@ function initializeSelectors() {
     };
 }
 
-let isPublicState = false;
+let currentVisibility = 'private'; // 'public' | 'friends' | 'private'
 let currentView = 'my-moments';
 let isRealLocationActive = false;
 const APP_THEMES = ['default', 'light', 'vintage'];
@@ -1648,12 +1648,20 @@ function setupEventListeners() {
     window.updateVisibilityUI = () => {
         const visibleIcon = document.getElementById('visibleIcon');
         const privateIcon = document.getElementById('privateIcon');
-        if (isPublicState) {
+        const friendsIcon = document.getElementById('friendsIcon'); // New icon
+
+        // Reset all
+        visibleIcon?.classList.add('hidden');
+        privateIcon?.classList.add('hidden');
+        friendsIcon?.classList.add('hidden');
+
+        if (currentVisibility === 'public') {
             visibleIcon?.classList.remove('hidden');
-            privateIcon?.classList.add('hidden');
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
+        } else if (currentVisibility === 'friends') {
+            friendsIcon?.classList.remove('hidden');
+            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Arkadaşlar";
         } else {
-            visibleIcon?.classList.add('hidden');
             privateIcon?.classList.remove('hidden');
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
         }
@@ -1661,7 +1669,11 @@ function setupEventListeners() {
 
     if (dom.visibilityToggle) {
         dom.visibilityToggle.onclick = () => {
-            isPublicState = !isPublicState;
+            // Cycle: Private -> Friends -> Public -> Private
+            if (currentVisibility === 'private') currentVisibility = 'friends';
+            else if (currentVisibility === 'friends') currentVisibility = 'public';
+            else currentVisibility = 'private';
+
             window.updateVisibilityUI();
         };
     }
@@ -2163,7 +2175,9 @@ async function saveMoment() {
             userId: String(currentUser.uid),
             userDisplayName: String(userProfile?.username || userProfile?.displayName || currentUser.displayName || 'Anonim'),
             userPhotoURL: String(userProfile?.photoURL || currentUser.photoURL || '👤'),
-            isPublic: Boolean(isPublicState),
+            visibility: currentVisibility,
+            isPublic: currentVisibility === 'public',
+            isFriendsOnly: currentVisibility === 'friends',
             isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
@@ -2451,7 +2465,10 @@ function renderTimeline(searchQuery = '') {
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
-                            ${m.isPublic ? '🌐' : '🔒'}
+                            ${(() => {
+                    if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
+                    return m.isPublic ? '🌐' : '🔒';
+                })()}
                         </button>
                         <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
                     ` : ''}
