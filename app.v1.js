@@ -1393,8 +1393,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Always start with akış (my-moments) view - no persistence
-    currentView = 'my-moments';
+    // Always start with explore (safest default) - avoids leaking hidden moments on refresh
+    currentView = 'explore';
 
     // Safety: ensure splash is hidden eventually (100% guarantee)
     const splashTimeout = setTimeout(() => {
