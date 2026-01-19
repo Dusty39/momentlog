@@ -842,8 +842,16 @@ const DBService = {
             .where('userId', '==', uid)
             .get();
         const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Client-side sorting to avoid missing index errors
-        return docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        // Robust sorting for mixed types (Timestamp, Date, String)
+        return docs.sort((a, b) => {
+            const getMs = (t) => {
+                if (!t) return 0;
+                if (typeof t.toMillis === 'function') return t.toMillis();
+                if (t instanceof Date) return t.getTime();
+                return new Date(t).getTime();
+            };
+            return getMs(b.createdAt) - getMs(a.createdAt);
+        });
     },
 
     // Koleksiyon İçindeki Anıları Getir
@@ -852,8 +860,16 @@ const DBService = {
             .where('journalId', '==', journalId)
             .get();
         const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Client-side sorting to avoid missing index errors
-        return docs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        // Robust sorting
+        return docs.sort((a, b) => {
+            const getMs = (t) => {
+                if (!t) return 0;
+                if (typeof t.toMillis === 'function') return t.toMillis();
+                if (t instanceof Date) return t.getTime();
+                return new Date(t).getTime();
+            };
+            return getMs(b.createdAt) - getMs(a.createdAt);
+        });
     },
 
     // Koleksiyona Üye Ekle (Collaborative)
