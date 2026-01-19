@@ -788,9 +788,13 @@ const MusicManager = {
                 this.audio.pause();
             }).catch((err) => { console.warn('[MusicManager] Music priming failed:', err); });
             if (voiceUrl) {
+                VoicePlayer.audio.src = voiceUrl; // Set src before priming!
+                VoicePlayer.audio.volume = 0; // Silent prime
                 VoicePlayer.audio.play().then(() => {
                     console.log('[MusicManager] Voice audio primed');
                     VoicePlayer.audio.pause();
+                    VoicePlayer.audio.volume = 1.0; // Reset volume
+                    VoicePlayer.audio.currentTime = 0;
                 }).catch((err) => { console.warn('[MusicManager] Voice priming failed:', err); });
             }
         }
