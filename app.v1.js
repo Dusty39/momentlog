@@ -2161,6 +2161,20 @@ async function saveMoment() {
         const venue = dom.venueInput?.value?.trim() || null;
         const stickerText = dom.stickerInput?.value?.trim() || null;
 
+        // --- SECURITY: Character Limit Validation ---
+        const isPremiumUser = userProfile?.isVerified || userProfile?.isEarlyUser;
+        const charLimit = isPremiumUser ? 500 : 250;
+
+        if (text && text.length > charLimit) {
+            showModal('Sınır Aşıldı', `Anı metniniz çok uzun. ${isPremiumUser ? 'Premium' : 'Normal'} üyeler için sınır ${charLimit} karakterdir. (Şu an: ${text.length})`);
+
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
+            }
+            return;
+        }
+
         const momentData = {
             text: String(text || ''),
             media: uploadedMedia,

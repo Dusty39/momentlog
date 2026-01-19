@@ -56,7 +56,18 @@ service cloud.firestore {
       return isOwner(moment.userId) 
              && isPremiumUser(request.auth.uid)
              && timeDiff < fiveMinutes
-             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields);
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedFields)
+             && isValidMoment(request.resource.data); // Validate new data
+    }
+
+    // --- DATA VALIDATION ---
+    function isValidMoment(data) {
+      let limit = isPremiumUser(request.auth.uid) ? 500 : 250;
+      
+      return (!('text' in data) || data.text.size() <= limit)
+             && (!('stickerText' in data) || data.stickerText == null || data.stickerText.size() <= 50)
+             && (!('musicText' in data) || data.musicText == null || data.musicText.size() <= 100)
+             && (!('theme' in data) || data.theme in ['minimal', 'dark', 'vintage', 'love', 'nature', 'party']);
     }
     
     // =============================================
@@ -68,7 +79,8 @@ service cloud.firestore {
                   || (isFriendsOnly() && isFriend(resource.data.userId));
 
       allow create: if isAuthenticated() 
-                    && request.resource.data.userId == request.auth.uid;
+                    && request.resource.data.userId == request.auth.uid
+                    && isValidMoment(request.resource.data);
       
       // Update protection: Owner can edit (premium only, 5min window) OR toggle likes
       allow update: if canEditMoment()
