@@ -1,4 +1,4 @@
-const CACHE_NAME = 'momentlog-v808-FIX-FILTERS-FINAL';
+const CACHE_NAME = 'momentlog-v809-CLEAN-LIST';
 const ASSETS = [
     './',
     './index.html',
