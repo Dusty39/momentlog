@@ -1523,6 +1523,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Login Button
+    // Login Button
     const loginBtn = document.getElementById('googleLoginBtn');
     loginBtn?.addEventListener('click', async () => {
         const btnText = loginBtn.querySelector('span');
@@ -1531,12 +1532,39 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.disabled = true;
 
         try {
-            await AuthService.signInWithGoogle();
+            const result = await AuthService.signInWithGoogle();
+            // EXPLICIT SUCCESS HANDLING (Fixes UI not updating after popup)
+            if (result && result.user) {
+                console.log("[Login] Explicit success for:", result.user.uid);
+
+                // Force UI Transition immediately
+                const loginOverlay = document.getElementById('loginOverlay');
+                const app = document.getElementById('app');
+                const splash = document.getElementById('loadingSplash');
+
+                if (loginOverlay) loginOverlay.style.display = 'none';
+                if (splash) splash.remove();
+                if (app) {
+                    app.classList.remove('hidden');
+                    app.style.opacity = '1';
+                }
+
+                // Reset button just in case
+                loginBtn.disabled = false;
+                if (btnText) btnText.textContent = originalText;
+
+                // Initialize if needed (Listener will also fire, but this ensures speed)
+                initializeUI();
+                await window.setView('my-following', true, null, result.user);
+            }
         } catch (err) {
             console.error("Login start error:", err);
             if (btnText) btnText.textContent = originalText;
             loginBtn.disabled = false;
-            showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.");
+            // Only show error if it's not a redirect-in-progress (code 3 cancelled usually implies redirect)
+            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+                showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.\n(" + err.message + ")");
+            }
         }
     });
 
