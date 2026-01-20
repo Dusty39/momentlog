@@ -1444,6 +1444,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- LOGIN SUCCESS ---
             console.log("[Auth] User detected:", user.uid);
 
+            // RESET LOGIN BUTTON STATE (Fixes "Wait..." hang)
+            const loginBtn = document.getElementById('googleLoginBtn');
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                const btnText = loginBtn.querySelector('span');
+                if (btnText) btnText.textContent = 'Giriş Yap';
+            }
+
             // 1. Set Shadow Persistence
             localStorage.setItem('momentLog_hasSession', 'true');
 
