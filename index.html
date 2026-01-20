@@ -8,21 +8,8 @@
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://accounts.google.com https://api.deezer.com https://open.spotify.com https://sdk.scdn.co; connect-src 'self' https://*.googleapis.com https://api.cloudinary.com https://open.spotify.com https://api.deezer.com https://api.spotify.com https://nominatim.openstreetmap.org; img-src 'self' data: https://*.cloudinary.com https://*.googleusercontent.com https://i.scdn.co https://e-cdns-images.dzcdn.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' https://*.cloudinary.com https://p.scdn.co https://*.dzcdn.net https://*.scdn.co;">
     <title>momentLog</title>
-    <!-- EMERGENCY SW KILL SWITCH -->
+    <!-- EMERGENCY SW KILL SWITCH REMOVED -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (registrations) {
-                if (registrations.length > 0) {
-                    console.warn('Emergency: Unregistering all SWs');
-                    for (let registration of registrations) {
-                        registration.unregister();
-                    }
-                    // Optional: Force reload if SW was found to ensure clean slate
-                    // location.reload(); // Can cause loops if not careful. Let's just unregister.
-                }
-            });
-        }
-
         // Error Visibility
         window.onerror = function (msg, url, line) {
             const spl = document.getElementById('loadingSplash');
