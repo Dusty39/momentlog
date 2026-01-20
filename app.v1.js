@@ -2478,21 +2478,16 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
-                        <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
+                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
                             ${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
                     return m.isPublic ? '🌐' : '🔒';
-                            ${
-                        (() => {
-                            if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
-                            return m.isPublic ? '🌐' : '🔒';
-                        })()
-                    }
-                        </button >
+                })()}
+                        </button>
                         <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
                     ` : `
-                        < button class="action-btn report-btn" onclick = "window.openReportModal('${m.id}')" title = "Şikayet Et" >🚩</button >
-                            `}
+                        <button class="action-btn report-btn" onclick="window.openReportModal('${m.id}')" title="Şikayet Et">🚩</button>
+                    `}
                 </div>
                 
                 <!-- Inline Comments Section -->
@@ -2505,37 +2500,37 @@ function renderTimeline(searchQuery = '') {
                 </div>
             </div>
         `;
-                }).join('');
-    }
+    }).join('');
+}
 
 // --- Render My Recent Moments (Compact List under input area) ---
 function renderMyRecentMoments() {
-            const list = document.getElementById('myMomentsList');
-            if (!list) return;
+    const list = document.getElementById('myMomentsList');
+    if (!list) return;
 
-            const currentUser = AuthService.currentUser();
-            if (!currentUser) return;
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
 
-            // Use the dedicated private moments cache
-            const myMoments = myPrivateMoments.slice(0, 5);
+    // Use the dedicated private moments cache
+    const myMoments = myPrivateMoments.slice(0, 5);
 
-            if (myMoments.length === 0) {
-                list.innerHTML = '<div class="empty-compact">Henüz anı yok</div>';
-                return;
-            }
+    if (myMoments.length === 0) {
+        list.innerHTML = '<div class="empty-compact">Henüz anı yok</div>';
+        return;
+    }
 
-            list.innerHTML = myMoments.map(m => {
-                const displayDate = new Date(m.momentDate || m.createdAt);
-                const displayTime = new Date(m.createdAt || m.momentDate);
+    list.innerHTML = myMoments.map(m => {
+        const displayDate = new Date(m.momentDate || m.createdAt);
+        const displayTime = new Date(m.createdAt || m.momentDate);
 
-                const formattedDate = displayDate.toLocaleDateString('tr-TR', {
-                    day: 'numeric', month: 'short', year: 'numeric'
-                });
-                const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                const firstImg = m.media?.find(med => med.type === 'image');
-                const imgSrc = firstImg?.url || firstImg?.data || '';
+        const formattedDate = displayDate.toLocaleDateString('tr-TR', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+        const formattedTime = displayTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        const firstImg = m.media?.find(med => med.type === 'image');
+        const imgSrc = firstImg?.url || firstImg?.data || '';
 
-                return `
+        return `
             <div class="swipe-item-wrapper">
                 <div class="swipe-action-delete" onclick="window.handleSwipeDelete('${m.id}')">
                     <span>✕</span>
@@ -2562,154 +2557,154 @@ function renderMyRecentMoments() {
                 </div>
             </div>
         `;
-            }).join('');
-        }
+    }).join('');
+}
 
 // --- Swipe to Delete Handlers ---
 let swipeStartX = 0;
-    let swipingElement = null;
+let swipingElement = null;
 
-    window.handleSwipeStart = (e) => {
-        swipeStartX = e.touches[0].clientX;
-        swipingElement = e.currentTarget;
-        swipingElement.style.transition = 'none';
-    };
+window.handleSwipeStart = (e) => {
+    swipeStartX = e.touches[0].clientX;
+    swipingElement = e.currentTarget;
+    swipingElement.style.transition = 'none';
+};
 
-    window.handleSwipeMove = (e) => {
-        if (!swipingElement) return;
-        const currentX = e.touches[0].clientX;
-        const diff = currentX - swipeStartX;
-        if (diff < 0) { // Only swipe left
-            const pull = Math.max(diff, -100);
-            swipingElement.style.transform = `translateX(${pull}px)`;
+window.handleSwipeMove = (e) => {
+    if (!swipingElement) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - swipeStartX;
+    if (diff < 0) { // Only swipe left
+        const pull = Math.max(diff, -100);
+        swipingElement.style.transform = `translateX(${pull}px)`;
 
-            // Dynamic opacity for delete button
-            const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
-            if (btn) {
-                btn.style.opacity = Math.min(Math.abs(diff) / 50, 1);
-            }
-        }
-    };
-
-    window.handleSwipeEnd = (e) => {
-        if (!swipingElement) return;
-        swipingElement.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        const currentX = e.changedTouches[0].clientX;
-        const diff = currentX - swipeStartX;
+        // Dynamic opacity for delete button
         const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
-
-        if (diff < -40) {
-            swipingElement.style.transform = 'translateX(-70px)';
-            if (btn) btn.style.opacity = '1';
-        } else {
-            swipingElement.style.transform = 'translateX(0)';
-            if (btn) btn.style.opacity = '0';
+        if (btn) {
+            btn.style.opacity = Math.min(Math.abs(diff) / 50, 1);
         }
-        swipingElement = null;
-    };
+    }
+};
 
-    window.handleSwipeDelete = async (id) => {
-        const confirmed = await showModal('Emin misiniz?', 'Bu anıyı silmek istediğinizden emin misiniz?', true);
-        if (confirmed) {
-            try {
-                await DBService.deleteMoment(id);
-                // Dynamic UI update: remove from local caches
-                myPrivateMoments = myPrivateMoments.filter(m => m.id !== id);
-                moments = moments.filter(m => m.id !== id);
+window.handleSwipeEnd = (e) => {
+    if (!swipingElement) return;
+    swipingElement.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    const currentX = e.changedTouches[0].clientX;
+    const diff = currentX - swipeStartX;
+    const btn = swipingElement.parentElement.querySelector('.swipe-action-delete');
 
-                // Re-render compact list immediately
-                renderMyRecentMoments();
+    if (diff < -40) {
+        swipingElement.style.transform = 'translateX(-70px)';
+        if (btn) btn.style.opacity = '1';
+    } else {
+        swipingElement.style.transform = 'translateX(0)';
+        if (btn) btn.style.opacity = '0';
+    }
+    swipingElement = null;
+};
 
-                // Re-render main timeline if visible
-                renderTimeline();
+window.handleSwipeDelete = async (id) => {
+    const confirmed = await showModal('Emin misiniz?', 'Bu anıyı silmek istediğinizden emin misiniz?', true);
+    if (confirmed) {
+        try {
+            await DBService.deleteMoment(id);
+            // Dynamic UI update: remove from local caches
+            myPrivateMoments = myPrivateMoments.filter(m => m.id !== id);
+            moments = moments.filter(m => m.id !== id);
 
-                await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
-            } catch (e) {
-                console.error("Delete error:", e);
-                showModal('Hata', 'Silme işlemi sırasında hata oluştu.');
-            }
-        } else {
-            // Reset swipe position if cancelled
+            // Re-render compact list immediately
             renderMyRecentMoments();
+
+            // Re-render main timeline if visible
+            renderTimeline();
+
+            await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
+        } catch (e) {
+            console.error("Delete error:", e);
+            showModal('Hata', 'Silme işlemi sırasında hata oluştu.');
         }
-    };
+    } else {
+        // Reset swipe position if cancelled
+        renderMyRecentMoments();
+    }
+};
 
-    // --- Photo Input ---
-    function handlePhotoInput(e) {
-        const files = Array.from(e.target.files);
-        const maxPhotos = getMaxPhotos();
-        const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
+// --- Photo Input ---
+function handlePhotoInput(e) {
+    const files = Array.from(e.target.files);
+    const maxPhotos = getMaxPhotos();
+    const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
 
-        if (currentMedia.length + files.length > maxPhotos) {
-            const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf)';
-            showModal('Limit Aşıldı', `En fazla ${maxPhotos} fotoğraf ekleyebilirsiniz.${premiumMsg}`);
-            return;
-        }
-
-        // Show progress indicator
-        let loaded = 0;
-        const total = files.length;
-        showUploadProgress(loaded, total);
-
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                currentMedia.push({ type: 'image', data: event.target.result });
-                loaded++;
-                showUploadProgress(loaded, total);
-
-                if (loaded === total) {
-                    hideUploadProgress();
-                    renderMediaPreview();
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+    if (currentMedia.length + files.length > maxPhotos) {
+        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf)';
+        showModal('Limit Aşıldı', `En fazla ${maxPhotos} fotoğraf ekleyebilirsiniz.${premiumMsg}`);
+        return;
     }
 
-    function showUploadProgress(current, total) {
-        let overlay = document.getElementById('uploadProgressOverlay');
-        let popup = document.getElementById('uploadProgress');
+    // Show progress indicator
+    let loaded = 0;
+    const total = files.length;
+    showUploadProgress(loaded, total);
 
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'uploadProgressOverlay';
-            overlay.className = 'upload-progress-backdrop';
-            document.body.appendChild(overlay);
-        }
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            currentMedia.push({ type: 'image', data: event.target.result });
+            loaded++;
+            showUploadProgress(loaded, total);
 
-        if (!popup) {
-            popup = document.createElement('div');
-            popup.id = 'uploadProgress';
-            popup.className = 'upload-progress';
-            popup.innerHTML = '<h4>Fotoğraflar Yükleniyor...</h4><div class="progress-text"></div>';
-            document.body.appendChild(popup);
-        }
+            if (loaded === total) {
+                hideUploadProgress();
+                renderMediaPreview();
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
-        overlay.classList.remove('hidden');
-        popup.classList.remove('hidden');
-        popup.querySelector('.progress-text').textContent = `${current}/${total}`;
+function showUploadProgress(current, total) {
+    let overlay = document.getElementById('uploadProgressOverlay');
+    let popup = document.getElementById('uploadProgress');
+
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'uploadProgressOverlay';
+        overlay.className = 'upload-progress-backdrop';
+        document.body.appendChild(overlay);
     }
 
-    function hideUploadProgress() {
-        document.getElementById('uploadProgressOverlay')?.classList.add('hidden');
-        document.getElementById('uploadProgress')?.classList.add('hidden');
+    if (!popup) {
+        popup = document.createElement('div');
+        popup.id = 'uploadProgress';
+        popup.className = 'upload-progress';
+        popup.innerHTML = '<h4>Fotoğraflar Yükleniyor...</h4><div class="progress-text"></div>';
+        document.body.appendChild(popup);
     }
 
-    function renderMediaPreview() {
-        if (!dom.previewArea) return;
+    overlay.classList.remove('hidden');
+    popup.classList.remove('hidden');
+    popup.querySelector('.progress-text').textContent = `${current}/${total}`;
+}
 
-        const hasImages = currentMedia.some(m => m.type === 'image');
+function hideUploadProgress() {
+    document.getElementById('uploadProgressOverlay')?.classList.add('hidden');
+    document.getElementById('uploadProgress')?.classList.add('hidden');
+}
 
-        let html = currentMedia.map((m, i) => `
+function renderMediaPreview() {
+    if (!dom.previewArea) return;
+
+    const hasImages = currentMedia.some(m => m.type === 'image');
+
+    let html = currentMedia.map((m, i) => `
         <div class="preview-item">
             ${m.type === 'image' ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">` : `<audio src="${m.data}" controls></audio>`}
             <button class="remove-btn" onclick="removeMedia(${i})">×</button>
         </div>
     `).join('');
 
-        if (hasImages) {
-            html += `
+    if (hasImages) {
+        html += `
             <div class="filter-trigger-container">
                 <button class="btn-filter-trigger" onclick="window.openFilterModal()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2719,270 +2714,270 @@ let swipeStartX = 0;
                 </button>
             </div>
         `;
-        }
-
-        dom.previewArea.innerHTML = html;
     }
 
-    window.removeMedia = (index) => {
-        currentMedia.splice(index, 1);
-        renderMediaPreview();
-    };
+    dom.previewArea.innerHTML = html;
+}
 
-    /* --- Photo Filter Logic --- */
-    let currentFilterIndex = 0;
-    let activeFilter = 'none';
+window.removeMedia = (index) => {
+    currentMedia.splice(index, 1);
+    renderMediaPreview();
+};
 
-    window.openFilterModal = () => {
-        const images = currentMedia.filter(m => m.type === 'image');
-        if (images.length === 0) return;
+/* --- Photo Filter Logic --- */
+let currentFilterIndex = 0;
+let activeFilter = 'none';
 
-        currentFilterIndex = 0;
-        activeFilter = 'none'; // Start fresh or keep current? Let's start fresh.
+window.openFilterModal = () => {
+    const images = currentMedia.filter(m => m.type === 'image');
+    if (images.length === 0) return;
 
-        const modal = document.getElementById('photoFilterModal');
-        modal.classList.remove('hidden');
+    currentFilterIndex = 0;
+    activeFilter = 'none'; // Start fresh or keep current? Let's start fresh.
 
-        renderFilterCarousel();
-        updateFilterOptionsUI();
-    };
+    const modal = document.getElementById('photoFilterModal');
+    modal.classList.remove('hidden');
 
-    window.closeFilterModal = () => {
-        document.getElementById('photoFilterModal').classList.add('hidden');
-    };
+    renderFilterCarousel();
+    updateFilterOptionsUI();
+};
 
-    function renderFilterCarousel() {
-        const carousel = document.getElementById('filterCarousel');
-        const images = currentMedia.filter(m => m.type === 'image');
+window.closeFilterModal = () => {
+    document.getElementById('photoFilterModal').classList.add('hidden');
+};
 
-        carousel.innerHTML = images.map((img, i) => `
+function renderFilterCarousel() {
+    const carousel = document.getElementById('filterCarousel');
+    const images = currentMedia.filter(m => m.type === 'image');
+
+    carousel.innerHTML = images.map((img, i) => `
         <div class="carousel-slide">
             <img src="${img.data}" class="f-${activeFilter}" id="filterSlide-${i}">
         </div>
     `).join('');
 
+    updateCarouselPosition();
+}
+
+function updateCarouselPosition() {
+    const carousel = document.getElementById('filterCarousel');
+    carousel.style.transform = `translateX(-${currentFilterIndex * 100}%)`;
+}
+
+window.nextFilterPhoto = () => {
+    const images = currentMedia.filter(m => m.type === 'image');
+    if (currentFilterIndex < images.length - 1) {
+        currentFilterIndex++;
         updateCarouselPosition();
     }
+};
 
-    function updateCarouselPosition() {
-        const carousel = document.getElementById('filterCarousel');
-        carousel.style.transform = `translateX(-${currentFilterIndex * 100}%)`;
+window.prevFilterPhoto = () => {
+    if (currentFilterIndex > 0) {
+        currentFilterIndex--;
+        updateCarouselPosition();
+    }
+};
+
+window.setFilter = (filterName) => {
+    activeFilter = filterName;
+
+    // Apply to all slides preview
+    const slides = document.querySelectorAll('.carousel-slide img');
+    slides.forEach(img => {
+        img.className = filterName === 'none' ? '' : `f-${filterName}`;
+    });
+
+    updateFilterOptionsUI();
+};
+
+function updateFilterOptionsUI() {
+    const options = document.querySelectorAll('.filter-option');
+    options.forEach(opt => {
+        const isMatch = opt.getAttribute('data-filter') === activeFilter;
+        opt.classList.toggle('active', isMatch);
+    });
+}
+
+window.applyFiltersToAll = async () => {
+    if (activeFilter === 'none') {
+        // Just clear any existing filters from memory objects
+        currentMedia.forEach(m => {
+            if (m.type === 'image') delete m.filter;
+        });
+        renderMediaPreview();
+        window.closeFilterModal();
+        return;
     }
 
-    window.nextFilterPhoto = () => {
-        const images = currentMedia.filter(m => m.type === 'image');
-        if (currentFilterIndex < images.length - 1) {
-            currentFilterIndex++;
-            updateCarouselPosition();
-        }
-    };
-
-    window.prevFilterPhoto = () => {
-        if (currentFilterIndex > 0) {
-            currentFilterIndex--;
-            updateCarouselPosition();
-        }
-    };
-
-    window.setFilter = (filterName) => {
-        activeFilter = filterName;
-
-        // Apply to all slides preview
-        const slides = document.querySelectorAll('.carousel-slide img');
-        slides.forEach(img => {
-            img.className = filterName === 'none' ? '' : `f-${filterName}`;
-        });
-
-        updateFilterOptionsUI();
-    };
-
-    function updateFilterOptionsUI() {
-        const options = document.querySelectorAll('.filter-option');
-        options.forEach(opt => {
-            const isMatch = opt.getAttribute('data-filter') === activeFilter;
-            opt.classList.toggle('active', isMatch);
-        });
+    const saveBtn = document.getElementById('btn-apply-filters');
+    const originalText = saveBtn ? saveBtn.textContent : 'Uygula';
+    if (saveBtn) {
+        saveBtn.textContent = 'Uygulanıyor...';
+        saveBtn.disabled = true;
     }
 
-    window.applyFiltersToAll = async () => {
-        if (activeFilter === 'none') {
-            // Just clear any existing filters from memory objects
-            currentMedia.forEach(m => {
-                if (m.type === 'image') delete m.filter;
-            });
-            renderMediaPreview();
-            window.closeFilterModal();
-            return;
+    try {
+        const filterStr = getCSSFilterString(activeFilter);
+
+        for (let i = 0; i < currentMedia.length; i++) {
+            if (currentMedia[i].type === 'image') {
+                currentMedia[i].data = await processImageWithFilter(currentMedia[i].data, filterStr);
+                currentMedia[i].filter = activeFilter; // Store name for preview class
+            }
         }
 
-        const saveBtn = document.getElementById('btn-apply-filters');
-        const originalText = saveBtn ? saveBtn.textContent : 'Uygula';
+        renderMediaPreview();
+        window.closeFilterModal();
+    } catch (err) {
+        console.error("Filter apply error:", err);
+        showModal('Hata', 'Filtre uygulanırken bir sorun oluştu.');
+    } finally {
         if (saveBtn) {
-            saveBtn.textContent = 'Uygulanıyor...';
-            saveBtn.disabled = true;
-        }
-
-        try {
-            const filterStr = getCSSFilterString(activeFilter);
-
-            for (let i = 0; i < currentMedia.length; i++) {
-                if (currentMedia[i].type === 'image') {
-                    currentMedia[i].data = await processImageWithFilter(currentMedia[i].data, filterStr);
-                    currentMedia[i].filter = activeFilter; // Store name for preview class
-                }
-            }
-
-            renderMediaPreview();
-            window.closeFilterModal();
-        } catch (err) {
-            console.error("Filter apply error:", err);
-            showModal('Hata', 'Filtre uygulanırken bir sorun oluştu.');
-        } finally {
-            if (saveBtn) {
-                saveBtn.textContent = originalText;
-                saveBtn.disabled = false;
-            }
-        }
-    };
-
-    function getCSSFilterString(filterName) {
-        switch (filterName) {
-            case 'soft': return 'brightness(1.1) contrast(0.9) saturate(0.9)';
-            case 'vintage': return 'sepia(0.4) contrast(1.2) brightness(0.9)';
-            case 'dramatic': return 'contrast(1.4) saturate(0.9) brightness(0.9)';
-            case 'cinema': return 'contrast(1.1) brightness(1.1) saturate(1.3) sepia(0.2)';
-            case 'bw': return 'grayscale(1) contrast(1.1)';
-            case 'nostalgia': return 'sepia(0.35) saturate(0.7) contrast(0.95)';
-            case 'retro': return 'sepia(0.5) contrast(1.1) brightness(0.95)';
-            case 'warm': return 'sepia(0.25) saturate(1.3) hue-rotate(-10deg)';
-            case 'cool': return 'saturate(1.1) hue-rotate(180deg) brightness(1.05)';
-            default: return 'none';
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
         }
     }
+};
 
-    async function processImageWithFilter(base64Data, filterStr) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-
-                ctx.filter = filterStr;
-                ctx.drawImage(img, 0, 0);
-
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
-            };
-            img.onerror = reject;
-            img.src = base64Data;
-        });
+function getCSSFilterString(filterName) {
+    switch (filterName) {
+        case 'soft': return 'brightness(1.1) contrast(0.9) saturate(0.9)';
+        case 'vintage': return 'sepia(0.4) contrast(1.2) brightness(0.9)';
+        case 'dramatic': return 'contrast(1.4) saturate(0.9) brightness(0.9)';
+        case 'cinema': return 'contrast(1.1) brightness(1.1) saturate(1.3) sepia(0.2)';
+        case 'bw': return 'grayscale(1) contrast(1.1)';
+        case 'nostalgia': return 'sepia(0.35) saturate(0.7) contrast(0.95)';
+        case 'retro': return 'sepia(0.5) contrast(1.1) brightness(0.95)';
+        case 'warm': return 'sepia(0.25) saturate(1.3) hue-rotate(-10deg)';
+        case 'cool': return 'saturate(1.1) hue-rotate(180deg) brightness(1.05)';
+        default: return 'none';
     }
+}
 
-    // Delete moment confirmation
-    window.deleteMomentConfirm = async (momentId) => {
-        const confirmed = await showModal('Silmek istediğinize emin misiniz?', 'Bu anı kalıcı olarak silinecek ve geri alınamaz.', true);
-        if (confirmed) {
-            try {
-                await DBService.deleteMoment(momentId);
+async function processImageWithFilter(base64Data, filterStr) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
 
-                // Dynamic UI update: remove from local caches
-                moments = moments.filter(m => m.id !== momentId);
-                myPrivateMoments = myPrivateMoments.filter(m => m.id !== momentId);
+            ctx.filter = filterStr;
+            ctx.drawImage(img, 0, 0);
 
-                // Re-render
-                renderTimeline();
-                renderMyRecentMoments();
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = base64Data;
+    });
+}
 
-                // SUCCESS UX: Show auto-closing modal
-                await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
-            } catch (e) {
-                console.error('Delete error:', e);
-                showModal('Hata', 'Anı silinemedi: ' + e.message);
-            }
-        }
-    };
-
-    // Toggle moment visibility (public/private)
-    window.toggleMomentVisibility = async (momentId, makePublic) => {
+// Delete moment confirmation
+window.deleteMomentConfirm = async (momentId) => {
+    const confirmed = await showModal('Silmek istediğinize emin misiniz?', 'Bu anı kalıcı olarak silinecek ve geri alınamaz.', true);
+    if (confirmed) {
         try {
-            await DBService.setMomentVisibility(momentId, makePublic);
+            await DBService.deleteMoment(momentId);
 
-            // Update local state
-            const updateState = (list) => {
-                const m = list.find(item => item.id === momentId);
-                if (m) m.isPublic = makePublic;
-            };
-            updateState(moments);
-            updateState(myPrivateMoments);
-
-            // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
-            if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
-                moments = moments.filter(m => m.id !== momentId);
-            }
+            // Dynamic UI update: remove from local caches
+            moments = moments.filter(m => m.id !== momentId);
+            myPrivateMoments = myPrivateMoments.filter(m => m.id !== momentId);
 
             // Re-render
             renderTimeline();
             renderMyRecentMoments();
 
-            showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
+            // SUCCESS UX: Show auto-closing modal
+            await showModal('Silindi', 'Anı başarıyla silindi.', false, 2000);
         } catch (e) {
-            console.error('Visibility error:', e);
-            showModal('Hata', 'Görünürlük değiştirilemedi: ' + e.message);
+            console.error('Delete error:', e);
+            showModal('Hata', 'Anı silinemedi: ' + e.message);
         }
-    };
+    }
+};
 
-    // --- Inline Comments ---
-    window.toggleComments = async (momentId) => {
-        const section = document.getElementById(`comments-${momentId}`);
-        if (!section) return;
+// Toggle moment visibility (public/private)
+window.toggleMomentVisibility = async (momentId, makePublic) => {
+    try {
+        await DBService.setMomentVisibility(momentId, makePublic);
 
-        const isHidden = section.classList.contains('hidden');
-        section.classList.toggle('hidden');
+        // Update local state
+        const updateState = (list) => {
+            const m = list.find(item => item.id === momentId);
+            if (m) m.isPublic = makePublic;
+        };
+        updateState(moments);
+        updateState(myPrivateMoments);
 
-        if (isHidden) {
-            await loadInlineComments(momentId);
+        // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
+        if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
+            moments = moments.filter(m => m.id !== momentId);
         }
-    };
 
-    async function loadInlineComments(momentId, expanded = false) {
-        const list = document.getElementById(`commentsList-${momentId}`);
-        if (!list) return;
+        // Re-render
+        renderTimeline();
+        renderMyRecentMoments();
 
-        list.innerHTML = '<div class="loading">Yükleniyor...</div>';
+        showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
+    } catch (e) {
+        console.error('Visibility error:', e);
+        showModal('Hata', 'Görünürlük değiştirilemedi: ' + e.message);
+    }
+};
 
-        try {
-            const comments = await DBService.getComments(momentId);
-            const currentUser = AuthService.currentUser();
+// --- Inline Comments ---
+window.toggleComments = async (momentId) => {
+    const section = document.getElementById(`comments-${momentId}`);
+    if (!section) return;
 
-            if (comments.length === 0) {
-                list.innerHTML = '<div class="no-comments">Henüz yorum yok</div>';
-                return;
-            }
+    const isHidden = section.classList.contains('hidden');
+    section.classList.toggle('hidden');
 
-            // Sort by likes count (descending)
-            comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+    if (isHidden) {
+        await loadInlineComments(momentId);
+    }
+};
 
-            let displayComments = comments;
-            let showMoreBtn = '';
+async function loadInlineComments(momentId, expanded = false) {
+    const list = document.getElementById(`commentsList-${momentId}`);
+    if (!list) return;
 
-            if (!expanded && comments.length > 3) {
-                displayComments = comments.slice(0, 3);
-                showMoreBtn = `
+    list.innerHTML = '<div class="loading">Yükleniyor...</div>';
+
+    try {
+        const comments = await DBService.getComments(momentId);
+        const currentUser = AuthService.currentUser();
+
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="no-comments">Henüz yorum yok</div>';
+            return;
+        }
+
+        // Sort by likes count (descending)
+        comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+
+        let displayComments = comments;
+        let showMoreBtn = '';
+
+        if (!expanded && comments.length > 3) {
+            displayComments = comments.slice(0, 3);
+            showMoreBtn = `
                 <div class="show-more-comments-wrapper" style="padding: 10px; text-align: center;">
                     <button class="show-more-comments-btn" onclick="loadInlineComments('${momentId}', true)" style="background: none; border: none; color: var(--accent-gold); font-size: 0.85rem; cursor: pointer;">
                         Tüm yorumları gör (${comments.length})
                     </button>
                 </div>
             `;
-            }
+        }
 
-            list.innerHTML = displayComments.map(c => {
-                const isOwner = currentUser?.uid === c.userId;
-                const isLiked = c.likes?.includes(currentUser?.uid);
-                const likeCount = c.likes?.length || 0;
-                const date = new Date(c.createdAt).toLocaleDateString('tr-TR');
-                return `
+        list.innerHTML = displayComments.map(c => {
+            const isOwner = currentUser?.uid === c.userId;
+            const isLiked = c.likes?.includes(currentUser?.uid);
+            const likeCount = c.likes?.length || 0;
+            const date = new Date(c.createdAt).toLocaleDateString('tr-TR');
+            return `
                 <div class="comment-item">
                     <div class="comment-header">
                         <span class="comment-author">@${escapeHTML(c.username || c.userDisplayName || c.userName || 'anonim')}</span>
@@ -2997,215 +2992,215 @@ let swipeStartX = 0;
                     </div>
                 </div>
             `;
-            }).join('') + showMoreBtn;
-        } catch (e) {
-            list.innerHTML = '<div class="error">Yorumlar yüklenemedi</div>';
-        }
+        }).join('') + showMoreBtn;
+    } catch (e) {
+        list.innerHTML = '<div class="error">Yorumlar yüklenemedi</div>';
     }
+}
 
-    window.toggleCommentLike = async (momentId, commentId) => {
-        try {
-            await DBService.toggleCommentLike(momentId, commentId);
-            // Determine if we should refresh as expanded or not based on current view
-            const list = document.getElementById(`commentsList-${momentId}`);
-            const isCurrentlyExpanded = list && list.querySelectorAll('.comment-item').length > 3;
-            await loadInlineComments(momentId, isCurrentlyExpanded);
-        } catch (e) {
-            console.error('Comment like error:', e);
-        }
-    };
+window.toggleCommentLike = async (momentId, commentId) => {
+    try {
+        await DBService.toggleCommentLike(momentId, commentId);
+        // Determine if we should refresh as expanded or not based on current view
+        const list = document.getElementById(`commentsList-${momentId}`);
+        const isCurrentlyExpanded = list && list.querySelectorAll('.comment-item').length > 3;
+        await loadInlineComments(momentId, isCurrentlyExpanded);
+    } catch (e) {
+        console.error('Comment like error:', e);
+    }
+};
 
-    window.addComment = async (momentId) => {
-        const input = document.getElementById(`commentInput-${momentId}`);
-        if (!input || !input.value.trim()) return;
+window.addComment = async (momentId) => {
+    const input = document.getElementById(`commentInput-${momentId}`);
+    if (!input || !input.value.trim()) return;
 
-        const text = input.value.trim();
-        input.value = '';
+    const text = input.value.trim();
+    input.value = '';
 
-        try {
-            await DBService.addComment(momentId, { text });
-            // Update local state to show +1 comment immediately
-            const m = moments.find(mom => mom.id === momentId);
-            if (m) m.commentsCount = (m.commentsCount || 0) + 1;
+    try {
+        await DBService.addComment(momentId, { text });
+        // Update local state to show +1 comment immediately
+        const m = moments.find(mom => mom.id === momentId);
+        if (m) m.commentsCount = (m.commentsCount || 0) + 1;
 
-            await loadInlineComments(momentId);
-            // We don't necessarily need to reload everything, just render the counts
-            renderTimeline();
-        } catch (e) {
-            showModal('Hata', 'Yorum eklenemedi: ' + e.message);
-        }
-    };
+        await loadInlineComments(momentId);
+        // We don't necessarily need to reload everything, just render the counts
+        renderTimeline();
+    } catch (e) {
+        showModal('Hata', 'Yorum eklenemedi: ' + e.message);
+    }
+};
 
-    window.deleteComment = async (momentId, commentId) => {
-        try {
-            await DBService.deleteComment(momentId, commentId);
-            await loadInlineComments(momentId);
-            await loadMoments();
-            renderTimeline();
-        } catch (e) {
-            showModal('Hata', 'Yorum silinemedi: ' + e.message);
-        }
-    };
+window.deleteComment = async (momentId, commentId) => {
+    try {
+        await DBService.deleteComment(momentId, commentId);
+        await loadInlineComments(momentId);
+        await loadMoments();
+        renderTimeline();
+    } catch (e) {
+        showModal('Hata', 'Yorum silinemedi: ' + e.message);
+    }
+};
 
-    // --- Location ---
-    function fetchLocation() {
-        if (!navigator.geolocation) {
-            if (dom.locationStatus) {
-                dom.locationStatus.textContent = "📍 Tarayıcı konumu desteklemiyor";
-                dom.locationStatus.classList.remove('hidden');
-            }
-            return;
-        }
-
+// --- Location ---
+function fetchLocation() {
+    if (!navigator.geolocation) {
         if (dom.locationStatus) {
-            dom.locationStatus.textContent = "📍 Konum alınıyor...";
+            dom.locationStatus.textContent = "📍 Tarayıcı konumu desteklemiyor";
             dom.locationStatus.classList.remove('hidden');
         }
+        return;
+    }
 
-        navigator.geolocation.getCurrentPosition(
-            async (pos) => {
-                try {
-                    const { latitude, longitude } = pos.coords;
-                    // Complying with Nominatim usage policy by providing an identifier (email)
-                    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr&email=serhataykis@gmail.com`;
+    if (dom.locationStatus) {
+        dom.locationStatus.textContent = "📍 Konum alınıyor...";
+        dom.locationStatus.classList.remove('hidden');
+    }
 
-                    const response = await fetch(url, {
-                        headers: {
-                            'Accept-Language': 'tr'
-                        }
-                    });
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            try {
+                const { latitude, longitude } = pos.coords;
+                // Complying with Nominatim usage policy by providing an identifier (email)
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=tr&email=serhataykis@gmail.com`;
 
-                    if (!response.ok) throw new Error("Servis yanıt vermedi");
-                    const data = await response.json();
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept-Language': 'tr'
+                    }
+                });
 
-                    const address = data.address;
-                    if (!address) {
-                        // Fallback to display name if address object is missing
-                        if (data.display_name) {
-                            currentLocation = data.display_name.split(',').slice(0, 3).join(', ');
-                        } else {
-                            throw new Error("Adres bulunamadı");
-                        }
+                if (!response.ok) throw new Error("Servis yanıt vermedi");
+                const data = await response.json();
+
+                const address = data.address;
+                if (!address) {
+                    // Fallback to display name if address object is missing
+                    if (data.display_name) {
+                        currentLocation = data.display_name.split(',').slice(0, 3).join(', ');
                     } else {
-                        // Format: İlçe, İl, Ülke
-                        const parts = [];
-                        const district = address.town || address.village || address.suburb || address.district || address.city_district || address.neighbourhood;
-                        const city = address.province || address.city || address.state || address.admin_level_4;
-
-                        if (district) parts.push(district);
-                        if (city) parts.push(city);
-                        if (address.country) parts.push(address.country);
-
-                        currentLocation = parts.length > 0 ? parts.join(', ') : (data.display_name ? data.display_name.split(',')[0] : 'Bilinmeyen Konum');
+                        throw new Error("Adres bulunamadı");
                     }
+                } else {
+                    // Format: İlçe, İl, Ülke
+                    const parts = [];
+                    const district = address.town || address.village || address.suburb || address.district || address.city_district || address.neighbourhood;
+                    const city = address.province || address.city || address.state || address.admin_level_4;
 
-                    if (dom.locationStatus) {
-                        dom.locationStatus.textContent = `📍 ${currentLocation}`;
-                        dom.locationStatus.classList.remove('hidden');
-                    }
+                    if (district) parts.push(district);
+                    if (city) parts.push(city);
+                    if (address.country) parts.push(address.country);
 
-                    dom.addLocationBtn?.classList.add('active');
-                } catch (e) {
-                    console.error("Konum ayrıştırma hatası:", e);
-                    currentLocation = "Konum alınamadı";
-                    // Show a more descriptive error based on the failure
-                    if (dom.locationStatus) {
-                        dom.locationStatus.textContent = e.message === "Adres bulunamadı" ? "📍 Konum bulunamadı" : "📍 Servis hatası";
-                    }
-                    isRealLocationActive = false;
-                    dom.addLocationBtn?.classList.remove('active');
+                    currentLocation = parts.length > 0 ? parts.join(', ') : (data.display_name ? data.display_name.split(',')[0] : 'Bilinmeyen Konum');
                 }
-            },
-            (err) => {
-                console.warn("Geolocation error:", err);
-                let msg = "Konum izni reddedildi";
-                if (err.code === 2) msg = "Konum servisleri kapalı";
-                if (err.code === 3) msg = "Konum zaman aşımı";
 
                 if (dom.locationStatus) {
-                    dom.locationStatus.textContent = `📍 ${msg}`;
+                    dom.locationStatus.textContent = `📍 ${currentLocation}`;
+                    dom.locationStatus.classList.remove('hidden');
+                }
+
+                dom.addLocationBtn?.classList.add('active');
+            } catch (e) {
+                console.error("Konum ayrıştırma hatası:", e);
+                currentLocation = "Konum alınamadı";
+                // Show a more descriptive error based on the failure
+                if (dom.locationStatus) {
+                    dom.locationStatus.textContent = e.message === "Adres bulunamadı" ? "📍 Konum bulunamadı" : "📍 Servis hatası";
                 }
                 isRealLocationActive = false;
                 dom.addLocationBtn?.classList.remove('active');
-            },
-            { timeout: 15000, enableHighAccuracy: true }
-        );
+            }
+        },
+        (err) => {
+            console.warn("Geolocation error:", err);
+            let msg = "Konum izni reddedildi";
+            if (err.code === 2) msg = "Konum servisleri kapalı";
+            if (err.code === 3) msg = "Konum zaman aşımı";
+
+            if (dom.locationStatus) {
+                dom.locationStatus.textContent = `📍 ${msg}`;
+            }
+            isRealLocationActive = false;
+            dom.addLocationBtn?.classList.remove('active');
+        },
+        { timeout: 15000, enableHighAccuracy: true }
+    );
+}
+
+window.handleRealLocation = () => {
+    // Check if the selected date is in the past
+    const selectedDate = dom.momentDate?.value;
+    const today = new Date().toLocaleDateString('en-CA');
+
+    if (!isRealLocationActive && selectedDate && selectedDate < today) {
+        if (dom.locationStatus) {
+            dom.locationStatus.textContent = "📍 Önce tarihi bugüne getirin";
+            dom.locationStatus.classList.remove('hidden');
+            setTimeout(() => {
+                if (dom.locationStatus.textContent === "📍 Önce tarihi bugüne getirin") {
+                    dom.locationStatus.classList.add('hidden');
+                }
+            }, 3000);
+        }
+        return;
     }
 
-    window.handleRealLocation = () => {
-        // Check if the selected date is in the past
-        const selectedDate = dom.momentDate?.value;
-        const today = new Date().toLocaleDateString('en-CA');
+    isRealLocationActive = !isRealLocationActive;
 
-        if (!isRealLocationActive && selectedDate && selectedDate < today) {
-            if (dom.locationStatus) {
-                dom.locationStatus.textContent = "📍 Önce tarihi bugüne getirin";
-                dom.locationStatus.classList.remove('hidden');
-                setTimeout(() => {
-                    if (dom.locationStatus.textContent === "📍 Önce tarihi bugüne getirin") {
-                        dom.locationStatus.classList.add('hidden');
-                    }
-                }, 3000);
-            }
-            return;
+    if (isRealLocationActive) {
+        dom.addLocationBtn?.classList.add('active');
+        fetchLocation();
+    } else {
+        dom.addLocationBtn?.classList.remove('active');
+        if (dom.locationStatus) dom.locationStatus.classList.add('hidden');
+        currentLocation = '';
+        if (dom.venueInput) dom.venueInput.value = '';
+    }
+};
+
+// --- Profile View ---
+async function openProfileView(uid) {
+    const view = document.getElementById('profileView');
+    const content = document.getElementById('profileContent');
+
+    if (!view || !content) return;
+
+    // Switch view first to show the container
+    await window.setView('profile');
+
+    content.innerHTML = '<div class="loading" style="padding: 40px; text-align: center;">Yükleniyor...</div>';
+    document.body.style.overflow = '';
+    window._currentProfileUid = uid;
+
+    try {
+        let userProfile = await DBService.getUserProfile(uid);
+
+        // If profile doesn't exist, create a temporary object to avoid crashing
+        if (!userProfile) {
+            userProfile = {
+                displayName: 'momentLog Gezgini',
+                username: 'isimsiz',
+                photoURL: '👤',
+                bio: 'Profil bilgileri henüz oluşturulmamış.',
+                followers: [],
+                following: []
+            };
         }
 
-        isRealLocationActive = !isRealLocationActive;
+        const momentsRes = await DBService.getMomentsByUser(uid).catch(err => {
+            console.warn("Moments fetch failed (likely missing index):", err);
+            return { moments: [], lastVisible: null };
+        });
+        const momentsList = momentsRes.moments || [];
+        const isOwnProfile = uid === AuthService.currentUser()?.uid;
+        const isFollowing = userProfile.followers?.includes(AuthService.currentUser()?.uid);
 
-        if (isRealLocationActive) {
-            dom.addLocationBtn?.classList.add('active');
-            fetchLocation();
-        } else {
-            dom.addLocationBtn?.classList.remove('active');
-            if (dom.locationStatus) dom.locationStatus.classList.add('hidden');
-            currentLocation = '';
-            if (dom.venueInput) dom.venueInput.value = '';
-        }
-    };
-
-    // --- Profile View ---
-    async function openProfileView(uid) {
-        const view = document.getElementById('profileView');
-        const content = document.getElementById('profileContent');
-
-        if (!view || !content) return;
-
-        // Switch view first to show the container
-        await window.setView('profile');
-
-        content.innerHTML = '<div class="loading" style="padding: 40px; text-align: center;">Yükleniyor...</div>';
-        document.body.style.overflow = '';
-        window._currentProfileUid = uid;
-
-        try {
-            let userProfile = await DBService.getUserProfile(uid);
-
-            // If profile doesn't exist, create a temporary object to avoid crashing
-            if (!userProfile) {
-                userProfile = {
-                    displayName: 'momentLog Gezgini',
-                    username: 'isimsiz',
-                    photoURL: '👤',
-                    bio: 'Profil bilgileri henüz oluşturulmamış.',
-                    followers: [],
-                    following: []
-                };
-            }
-
-            const momentsRes = await DBService.getMomentsByUser(uid).catch(err => {
-                console.warn("Moments fetch failed (likely missing index):", err);
-                return { moments: [], lastVisible: null };
-            });
-            const momentsList = momentsRes.moments || [];
-            const isOwnProfile = uid === AuthService.currentUser()?.uid;
-            const isFollowing = userProfile.followers?.includes(AuthService.currentUser()?.uid);
-
-            content.innerHTML = `
+        content.innerHTML = `
             <div class="profile-header-simple">
                 <div class="profile-avatar-wrapper" onclick="window.viewFullSizePhoto('${userProfile.photoURL}')" style="cursor: pointer;">
                     ${(userProfile.photoURL?.startsWith('http') || userProfile.photoURL?.startsWith('data:')) ?
-                    `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
-                    `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
+                `<img src="${userProfile.photoURL}" class="profile-avatar-large">` :
+                `<div class="profile-avatar-emoji">${userProfile.photoURL || '👤'}</div>`}
                 </div>
                 <div class="profile-info-minimal">
                     <h2>
@@ -3262,13 +3257,13 @@ let swipeStartX = 0;
                 ${(isOwnProfile || !userProfile.isPrivateProfile || isFollowing) ? `
                     <div class="profile-moments-grid">
                         ${momentsList.length > 0 ? momentsList.map(m => {
-                        const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
-                        const imgSrc = firstImg?.url || firstImg?.data || '';
-                        const targetView = isOwnProfile ? 'my-moments' : 'explore';
-                        return `<div class="grid-item" onclick="window.setView('${targetView}', false, '${m.id}')">
+                    const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+                    const imgSrc = firstImg?.url || firstImg?.data || '';
+                    const targetView = isOwnProfile ? 'my-moments' : 'explore';
+                    return `<div class="grid-item" onclick="window.setView('${targetView}', false, '${m.id}')">
                         ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
                         </div>`;
-                    }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
+                }).join('') : '<div class="no-moments-msg">Henüz anı yok</div>'}
                     </div>
                 ` : `
                     <div class="private-profile-notice">
@@ -3280,106 +3275,106 @@ let swipeStartX = 0;
             </div>
         `;
 
-            // Follow button handler
-            const followBtn = document.getElementById('followBtn');
-            if (followBtn) {
-                followBtn.onclick = () => window.handleFollowAction(uid);
-            }
-
-            // Tab switching
-            const tabBtns = content.querySelectorAll('.tab-btn');
-            const momentsGrid = content.querySelector('.profile-moments-grid');
-            const privateNotice = content.querySelector('.private-profile-notice');
-
-            if (tabBtns.length > 0) {
-                tabBtns[0].onclick = () => {
-                    // Anılar tab
-                    tabBtns.forEach(btn => btn.classList.remove('active'));
-                    tabBtns[0].classList.add('active');
-                    if (momentsGrid) momentsGrid.style.display = 'grid';
-                    if (privateNotice) privateNotice.style.display = 'flex';
-                    const collectionsGrid = content.querySelector('.profile-collections-grid');
-                    if (collectionsGrid) collectionsGrid.style.display = 'none';
-                };
-
-                tabBtns[1].onclick = async () => {
-                    // Koleksiyonlar tab
-                    tabBtns.forEach(btn => btn.classList.remove('active'));
-                    tabBtns[1].classList.add('active');
-                    if (momentsGrid) momentsGrid.style.display = 'none';
-                    if (privateNotice) privateNotice.style.display = 'none';
-
-                    // Load and show collections
-                    await window.renderCollectionsGrid(uid, content);
-                };
-            }
-
-        } catch (e) {
-            console.error("Profil yükleme hatası:", e);
-            content.innerHTML = '<div class="error" style="padding: 40px; text-align: center;">Profil yüklenemedi</div>';
+        // Follow button handler
+        const followBtn = document.getElementById('followBtn');
+        if (followBtn) {
+            followBtn.onclick = () => window.handleFollowAction(uid);
         }
 
-        const closeBtn = view.querySelector('.close-modal-btn');
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                view.classList.add('hidden');
-                document.body.style.overflow = '';
+        // Tab switching
+        const tabBtns = content.querySelectorAll('.tab-btn');
+        const momentsGrid = content.querySelector('.profile-moments-grid');
+        const privateNotice = content.querySelector('.private-profile-notice');
+
+        if (tabBtns.length > 0) {
+            tabBtns[0].onclick = () => {
+                // Anılar tab
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabBtns[0].classList.add('active');
+                if (momentsGrid) momentsGrid.style.display = 'grid';
+                if (privateNotice) privateNotice.style.display = 'flex';
+                const collectionsGrid = content.querySelector('.profile-collections-grid');
+                if (collectionsGrid) collectionsGrid.style.display = 'none';
+            };
+
+            tabBtns[1].onclick = async () => {
+                // Koleksiyonlar tab
+                tabBtns.forEach(btn => btn.classList.remove('active'));
+                tabBtns[1].classList.add('active');
+                if (momentsGrid) momentsGrid.style.display = 'none';
+                if (privateNotice) privateNotice.style.display = 'none';
+
+                // Load and show collections
+                await window.renderCollectionsGrid(uid, content);
             };
         }
+
+    } catch (e) {
+        console.error("Profil yükleme hatası:", e);
+        content.innerHTML = '<div class="error" style="padding: 40px; text-align: center;">Profil yüklenemedi</div>';
     }
 
-    window.openProfileView = openProfileView;
+    const closeBtn = view.querySelector('.close-modal-btn');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            view.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+    }
+}
 
-    // Render Collections Grid
-    window.renderCollectionsGrid = async (uid, profileContent) => {
-        try {
-            const collections = await DBService.getJournals(uid);
+window.openProfileView = openProfileView;
 
-            // Remove existing collections grid if any
-            let collectionsGrid = profileContent.querySelector('.profile-collections-grid');
-            if (!collectionsGrid) {
-                collectionsGrid = document.createElement('div');
-                collectionsGrid.className = 'profile-collections-grid';
-                profileContent.querySelector('.profile-scroll-content').appendChild(collectionsGrid);
-            }
+// Render Collections Grid
+window.renderCollectionsGrid = async (uid, profileContent) => {
+    try {
+        const collections = await DBService.getJournals(uid);
 
-            collectionsGrid.style.display = 'grid';
+        // Remove existing collections grid if any
+        let collectionsGrid = profileContent.querySelector('.profile-collections-grid');
+        if (!collectionsGrid) {
+            collectionsGrid = document.createElement('div');
+            collectionsGrid.className = 'profile-collections-grid';
+            profileContent.querySelector('.profile-scroll-content').appendChild(collectionsGrid);
+        }
 
-            if (collections.length === 0) {
-                collectionsGrid.innerHTML = '<div class="no-moments-msg">Henüz koleksiyon yok</div>';
-            } else {
-                // Get moment counts for each collection
-                const collectionsWithCounts = await Promise.all(
-                    collections.map(async (col) => {
-                        const moments = await DBService.getMomentsByJournal(col.id);
-                        return { ...col, momentCount: moments.length };
-                    })
-                );
+        collectionsGrid.style.display = 'grid';
 
-                collectionsGrid.innerHTML = collectionsWithCounts.map(col => `
+        if (collections.length === 0) {
+            collectionsGrid.innerHTML = '<div class="no-moments-msg">Henüz koleksiyon yok</div>';
+        } else {
+            // Get moment counts for each collection
+            const collectionsWithCounts = await Promise.all(
+                collections.map(async (col) => {
+                    const moments = await DBService.getMomentsByJournal(col.id);
+                    return { ...col, momentCount: moments.length };
+                })
+            );
+
+            collectionsGrid.innerHTML = collectionsWithCounts.map(col => `
                 <div class="collection-card" onclick="window.openCollectionDetail('${col.id}', '${escapeHTML(col.title)}', '${escapeHTML(col.coverEmoji || '📁')}')">
                     <div class="collection-emoji-large">${col.coverEmoji || '📁'}</div>
                     <div class="collection-title">${escapeHTML(col.title)}</div>
                     <div class="collection-count">${col.momentCount} anı</div>
                 </div>
             `).join('');
-            }
-        } catch (e) {
-            console.error('Collections grid error:', e);
         }
-    };
+    } catch (e) {
+        console.error('Collections grid error:', e);
+    }
+};
 
-    // Open Collection Detail View
-    window.openCollectionDetail = async (collectionId, title, emoji) => {
-        const view = document.getElementById('profileView');
-        const content = document.getElementById('profileContent');
+// Open Collection Detail View
+window.openCollectionDetail = async (collectionId, title, emoji) => {
+    const view = document.getElementById('profileView');
+    const content = document.getElementById('profileContent');
 
-        if (!view || !content) return;
+    if (!view || !content) return;
 
-        try {
-            const moments = await DBService.getMomentsByJournal(collectionId);
+    try {
+        const moments = await DBService.getMomentsByJournal(collectionId);
 
-            content.innerHTML = `
+        content.innerHTML = `
             <div class="collection-detail-view">
                 <div class="collection-header">
                     <button class="back-btn" onclick="window.closeCollectionDetail()">← Geri</button>
@@ -3391,38 +3386,38 @@ let swipeStartX = 0;
                 </div>
                 <div class="collection-moments-grid">
                     ${moments.length > 0 ? moments.map(m => {
-                const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
-                const imgSrc = firstImg?.url || firstImg?.data || '';
-                return `<div class="grid-item" onclick="window.setView('my-moments', false, '${m.id}')">
+            const firstImg = m.media ? m.media.find(med => med.type === 'image') : null;
+            const imgSrc = firstImg?.url || firstImg?.data || '';
+            return `<div class="grid-item" onclick="window.setView('my-moments', false, '${m.id}')">
                             ${imgSrc ? `<img src="${imgSrc}">` : '<div class="text-placeholder">📝</div>'}
                         </div>`;
-            }).join('') : '<div class="no-moments-msg">Bu koleksiyonda henüz anı yok</div>'}
+        }).join('') : '<div class="no-moments-msg">Bu koleksiyonda henüz anı yok</div>'}
                 </div>
             </div>
         `;
 
-            view.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        } catch (e) {
-            console.error('Collection detail error:', e);
-            showModal('Hata', 'Koleksiyon yüklenemedi.');
-        }
-    };
+        view.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    } catch (e) {
+        console.error('Collection detail error:', e);
+        showModal('Hata', 'Koleksiyon yüklenemedi.');
+    }
+};
 
-    window.closeCollectionDetail = () => {
-        const currentUser = AuthService.currentUser();
-        if (currentUser) {
-            window.openProfileView(currentUser.uid);
-        }
-    };
+window.closeCollectionDetail = () => {
+    const currentUser = AuthService.currentUser();
+    if (currentUser) {
+        window.openProfileView(currentUser.uid);
+    }
+};
 
-    // Profil fotoğrafını tam ekran gör
-    window.viewFullSizePhoto = (url) => {
-        if (!url || (!url.startsWith('http') && !url.startsWith('data:'))) return;
+// Profil fotoğrafını tam ekran gör
+window.viewFullSizePhoto = (url) => {
+    if (!url || (!url.startsWith('http') && !url.startsWith('data:'))) return;
 
-        const viewer = document.createElement('div');
-        viewer.className = 'full-size-photo-viewer';
-        viewer.innerHTML = `
+    const viewer = document.createElement('div');
+    viewer.className = 'full-size-photo-viewer';
+    viewer.innerHTML = `
         <div class="photo-viewer-overlay">
             <button class="close-viewer">✕</button>
             <div class="photo-container">
@@ -3431,111 +3426,111 @@ let swipeStartX = 0;
         </div>
     `;
 
-        document.body.appendChild(viewer);
-        document.body.style.overflow = 'hidden';
+    document.body.appendChild(viewer);
+    document.body.style.overflow = 'hidden';
 
-        const close = () => {
-            viewer.classList.add('fade-out');
-            setTimeout(() => {
-                viewer.remove();
+    const close = () => {
+        viewer.classList.add('fade-out');
+        setTimeout(() => {
+            viewer.remove();
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    viewer.querySelector('.photo-viewer-overlay').onclick = (e) => {
+        if (e.target.tagName !== 'IMG') close();
+    };
+    viewer.querySelector('.close-viewer').onclick = close;
+};
+
+// --- Logout Handler ---
+window.handleLogout = async () => {
+    const confirmed = await showModal('Çıkış', 'Çıkış yapmak istediğinize emin misiniz?', true);
+    if (confirmed) {
+        try {
+            // Clear shadow persistence
+            localStorage.removeItem('momentLog_hasSession');
+
+            await AuthService.signOut();
+            const view = document.getElementById('profileView');
+            if (view) {
+                view.classList.add('hidden');
                 document.body.style.overflow = '';
-            }, 300);
-        };
-
-        viewer.querySelector('.photo-viewer-overlay').onclick = (e) => {
-            if (e.target.tagName !== 'IMG') close();
-        };
-        viewer.querySelector('.close-viewer').onclick = close;
-    };
-
-    // --- Logout Handler ---
-    window.handleLogout = async () => {
-        const confirmed = await showModal('Çıkış', 'Çıkış yapmak istediğinize emin misiniz?', true);
-        if (confirmed) {
-            try {
-                // Clear shadow persistence
-                localStorage.removeItem('momentLog_hasSession');
-
-                await AuthService.signOut();
-                const view = document.getElementById('profileView');
-                if (view) {
-                    view.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-                // Auth listener will handle showing login overlay
-            } catch (e) {
-                console.error('Logout error:', e);
-                showModal('Hata', 'Çıkış yapılırken bir hata oluştu.');
             }
+            // Auth listener will handle showing login overlay
+        } catch (e) {
+            console.error('Logout error:', e);
+            showModal('Hata', 'Çıkış yapılırken bir hata oluştu.');
         }
-    };
+    }
+};
 
-    // --- Follow System ---
-    window.handleFollowAction = async (targetUid) => {
+// --- Follow System ---
+window.handleFollowAction = async (targetUid) => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) {
+        showModal('Giriş Gerekli', 'Takip etmek için giriş yapmalısınız.');
+        return;
+    }
+
+    const followBtn = document.getElementById('followBtn');
+    if (!followBtn) return;
+
+    followBtn.disabled = true;
+    followBtn.innerText = 'İşleniyor...';
+
+    try {
+        await DBService.toggleFollow(targetUid);
+    } catch (e) {
+        console.error('Follow action error:', e);
+        // Don't show error modal - action may have partially succeeded
+    }
+    // Always refresh profile to show current state
+    await openProfileView(targetUid);
+};
+
+window.toggleProfilePrivacy = async (currentPrivacy) => {
+    try {
         const currentUser = AuthService.currentUser();
-        if (!currentUser) {
-            showModal('Giriş Gerekli', 'Takip etmek için giriş yapmalısınız.');
+        if (!currentUser) return;
+
+        await DBService.updateUserProfile(currentUser.uid, {
+            isPrivateProfile: !currentPrivacy
+        });
+
+        openProfileView(currentUser.uid);
+    } catch (e) {
+        showModal('Hata', 'Gizlilik ayarı güncellenemedi');
+    }
+};
+
+// --- Followers List ---
+window.showFollowersList = async (uid, type) => {
+    try {
+        const userProfile = await DBService.getUserProfile(uid);
+        const userIds = type === 'followers' ? (userProfile.followers || []) : (userProfile.following || []);
+        const title = type === 'followers' ? 'Takipçiler' : 'Takip Edilenler';
+
+        if (userIds.length === 0) {
+            showModal(title, type === 'followers' ? 'Henüz takipçi yok' : 'Henüz kimse takip edilmiyor');
             return;
         }
 
-        const followBtn = document.getElementById('followBtn');
-        if (!followBtn) return;
-
-        followBtn.disabled = true;
-        followBtn.innerText = 'İşleniyor...';
-
-        try {
-            await DBService.toggleFollow(targetUid);
-        } catch (e) {
-            console.error('Follow action error:', e);
-            // Don't show error modal - action may have partially succeeded
-        }
-        // Always refresh profile to show current state
-        await openProfileView(targetUid);
-    };
-
-    window.toggleProfilePrivacy = async (currentPrivacy) => {
-        try {
-            const currentUser = AuthService.currentUser();
-            if (!currentUser) return;
-
-            await DBService.updateUserProfile(currentUser.uid, {
-                isPrivateProfile: !currentPrivacy
-            });
-
-            openProfileView(currentUser.uid);
-        } catch (e) {
-            showModal('Hata', 'Gizlilik ayarı güncellenemedi');
-        }
-    };
-
-    // --- Followers List ---
-    window.showFollowersList = async (uid, type) => {
-        try {
-            const userProfile = await DBService.getUserProfile(uid);
-            const userIds = type === 'followers' ? (userProfile.followers || []) : (userProfile.following || []);
-            const title = type === 'followers' ? 'Takipçiler' : 'Takip Edilenler';
-
-            if (userIds.length === 0) {
-                showModal(title, type === 'followers' ? 'Henüz takipçi yok' : 'Henüz kimse takip edilmiyor');
-                return;
+        const users = [];
+        for (const userId of userIds) {
+            try {
+                const profile = await DBService.getUserProfile(userId);
+                users.push({ uid: userId, ...profile });
+            } catch (e) {
+                users.push({ uid: userId, displayName: 'Bilinmiyor' });
             }
+        }
 
-            const users = [];
-            for (const userId of userIds) {
-                try {
-                    const profile = await DBService.getUserProfile(userId);
-                    users.push({ uid: userId, ...profile });
-                } catch (e) {
-                    users.push({ uid: userId, displayName: 'Bilinmiyor' });
-                }
-            }
+        const modal = document.createElement('div');
+        modal.className = 'follow-list-modal';
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 
-            const modal = document.createElement('div');
-            modal.className = 'follow-list-modal';
-            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-
-            modal.innerHTML = `
+        modal.innerHTML = `
             <div class="follow-list-content">
                 <div class="follow-list-header">
                     <h3>${title}</h3>
@@ -3557,85 +3552,85 @@ let swipeStartX = 0;
             </div>
         `;
 
-            document.body.appendChild(modal);
-        } catch (e) {
-            console.error('Error loading followers list:', e);
-            showModal('Hata', 'Liste yüklenemedi');
-        }
-    };
+        document.body.appendChild(modal);
+    } catch (e) {
+        console.error('Error loading followers list:', e);
+        showModal('Hata', 'Liste yüklenemedi');
+    }
+};
 
-    // --- Like System ---
-    window.toggleLike = async (id) => {
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) {
-            showModal('Giriş Gerekli', 'Beğenmek için giriş yapmalısınız.');
+// --- Like System ---
+window.toggleLike = async (id) => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) {
+        showModal('Giriş Gerekli', 'Beğenmek için giriş yapmalısınız.');
+        return;
+    }
+
+    const card = document.querySelector(`.moment-card[data-id="${id}"]`);
+    const likeBtn = card?.querySelector('.action-btn');
+    const likeIcon = likeBtn?.querySelector('.like-icon');
+    const likeCount = likeBtn?.querySelector('.like-count');
+
+    if (!card) return;
+
+    // Optimistic update
+    const isCurrentlyLiked = likeBtn?.classList.contains('liked');
+    const currentCount = parseInt(likeCount?.textContent || '0');
+
+    if (isCurrentlyLiked) {
+        likeBtn?.classList.remove('liked');
+        if (likeIcon) likeIcon.textContent = '🤍';
+        if (likeCount) likeCount.textContent = Math.max(0, currentCount - 1);
+    } else {
+        likeBtn?.classList.add('liked');
+        if (likeIcon) likeIcon.textContent = '❤️';
+        if (likeCount) likeCount.textContent = currentCount + 1;
+    }
+
+    try {
+        await DBService.toggleLike(id);
+    } catch (e) {
+        // Revert on error - silently for permission errors
+        if (isCurrentlyLiked) {
+            likeBtn?.classList.add('liked');
+            if (likeIcon) likeIcon.textContent = '❤️';
+            if (likeCount) likeCount.textContent = currentCount;
+        } else {
+            likeBtn?.classList.remove('liked');
+            if (likeIcon) likeIcon.textContent = '🤍';
+            if (likeCount) likeCount.textContent = currentCount;
+        }
+        console.error('Like error:', e);
+    }
+};
+
+// --- Comments ---
+async function loadComments(momentId, expanded = false) {
+    const commentsList = document.getElementById('commentsList');
+    if (!commentsList) return;
+
+    try {
+        const comments = await DBService.getComments(momentId);
+        const isImmersive = commentsList.classList.contains('comments-list-immersive');
+
+        if (comments.length === 0) {
+            commentsList.innerHTML = `<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:10px; font-size:0.8rem; margin:0;">Henüz yorum yok</p>`;
             return;
         }
 
-        const card = document.querySelector(`.moment-card[data-id="${id}"]`);
-        const likeBtn = card?.querySelector('.action-btn');
-        const likeIcon = likeBtn?.querySelector('.like-icon');
-        const likeCount = likeBtn?.querySelector('.like-count');
+        // Sort by likes count (descending)
+        comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
 
-        if (!card) return;
+        let displayComments = comments;
+        let showMoreBtn = '';
 
-        // Optimistic update
-        const isCurrentlyLiked = likeBtn?.classList.contains('liked');
-        const currentCount = parseInt(likeCount?.textContent || '0');
-
-        if (isCurrentlyLiked) {
-            likeBtn?.classList.remove('liked');
-            if (likeIcon) likeIcon.textContent = '🤍';
-            if (likeCount) likeCount.textContent = Math.max(0, currentCount - 1);
-        } else {
-            likeBtn?.classList.add('liked');
-            if (likeIcon) likeIcon.textContent = '❤️';
-            if (likeCount) likeCount.textContent = currentCount + 1;
+        if (!expanded && comments.length > 3) {
+            displayComments = comments.slice(0, 3);
+            showMoreBtn = `<button class="show-more-comments" onclick="loadComments('${momentId}', true)">${comments.length - 3} yorum daha gör...</button>`;
         }
 
-        try {
-            await DBService.toggleLike(id);
-        } catch (e) {
-            // Revert on error - silently for permission errors
-            if (isCurrentlyLiked) {
-                likeBtn?.classList.add('liked');
-                if (likeIcon) likeIcon.textContent = '❤️';
-                if (likeCount) likeCount.textContent = currentCount;
-            } else {
-                likeBtn?.classList.remove('liked');
-                if (likeIcon) likeIcon.textContent = '🤍';
-                if (likeCount) likeCount.textContent = currentCount;
-            }
-            console.error('Like error:', e);
-        }
-    };
-
-    // --- Comments ---
-    async function loadComments(momentId, expanded = false) {
-        const commentsList = document.getElementById('commentsList');
-        if (!commentsList) return;
-
-        try {
-            const comments = await DBService.getComments(momentId);
-            const isImmersive = commentsList.classList.contains('comments-list-immersive');
-
-            if (comments.length === 0) {
-                commentsList.innerHTML = `<p class="no-comments" style="text-align:center; color:var(--text-secondary); padding:10px; font-size:0.8rem; margin:0;">Henüz yorum yok</p>`;
-                return;
-            }
-
-            // Sort by likes count (descending)
-            comments.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
-
-            let displayComments = comments;
-            let showMoreBtn = '';
-
-            if (!expanded && comments.length > 3) {
-                displayComments = comments.slice(0, 3);
-                showMoreBtn = `<button class="show-more-comments" onclick="loadComments('${momentId}', true)">${comments.length - 3} yorum daha gör...</button>`;
-            }
-
-            commentsList.innerHTML = displayComments.map(c => `
+        commentsList.innerHTML = displayComments.map(c => `
             <div class="${isImmersive ? 'comment-item-immersive' : 'comment-item'}" ${!isImmersive ? 'style="padding: 10px; border-bottom: 1px solid var(--border-subtle);"' : ''}>
                 <div class="${isImmersive ? 'comment-user-immersive' : 'comment-user-info'}" onclick="openProfileView('${c.userId}')" style="cursor:pointer;">
                     <span class="comment-username" style="font-weight:600;">${c.userDisplayName || 'Anonim'}</span>
@@ -3643,106 +3638,106 @@ let swipeStartX = 0;
                 <p class="${isImmersive ? 'comment-text-immersive' : 'comment-text'}" style="margin-top:2px;">${c.text}</p>
             </div>
         `).join('') + showMoreBtn;
-        } catch (e) {
-            console.error("Yorumlar yüklenemedi:", e);
-        }
+    } catch (e) {
+        console.error("Yorumlar yüklenemedi:", e);
+    }
+}
+
+window.loadComments = loadComments;
+
+window.submitComment = async (momentId) => {
+    const input = document.getElementById('commentInput');
+    const text = input?.value?.trim();
+
+    if (!text) return;
+
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) {
+        showModal('Giriş Gerekli', 'Yorum yapmak için giriş yapmalısınız.');
+        return;
     }
 
-    window.loadComments = loadComments;
+    try {
+        await DBService.addComment(momentId, text);
+        input.value = '';
+        loadComments(momentId);
+    } catch (e) {
+        console.error('Yorum gönderilemedi:', e);
+    }
+};
 
-    window.submitComment = async (momentId) => {
-        const input = document.getElementById('commentInput');
-        const text = input?.value?.trim();
+// --- Notification System ---
+function setupNotifications() {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
 
-        if (!text) return;
+    DBService.onNotifications(currentUser.uid, (notifications) => {
 
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) {
-            showModal('Giriş Gerekli', 'Yorum yapmak için giriş yapmalısınız.');
-            return;
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+
+        const badge = document.getElementById('notifBadge');
+        const btn = document.getElementById('notificationsBtn');
+
+
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
-        try {
-            await DBService.addComment(momentId, text);
-            input.value = '';
-            loadComments(momentId);
-        } catch (e) {
-            console.error('Yorum gönderilemedi:', e);
+        // Add/remove has-unread class for button color
+        if (btn) {
+            if (unreadCount > 0) {
+                btn.classList.add('has-unread');
+
+            } else {
+                btn.classList.remove('has-unread');
+            }
         }
-    };
 
-    // --- Notification System ---
-    function setupNotifications() {
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) return;
+        window._notifications = notifications;
+    });
+}
 
-        DBService.onNotifications(currentUser.uid, (notifications) => {
+// Notification logic is now handled in setView('notifications')
 
-            const unreadCount = notifications.filter(n => !n.isRead).length;
+function renderNotificationsInView(notifications) {
+    const list = document.getElementById('notiContent');
+    if (!list) return;
 
-            const badge = document.getElementById('notifBadge');
-            const btn = document.getElementById('notificationsBtn');
-
-
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-            }
-
-            // Add/remove has-unread class for button color
-            if (btn) {
-                if (unreadCount > 0) {
-                    btn.classList.add('has-unread');
-
-                } else {
-                    btn.classList.remove('has-unread');
-                }
-            }
-
-            window._notifications = notifications;
-        });
+    if (!notifications || notifications.length === 0) {
+        list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Henüz bildirim yok</div>';
+        return;
     }
 
-    // Notification logic is now handled in setView('notifications')
-
-    function renderNotificationsInView(notifications) {
-        const list = document.getElementById('notiContent');
-        if (!list) return;
-
-        if (!notifications || notifications.length === 0) {
-            list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Henüz bildirim yok</div>';
-            return;
-        }
-
-        const clearAllBtn = `
+    const clearAllBtn = `
         <div class="notif-clear-all">
             <button onclick="window.clearAllNotifications()" class="clear-all-btn">🗑️ Tümünü Temizle</button>
         </div>
     `;
 
-        const notifItems = notifications.map(n => {
-            const typeText = {
-                'like': 'gönderini beğendi',
-                'comment': 'yorum yaptı',
-                'follow': 'seni takip etti',
-                'follow_request': 'takip isteği gönderdi'
-            };
-            const avatar = (n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:')) ? `<img src="${n.senderPhoto}">` : (n.senderPhoto || '👤');
-            const unreadClass = n.isRead ? '' : 'unread';
-            const timeAgo = getTimeAgo(n.createdAt);
+    const notifItems = notifications.map(n => {
+        const typeText = {
+            'like': 'gönderini beğendi',
+            'comment': 'yorum yaptı',
+            'follow': 'seni takip etti',
+            'follow_request': 'takip isteği gönderdi'
+        };
+        const avatar = (n.senderPhoto?.startsWith('http') || n.senderPhoto?.startsWith('data:')) ? `<img src="${n.senderPhoto}">` : (n.senderPhoto || '👤');
+        const unreadClass = n.isRead ? '' : 'unread';
+        const timeAgo = getTimeAgo(n.createdAt);
 
-            const actionButtons = n.type === 'follow_request' ? `
+        const actionButtons = n.type === 'follow_request' ? `
             <div class="notif-actions">
                 <button class="notif-action-btn accept" onclick="window._approveFollowRequest('${n.id}', '${n.senderUid}')">Onayla</button>
                 <button class="notif-action-btn decline" onclick="window._rejectFollowRequest('${n.id}', '${n.senderUid}')">Reddet</button>
             </div>
         ` : '';
 
-            return `
+        return `
             <div class="notification-item ${unreadClass} ${n.type}">
                 <div class="notif-main" onclick="handleNotificationClick('${n.id}', '${n.momentId || ''}', '${n.senderUid}', '${n.type}')">
                     <div class="notif-avatar">${avatar}</div>
@@ -3755,193 +3750,193 @@ let swipeStartX = 0;
                 <button class="notif-delete-btn" onclick="window.deleteNotification('${n.id}')">×</button>
             </div>
         `;
-        }).join('');
+    }).join('');
 
-        list.innerHTML = clearAllBtn + notifItems;
+    list.innerHTML = clearAllBtn + notifItems;
+}
+
+window.deleteNotification = async (notifId) => {
+    // Immediate UI update - remove from list
+    window._notifications = (window._notifications || []).filter(n => n.id !== notifId);
+    renderNotificationsInView(window._notifications);
+
+    try {
+        await DBService.deleteNotification(notifId);
+    } catch (e) {
+        console.error('Delete notification error:', e);
     }
+};
 
-    window.deleteNotification = async (notifId) => {
-        // Immediate UI update - remove from list
-        window._notifications = (window._notifications || []).filter(n => n.id !== notifId);
-        renderNotificationsInView(window._notifications);
+window.clearAllNotifications = async () => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
 
-        try {
-            await DBService.deleteNotification(notifId);
-        } catch (e) {
-            console.error('Delete notification error:', e);
-        }
-    };
+    // Immediate UI update - empty list
+    window._notifications = [];
+    renderNotificationsInView([]);
 
-    window.clearAllNotifications = async () => {
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) return;
-
-        // Immediate UI update - empty list
-        window._notifications = [];
-        renderNotificationsInView([]);
-
-        try {
-            await DBService.clearAllNotifications(currentUser.uid);
-        } catch (e) {
-            console.error('Clear all notifications error:', e);
-        }
-    };
-
-    function getTimeAgo(dateStr) {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = Math.floor((now - date) / 1000);
-
-        if (diff < 60) return 'az önce';
-        if (diff < 3600) return `${Math.floor(diff / 60)} dk önce`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)} saat önce`;
-        return `${Math.floor(diff / 86400)} gün önce`;
+    try {
+        await DBService.clearAllNotifications(currentUser.uid);
+    } catch (e) {
+        console.error('Clear all notifications error:', e);
     }
+};
 
-    window.handleNotificationClick = async (notifId, momentId, senderUid, type) => {
-        // 1. Mark as read immediately for UX
-        const notif = (window._notifications || []).find(n => n.id === notifId);
-        if (notif) notif.isRead = true;
-        renderNotificationsInView(window._notifications || []);
-        DBService.markNotificationsAsRead(AuthService.currentUser()?.uid);
+function getTimeAgo(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
 
-        if (momentId) {
-            // Go to feed
-            await setView('home');
+    if (diff < 60) return 'az önce';
+    if (diff < 3600) return `${Math.floor(diff / 60)} dk önce`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} saat önce`;
+    return `${Math.floor(diff / 86400)} gün önce`;
+}
 
-            // Wait for rendering and scroll
-            const scrollToId = () => {
-                const el = document.querySelector(`.moment-card[data-id="${momentId}"]`);
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('moment-highlight');
-                    setTimeout(() => el.classList.remove('moment-highlight'), 3000);
-                    return true;
-                }
-                return false;
-            };
+window.handleNotificationClick = async (notifId, momentId, senderUid, type) => {
+    // 1. Mark as read immediately for UX
+    const notif = (window._notifications || []).find(n => n.id === notifId);
+    if (notif) notif.isRead = true;
+    renderNotificationsInView(window._notifications || []);
+    DBService.markNotificationsAsRead(AuthService.currentUser()?.uid);
 
-            // Try immediate, then retry as loading happens
-            if (!scrollToId()) {
-                let attempts = 0;
-                const interval = setInterval(() => {
-                    attempts++;
-                    const found = scrollToId();
-                    if (found || attempts > 20) {
-                        clearInterval(interval);
-                        if (found && type === 'comment') {
-                            setTimeout(() => window.toggleComments(momentId), 500);
-                        }
-                    }
-                }, 500);
-            } else {
-                if (type === 'comment') {
-                    setTimeout(() => window.toggleComments(momentId), 500);
-                }
+    if (momentId) {
+        // Go to feed
+        await setView('home');
+
+        // Wait for rendering and scroll
+        const scrollToId = () => {
+            const el = document.querySelector(`.moment-card[data-id="${momentId}"]`);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('moment-highlight');
+                setTimeout(() => el.classList.remove('moment-highlight'), 3000);
+                return true;
             }
-        } else if (senderUid) {
-            openProfileView(senderUid);
-        }
-    };
-
-    window.markAllNotificationsRead = async () => {
-        const currentUser = AuthService.currentUser();
-        if (!currentUser) return;
-        try {
-            await DBService.markNotificationsAsRead(currentUser.uid);
-        } catch (e) {
-            console.error('Mark read error:', e);
-        }
-    };
-
-    window._approveFollowRequest = async (notifId, senderUid) => {
-        try {
-            await DBService.acceptFollowRequest(senderUid);
-            await DBService.deleteNotification(notifId);
-            // Refresh notifications list if open
-            const currentUser = AuthService.currentUser();
-            if (currentUser) {
-                const listSnapshot = await db.collection('notifications')
-                    .where('targetUid', '==', currentUser.uid)
-                    .limit(50)
-                    .get();
-                const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-                renderNotificationsInView(notifications);
-            }
-        } catch (e) {
-            console.error('Approve follow request error:', e);
-            showModal('Hata', 'İstek onaylanamadı');
-        }
-    };
-
-    window._rejectFollowRequest = async (notifId, senderUid) => {
-        try {
-            await DBService.declineFollowRequest(senderUid);
-            await DBService.deleteNotification(notifId);
-            // Refresh notifications list if open
-            const currentUser = AuthService.currentUser();
-            if (currentUser) {
-                const listSnapshot = await db.collection('notifications')
-                    .where('targetUid', '==', currentUser.uid)
-                    .limit(50)
-                    .get();
-                const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-                renderNotificationsInView(notifications);
-            }
-        } catch (e) {
-            console.error('Reject follow request error:', e);
-            showModal('Hata', 'İstek reddedilemedi');
-        }
-    };
-    window._handleCarouselScroll = (el) => {
-        const scrollLeft = el.scrollLeft;
-        const width = el.offsetWidth;
-        const index = Math.round(scrollLeft / width);
-        const container = el.parentElement;
-        const indicator = container.querySelector('.carousel-indicator');
-        if (indicator) {
-            const slides = el.querySelectorAll('.carousel-slide');
-            const totalPhotos = slides.length - 1; // Slide 1 is collage
-
-            if (index === 0) {
-                indicator.classList.add('hidden-fade');
-            } else {
-                indicator.textContent = `${index}/${totalPhotos}`;
-                indicator.classList.remove('hidden-fade');
-
-                // Reset hide timer
-                if (el._indicatorTimer) clearTimeout(el._indicatorTimer);
-                el._indicatorTimer = setTimeout(() => {
-                    indicator.classList.add('hidden-fade');
-                }, 2000);
-            }
-        }
-    };
-
-    window.handleShare = async (e, momentId) => {
-        e.stopPropagation();
-        const moment = moments.find(m => m.id === momentId);
-        const text = moment?.text || 'Harika bir anıya bak!';
-
-        const shareData = {
-            title: 'MomentLog Anısı',
-            text: text,
-            url: window.location.origin // Dynamic app URL
+            return false;
         };
 
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback for desktop: Copy to clipboard
-                const shareUrl = `${window.location.origin}`;
-                await navigator.clipboard.writeText(shareUrl);
-                showModal('Bağlantı Kopyalandı', 'Uygulama bağlantısı panoya kopyalandı! 🔗');
+        // Try immediate, then retry as loading happens
+        if (!scrollToId()) {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                const found = scrollToId();
+                if (found || attempts > 20) {
+                    clearInterval(interval);
+                    if (found && type === 'comment') {
+                        setTimeout(() => window.toggleComments(momentId), 500);
+                    }
+                }
+            }, 500);
+        } else {
+            if (type === 'comment') {
+                setTimeout(() => window.toggleComments(momentId), 500);
             }
-        } catch (err) {
-            console.warn('Share failed:', err);
         }
+    } else if (senderUid) {
+        openProfileView(senderUid);
+    }
+};
+
+window.markAllNotificationsRead = async () => {
+    const currentUser = AuthService.currentUser();
+    if (!currentUser) return;
+    try {
+        await DBService.markNotificationsAsRead(currentUser.uid);
+    } catch (e) {
+        console.error('Mark read error:', e);
+    }
+};
+
+window._approveFollowRequest = async (notifId, senderUid) => {
+    try {
+        await DBService.acceptFollowRequest(senderUid);
+        await DBService.deleteNotification(notifId);
+        // Refresh notifications list if open
+        const currentUser = AuthService.currentUser();
+        if (currentUser) {
+            const listSnapshot = await db.collection('notifications')
+                .where('targetUid', '==', currentUser.uid)
+                .limit(50)
+                .get();
+            const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            renderNotificationsInView(notifications);
+        }
+    } catch (e) {
+        console.error('Approve follow request error:', e);
+        showModal('Hata', 'İstek onaylanamadı');
+    }
+};
+
+window._rejectFollowRequest = async (notifId, senderUid) => {
+    try {
+        await DBService.declineFollowRequest(senderUid);
+        await DBService.deleteNotification(notifId);
+        // Refresh notifications list if open
+        const currentUser = AuthService.currentUser();
+        if (currentUser) {
+            const listSnapshot = await db.collection('notifications')
+                .where('targetUid', '==', currentUser.uid)
+                .limit(50)
+                .get();
+            const notifications = listSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            notifications.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            renderNotificationsInView(notifications);
+        }
+    } catch (e) {
+        console.error('Reject follow request error:', e);
+        showModal('Hata', 'İstek reddedilemedi');
+    }
+};
+window._handleCarouselScroll = (el) => {
+    const scrollLeft = el.scrollLeft;
+    const width = el.offsetWidth;
+    const index = Math.round(scrollLeft / width);
+    const container = el.parentElement;
+    const indicator = container.querySelector('.carousel-indicator');
+    if (indicator) {
+        const slides = el.querySelectorAll('.carousel-slide');
+        const totalPhotos = slides.length - 1; // Slide 1 is collage
+
+        if (index === 0) {
+            indicator.classList.add('hidden-fade');
+        } else {
+            indicator.textContent = `${index}/${totalPhotos}`;
+            indicator.classList.remove('hidden-fade');
+
+            // Reset hide timer
+            if (el._indicatorTimer) clearTimeout(el._indicatorTimer);
+            el._indicatorTimer = setTimeout(() => {
+                indicator.classList.add('hidden-fade');
+            }, 2000);
+        }
+    }
+};
+
+window.handleShare = async (e, momentId) => {
+    e.stopPropagation();
+    const moment = moments.find(m => m.id === momentId);
+    const text = moment?.text || 'Harika bir anıya bak!';
+
+    const shareData = {
+        title: 'MomentLog Anısı',
+        text: text,
+        url: window.location.origin // Dynamic app URL
     };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            // Fallback for desktop: Copy to clipboard
+            const shareUrl = `${window.location.origin}`;
+            await navigator.clipboard.writeText(shareUrl);
+            showModal('Bağlantı Kopyalandı', 'Uygulama bağlantısı panoya kopyalandı! 🔗');
+        }
+    } catch (err) {
+        console.warn('Share failed:', err);
+    }
+};
 
