@@ -1540,12 +1540,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle Redirect Results Once
+    // Handle Redirect Results Once (Fallback for flaky onAuthStateChanged on mobile)
     (async () => {
         try {
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
                 console.log("[Auth] Redirect success for:", result.user.uid);
+
+                // FORCE UI TRANSITION (If auth listener was too slow)
+                const loginOverlay = document.getElementById('loginOverlay');
+                const app = document.getElementById('app');
+                const splash = document.getElementById('loadingSplash');
+
+                if (loginOverlay && !loginOverlay.classList.contains('hidden')) {
+                    loginOverlay.style.display = 'none';
+                    if (app) app.classList.remove('hidden');
+                    if (splash) splash.remove(); // Nuke splash if still there
+                    initializeUI();
+                }
             }
         } catch (err) {
             console.error("[Auth] Redirect result error:", err);
