@@ -1544,13 +1544,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     })();
 
-    // Register Service Worker
+    // Register Service Worker with Reload Protection
     if ('serviceWorker' in navigator) {
+        // Track if we had a controller at start (to distinguish first install from update)
+        // If navigator.serviceWorker.controller is null, this is a fresh install.
+        // We generally DO NOT want to reload on fresh install, clients.claim() is enough.
+        // We ONLY want to reload if there WAS a controller (meaning an update happened).
+        const hadController = !!navigator.serviceWorker.controller;
+
         navigator.serviceWorker.register('./sw.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
+            if (!hadController) return; // Don't reload on first install
+
             refreshing = true;
             window.location.reload();
         });
