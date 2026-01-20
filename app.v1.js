@@ -1669,6 +1669,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- Event Listeners Setup ---
+function initializeUI() {
+    // Refresh DOM elements helper
+    dom.loginBtn = document.getElementById('loginBtn');
+    dom.googleLoginBtn = document.getElementById('googleLoginBtn');
+    dom.profileBtn = document.getElementById('profileBtn');
+    dom.userNameSpan = document.getElementById('userNameSpan');
+    dom.logoutBtn = document.getElementById('logoutBtn');
+    dom.momentText = document.getElementById('momentText');
+    dom.charCount = document.getElementById('charCount');
+    dom.photoInput = document.getElementById('photoInput');
+    dom.photoPreview = document.getElementById('photoPreview');
+    dom.addLocationBtn = document.getElementById('addLocationBtn');
+    dom.locationStatus = document.getElementById('locationStatus');
+    dom.dateBtn = document.getElementById('dateBtn');
+    dom.momentDate = document.getElementById('momentDate');
+    dom.themeBtn = document.getElementById('themeBtn');
+    dom.saveMomentBtn = document.getElementById('saveMomentBtn');
+    dom.timeline = document.getElementById('timeline');
+    dom.headerAddBtn = document.getElementById('headerAddBtn');
+    dom.visibilityToggle = document.getElementById('visibilityToggle');
+    // Re-run selectors init if needed
+    initializeSelectors();
+}
+
 function setupEventListeners() {
     // Photo input
     if (dom.photoInput) {
