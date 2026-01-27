@@ -2558,6 +2558,12 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
+                         <span class="visibility-status-text" style="font-size: 0.75rem; margin-right: 4px; color: var(--text-secondary); opacity: 0.8;">
+                             ${(() => {
+                    if (m.visibility === 'friends' || m.isFriendsOnly) return 'Takipçiler';
+                    return m.isPublic ? 'Herkes' : 'Kendim';
+                })()}
+                         </span>
                          <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return 'Görünürlük: Sadece Takipçiler';
                     return m.isPublic ? 'Görünürlük: Herkese Açık' : 'Görünürlük: Sadece Ben';
@@ -3029,7 +3035,7 @@ window.toggleMomentVisibility = async (momentId, currentVisibilityOrPublic) => {
             'friends': 'Sadece Takipçiler 👥',
             'private': 'Sadece Ben 🔒'
         };
-        showToast(`Görünürlük: ${labels[nextState]}`);
+        // showToast(`Görünürlük: ${labels[nextState]}`); // Removed in favor of card text
 
     } catch (e) {
         console.error("Visibility update error:", e);
