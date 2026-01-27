@@ -137,10 +137,7 @@ const DBService = {
 
         // If privacy or display info changed, sync moments
         if (data.isPrivateProfile !== undefined || data.username || data.displayName || data.photoURL || data.isVerified !== undefined) {
-            // Run sync in background/silently to avoid blocking the main UI flow if it fails partially
-            this.syncUserMoments(uid, data).catch(err => {
-                console.warn("[DBService] Background sync warning (non-critical):", err);
-            });
+            await this.syncUserMoments(uid, data);
         }
     },
 
@@ -209,20 +206,6 @@ const DBService = {
             await db.collection('users').doc(currentUser.uid).update({
                 following: firebase.firestore.FieldValue.arrayUnion(targetUid)
             });
-
-            // Check for mutual follow (Friendship)
-            const myDoc = await db.collection('users').doc(currentUser.uid).get();
-            if (myDoc.exists && myDoc.data().followers && myDoc.data().followers.includes(targetUid)) {
-                // It's a match! Add to friends list for both
-                await db.collection('users').doc(currentUser.uid).update({
-                    friends: firebase.firestore.FieldValue.arrayUnion(targetUid)
-                });
-                await targetRef.update({
-                    friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-                });
-                this.addNotification(targetUid, { type: 'friend_connected', text: 'Artık arkadaşsınız!' });
-            }
-
             return this.addNotification(targetUid, { type: 'follow' });
         }
     },
@@ -232,17 +215,12 @@ const DBService = {
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error("Giriş yapmalısınız!");
 
-        // Remove from followers, pending
         await db.collection('users').doc(targetUid).update({
             followers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
-            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid),
-            friends: firebase.firestore.FieldValue.arrayRemove(currentUser.uid) // Break friendship
+            pendingFollowers: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
         });
-
-        // Remove from following
         return db.collection('users').doc(currentUser.uid).update({
-            following: firebase.firestore.FieldValue.arrayRemove(targetUid),
-            friends: firebase.firestore.FieldValue.arrayRemove(targetUid) // Break friendship
+            following: firebase.firestore.FieldValue.arrayRemove(targetUid)
         });
     },
 
@@ -276,22 +254,6 @@ const DBService = {
         await db.collection('users').doc(requestUid).update({
             following: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
         });
-
-        // Check for mutual follow (Friendship) from the other side
-        // If I (currentUser) am accepting, I am now followed by RequestUid.
-        // If I ALREADY follow RequestUid, then it is mutual.
-        const myDoc = await db.collection('users').doc(currentUser.uid).get();
-        if (myDoc.exists && myDoc.data().following && myDoc.data().following.includes(requestUid)) {
-            // Mutual!
-            await db.collection('users').doc(currentUser.uid).update({
-                friends: firebase.firestore.FieldValue.arrayUnion(requestUid)
-            });
-            await db.collection('users').doc(requestUid).update({
-                friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-            });
-            this.addNotification(requestUid, { type: 'friend_connected', text: 'Artık arkadaşsınız!' });
-        }
-
         return this.addNotification(requestUid, { type: 'follow' });
     },
 
@@ -302,46 +264,6 @@ const DBService = {
 
         return db.collection('users').doc(currentUser.uid).update({
             pendingFollowers: firebase.firestore.FieldValue.arrayRemove(requestUid)
-        });
-    },
-
-    // --- REPORT & BLOCK (Market Compliance) ---
-    async reportMoment(momentId, reason) {
-        const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Giriş yapmalısınız!");
-
-        return db.collection('reports').add({
-            reporterId: currentUser.uid,
-            momentId: momentId,
-            reason: reason,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'pending'
-        });
-    },
-
-    async blockUser(targetUid) {
-        const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Giriş yapmalısınız!");
-
-        // Add to blocked list
-        await db.collection('users').doc(currentUser.uid).update({
-            blocked: firebase.firestore.FieldValue.arrayUnion(targetUid)
-        });
-
-        // Auto unfollow/remove friend to ensure separation
-        try {
-            await this.unfollowUser(targetUid);
-        } catch (e) {
-            // Ignore if not following
-        }
-    },
-
-    async unblockUser(targetUid) {
-        const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("Giriş yapmalısınız!");
-
-        return db.collection('users').doc(currentUser.uid).update({
-            blocked: firebase.firestore.FieldValue.arrayRemove(targetUid)
         });
     },
 
@@ -408,15 +330,9 @@ const DBService = {
         }
     },
 
-    // Görünürlük Ayarla (3-State: Public, Friends, Private)
-    async setMomentVisibility(id, visibilityState) {
-        // visibilityState: 'public' | 'friends' | 'private'
-        const updateData = {
-            visibility: visibilityState,
-            isPublic: visibilityState === 'public',
-            isFriendsOnly: visibilityState === 'friends'
-        };
-        return db.collection('moments').doc(id).update(updateData);
+    // Görünürlük Ayarla
+    async setMomentVisibility(id, isPublic) {
+        return db.collection('moments').doc(id).update({ isPublic: isPublic });
     },
 
     // Kişisel Anıları Getir
@@ -927,31 +843,20 @@ const DBService = {
 
     // Kullanıcının Koleksiyonlarını Getir
     async getJournals(uid) {
-        try {
-            const snapshot = await db.collection('journals')
-                .where('userId', '==', uid)
-                .get();
-
-            const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            // Robust sorting for mixed types (Timestamp, Date, String)
-            return docs.sort((a, b) => {
-                const getMs = (t) => {
-                    if (!t) return 0;
-                    try {
-                        if (typeof t.toMillis === 'function') return t.toMillis();
-                        if (t instanceof Date) return t.getTime();
-                        return new Date(t).getTime();
-                    } catch (e) {
-                        return 0; // Fallback for invalid dates
-                    }
-                };
-                return getMs(b.createdAt) - getMs(a.createdAt);
-            });
-        } catch (e) {
-            console.error("Journals Fetch Error:", e);
-            throw e; // Propagate to caller for handling
-        }
+        const snapshot = await db.collection('journals')
+            .where('userId', '==', uid)
+            .get();
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Robust sorting for mixed types (Timestamp, Date, String)
+        return docs.sort((a, b) => {
+            const getMs = (t) => {
+                if (!t) return 0;
+                if (typeof t.toMillis === 'function') return t.toMillis();
+                if (t instanceof Date) return t.getTime();
+                return new Date(t).getTime();
+            };
+            return getMs(b.createdAt) - getMs(a.createdAt);
+        });
     },
 
     // Koleksiyon İçindeki Anıları Getir

@@ -745,7 +745,7 @@ function initializeSelectors() {
     };
 }
 
-let currentVisibility = 'private'; // 'public' | 'friends' | 'private'
+let isPublicState = false;
 let currentView = 'my-moments';
 let isRealLocationActive = false;
 const APP_THEMES = ['default', 'light', 'vintage'];
@@ -1444,14 +1444,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- LOGIN SUCCESS ---
             console.log("[Auth] User detected:", user.uid);
 
-            // RESET LOGIN BUTTON STATE (Fixes "Wait..." hang)
-            const loginBtn = document.getElementById('googleLoginBtn');
-            if (loginBtn) {
-                loginBtn.disabled = false;
-                const btnText = loginBtn.querySelector('span');
-                if (btnText) btnText.textContent = 'Giriş Yap';
-            }
-
             // 1. Set Shadow Persistence
             localStorage.setItem('momentLog_hasSession', 'true');
 
@@ -1523,7 +1515,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Login Button
-    // Login Button
     const loginBtn = document.getElementById('googleLoginBtn');
     loginBtn?.addEventListener('click', async () => {
         const btnText = loginBtn.querySelector('span');
@@ -1532,81 +1523,34 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.disabled = true;
 
         try {
-            const result = await AuthService.signInWithGoogle();
-            // EXPLICIT SUCCESS HANDLING (Fixes UI not updating after popup)
-            if (result && result.user) {
-                console.log("[Login] Explicit success for:", result.user.uid);
-
-                // Force UI Transition immediately
-                const loginOverlay = document.getElementById('loginOverlay');
-                const app = document.getElementById('app');
-                const splash = document.getElementById('loadingSplash');
-
-                if (loginOverlay) loginOverlay.style.display = 'none';
-                if (splash) splash.remove();
-                if (app) {
-                    app.classList.remove('hidden');
-                    app.style.opacity = '1';
-                }
-
-                // Reset button just in case
-                loginBtn.disabled = false;
-                if (btnText) btnText.textContent = originalText;
-
-                // Initialize if needed (Listener will also fire, but this ensures speed)
-                initializeUI();
-                await window.setView('my-following', true, null, result.user);
-            }
+            await AuthService.signInWithGoogle();
         } catch (err) {
             console.error("Login start error:", err);
             if (btnText) btnText.textContent = originalText;
             loginBtn.disabled = false;
-            // Only show error if it's not a redirect-in-progress (code 3 cancelled usually implies redirect)
-            if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-                showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.\n(" + err.message + ")");
-            }
+            showModal("Hata", "Giriş başlatılamadı. Lütfen tekrar deneyin.");
         }
     });
 
-    // Handle Redirect Results Once (Fallback for flaky onAuthStateChanged on mobile)
+    // Handle Redirect Results Once
     (async () => {
         try {
             const result = await AuthService.getRedirectResult();
             if (result && result.user) {
                 console.log("[Auth] Redirect success for:", result.user.uid);
-
-                // FORCE UI TRANSITION (If auth listener was too slow)
-                const loginOverlay = document.getElementById('loginOverlay');
-                const app = document.getElementById('app');
-                const splash = document.getElementById('loadingSplash');
-
-                if (loginOverlay && !loginOverlay.classList.contains('hidden')) {
-                    loginOverlay.style.display = 'none';
-                    if (app) app.classList.remove('hidden');
-                    if (splash) splash.remove(); // Nuke splash if still there
-                    initializeUI();
-                }
             }
         } catch (err) {
             console.error("[Auth] Redirect result error:", err);
         }
     })();
 
-    // Register Service Worker with Reload Protection
+    // Register Service Worker
     if ('serviceWorker' in navigator) {
-        // Track if we had a controller at start (to distinguish first install from update)
-        // If navigator.serviceWorker.controller is null, this is a fresh install.
-        // We generally DO NOT want to reload on fresh install, clients.claim() is enough.
-        // We ONLY want to reload if there WAS a controller (meaning an update happened).
-        const hadController = !!navigator.serviceWorker.controller;
-
         navigator.serviceWorker.register('./sw.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (refreshing) return;
-            if (!hadController) return; // Don't reload on first install
-
             refreshing = true;
             window.location.reload();
         });
@@ -1669,30 +1613,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- Event Listeners Setup ---
-function initializeUI() {
-    // Refresh DOM elements helper
-    dom.loginBtn = document.getElementById('loginBtn');
-    dom.googleLoginBtn = document.getElementById('googleLoginBtn');
-    dom.profileBtn = document.getElementById('profileBtn');
-    dom.userNameSpan = document.getElementById('userNameSpan');
-    dom.logoutBtn = document.getElementById('logoutBtn');
-    dom.momentText = document.getElementById('momentText');
-    dom.charCount = document.getElementById('charCount');
-    dom.photoInput = document.getElementById('photoInput');
-    dom.photoPreview = document.getElementById('photoPreview');
-    dom.addLocationBtn = document.getElementById('addLocationBtn');
-    dom.locationStatus = document.getElementById('locationStatus');
-    dom.dateBtn = document.getElementById('dateBtn');
-    dom.momentDate = document.getElementById('momentDate');
-    dom.themeBtn = document.getElementById('themeBtn');
-    dom.saveMomentBtn = document.getElementById('saveMomentBtn');
-    dom.timeline = document.getElementById('timeline');
-    dom.headerAddBtn = document.getElementById('headerAddBtn');
-    dom.visibilityToggle = document.getElementById('visibilityToggle');
-    // Re-run selectors init if needed
-    initializeSelectors();
-}
-
 function setupEventListeners() {
     // Photo input
     if (dom.photoInput) {
@@ -1728,20 +1648,12 @@ function setupEventListeners() {
     window.updateVisibilityUI = () => {
         const visibleIcon = document.getElementById('visibleIcon');
         const privateIcon = document.getElementById('privateIcon');
-        const friendsIcon = document.getElementById('friendsIcon'); // New icon
-
-        // Reset all
-        visibleIcon?.classList.add('hidden');
-        privateIcon?.classList.add('hidden');
-        friendsIcon?.classList.add('hidden');
-
-        if (currentVisibility === 'public') {
+        if (isPublicState) {
             visibleIcon?.classList.remove('hidden');
+            privateIcon?.classList.add('hidden');
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
-        } else if (currentVisibility === 'friends') {
-            friendsIcon?.classList.remove('hidden');
-            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Arkadaşlar";
         } else {
+            visibleIcon?.classList.add('hidden');
             privateIcon?.classList.remove('hidden');
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
         }
@@ -1749,11 +1661,7 @@ function setupEventListeners() {
 
     if (dom.visibilityToggle) {
         dom.visibilityToggle.onclick = () => {
-            // Cycle: Private -> Friends -> Public -> Private
-            if (currentVisibility === 'private') currentVisibility = 'friends';
-            else if (currentVisibility === 'friends') currentVisibility = 'public';
-            else currentVisibility = 'private';
-
+            isPublicState = !isPublicState;
             window.updateVisibilityUI();
         };
     }
@@ -2241,20 +2149,6 @@ async function saveMoment() {
         const venue = dom.venueInput?.value?.trim() || null;
         const stickerText = dom.stickerInput?.value?.trim() || null;
 
-        // --- SECURITY: Character Limit Validation ---
-        const isPremiumUser = userProfile?.isVerified || userProfile?.isEarlyUser;
-        const charLimit = isPremiumUser ? 500 : 250;
-
-        if (text && text.length > charLimit) {
-            showModal('Sınır Aşıldı', `Anı metniniz çok uzun. ${isPremiumUser ? 'Premium' : 'Normal'} üyeler için sınır ${charLimit} karakterdir. (Şu an: ${text.length})`);
-
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalBtnText;
-            }
-            return;
-        }
-
         const momentData = {
             text: String(text || ''),
             media: uploadedMedia,
@@ -2269,9 +2163,7 @@ async function saveMoment() {
             userId: String(currentUser.uid),
             userDisplayName: String(userProfile?.username || userProfile?.displayName || currentUser.displayName || 'Anonim'),
             userPhotoURL: String(userProfile?.photoURL || currentUser.photoURL || '👤'),
-            visibility: currentVisibility,
-            isPublic: currentVisibility === 'public',
-            isFriendsOnly: currentVisibility === 'friends',
+            isPublic: Boolean(isPublicState),
             isPrivateProfile: Boolean(userProfile?.isPrivateProfile), // Store privacy during save
             likes: [],
             commentsCount: 0,
@@ -2558,16 +2450,11 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
-                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="Görünürlük Değiştir">
-                            ${(() => {
-                    if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
-                    return m.isPublic ? '🌐' : '🔒';
-                })()}
+                        <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
+                            ${m.isPublic ? '🌐' : '🔒'}
                         </button>
                         <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
-                    ` : `
-                        <button class="action-btn report-btn" onclick="window.openReportModal('${m.id}')" title="Şikayet Et">🚩</button>
-                    `}
+                    ` : ''}
                 </div>
                 
                 <!-- Inline Comments Section -->
@@ -2979,61 +2866,33 @@ window.deleteMomentConfirm = async (momentId) => {
 };
 
 // Toggle moment visibility (public/private)
-// Toggle moment visibility (3-State: Public -> Friends -> Private)
-window.toggleMomentVisibility = async (momentId, currentVisibilityOrPublic) => {
-    // Determine current state based on old boolean or new string
-    let currentState = 'public';
-    if (typeof currentVisibilityOrPublic === 'boolean') {
-        currentState = currentVisibilityOrPublic ? 'public' : 'private';
-    } else {
-        currentState = currentVisibilityOrPublic || 'public';
-    }
-
-    // Cycle: Public -> Friends -> Private -> Public
-    let nextState = 'public';
-    if (currentState === 'public') nextState = 'friends';
-    else if (currentState === 'friends') nextState = 'private';
-    else nextState = 'public';
-
+window.toggleMomentVisibility = async (momentId, makePublic) => {
     try {
-        await DBService.setMomentVisibility(momentId, nextState);
+        await DBService.setMomentVisibility(momentId, makePublic);
 
         // Update local state
         const updateState = (list) => {
             const m = list.find(item => item.id === momentId);
-            if (m) {
-                m.visibility = nextState;
-                m.isPublic = nextState === 'public';
-                m.isFriendsOnly = nextState === 'friends';
-            }
+            if (m) m.isPublic = makePublic;
         };
         updateState(moments);
         updateState(myPrivateMoments);
 
-        // If hidden/friends-only in public feed, remove it
-        if (nextState !== 'public' && (currentView === 'explore' || currentView === 'my-following')) {
-            // Keep logic simple: remove if not public in explore
-            if (currentView === 'explore') moments = moments.filter(m => m.id !== momentId);
+        // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
+        if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
+            moments = moments.filter(m => m.id !== momentId);
         }
 
         // Re-render
         renderTimeline();
         renderMyRecentMoments();
 
-        // Feedback
-        const labels = {
-            'public': 'Herkese Açık 🌐',
-            'friends': 'Sadece Takipçiler 👥',
-            'private': 'Sadece Ben 🔒'
-        };
-        showToast(`Görünürlük: ${labels[nextState]}`);
-
+        showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
     } catch (e) {
-        console.error("Visibility update error:", e);
+        console.error('Visibility error:', e);
         showModal('Hata', 'Görünürlük değiştirilemedi: ' + e.message);
     }
 };
-
 
 // --- Inline Comments ---
 window.toggleComments = async (momentId) => {
@@ -3598,33 +3457,17 @@ window.handleFollowAction = async (targetUid) => {
 };
 
 window.toggleProfilePrivacy = async (currentPrivacy) => {
-    const newPrivacy = !currentPrivacy;
-
-    // Immediate UI Feedback (Optimistic)
-    const toggleBtn = document.querySelector('.privacy-toggle-btn'); // Assuming class name, but referencing by context
-    if (toggleBtn) toggleBtn.innerHTML = '⏳ Güncelleniyor...';
-
     try {
         const currentUser = AuthService.currentUser();
         if (!currentUser) return;
 
         await DBService.updateUserProfile(currentUser.uid, {
-            isPrivateProfile: newPrivacy
+            isPrivateProfile: !currentPrivacy
         });
 
-        // Manually update local cache to reflect change immediately
-        if (currentUserProfile) {
-            currentUserProfile.isPrivateProfile = newPrivacy;
-        }
-
-        await showModal('Başarılı', `Profiliniz artık ${newPrivacy ? 'Gizli 🔒' : 'Herkese Açık 🌐'}.`, false, 1500);
         openProfileView(currentUser.uid);
-
     } catch (e) {
-        console.error("Privacy toggle error:", e);
-        showModal('Hata', 'Gizlilik ayarı güncellenemedi.' + (e.message ? ` (${e.message})` : ''));
-        // Revert UI effectively happens by not reloading view or manually resetting if we had a specific button reference
-        openProfileView(AuthService.currentUser()?.uid);
+        showModal('Hata', 'Gizlilik ayarı güncellenemedi');
     }
 };
 

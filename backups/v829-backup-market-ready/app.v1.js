@@ -2558,7 +2558,7 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
-                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="Görünürlük Değiştir">
+                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', ${!m.isPublic})" title="${m.isPublic ? 'Gizle' : 'Herkese Aç'}">
                             ${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
                     return m.isPublic ? '🌐' : '🔒';
@@ -2979,61 +2979,33 @@ window.deleteMomentConfirm = async (momentId) => {
 };
 
 // Toggle moment visibility (public/private)
-// Toggle moment visibility (3-State: Public -> Friends -> Private)
-window.toggleMomentVisibility = async (momentId, currentVisibilityOrPublic) => {
-    // Determine current state based on old boolean or new string
-    let currentState = 'public';
-    if (typeof currentVisibilityOrPublic === 'boolean') {
-        currentState = currentVisibilityOrPublic ? 'public' : 'private';
-    } else {
-        currentState = currentVisibilityOrPublic || 'public';
-    }
-
-    // Cycle: Public -> Friends -> Private -> Public
-    let nextState = 'public';
-    if (currentState === 'public') nextState = 'friends';
-    else if (currentState === 'friends') nextState = 'private';
-    else nextState = 'public';
-
+window.toggleMomentVisibility = async (momentId, makePublic) => {
     try {
-        await DBService.setMomentVisibility(momentId, nextState);
+        await DBService.setMomentVisibility(momentId, makePublic);
 
         // Update local state
         const updateState = (list) => {
             const m = list.find(item => item.id === momentId);
-            if (m) {
-                m.visibility = nextState;
-                m.isPublic = nextState === 'public';
-                m.isFriendsOnly = nextState === 'friends';
-            }
+            if (m) m.isPublic = makePublic;
         };
         updateState(moments);
         updateState(myPrivateMoments);
 
-        // If hidden/friends-only in public feed, remove it
-        if (nextState !== 'public' && (currentView === 'explore' || currentView === 'my-following')) {
-            // Keep logic simple: remove if not public in explore
-            if (currentView === 'explore') moments = moments.filter(m => m.id !== momentId);
+        // If we are in 'explore' or 'my-following' and hide a moment, remove it from feed
+        if (!makePublic && (currentView === 'explore' || currentView === 'my-following')) {
+            moments = moments.filter(m => m.id !== momentId);
         }
 
         // Re-render
         renderTimeline();
         renderMyRecentMoments();
 
-        // Feedback
-        const labels = {
-            'public': 'Herkese Açık 🌐',
-            'friends': 'Sadece Takipçiler 👥',
-            'private': 'Sadece Ben 🔒'
-        };
-        showToast(`Görünürlük: ${labels[nextState]}`);
-
+        showModal('Güncellendi', makePublic ? 'Anı artık herkese açık.' : 'Anı gizlendi.');
     } catch (e) {
-        console.error("Visibility update error:", e);
+        console.error('Visibility error:', e);
         showModal('Hata', 'Görünürlük değiştirilemedi: ' + e.message);
     }
 };
-
 
 // --- Inline Comments ---
 window.toggleComments = async (momentId) => {
@@ -3598,33 +3570,17 @@ window.handleFollowAction = async (targetUid) => {
 };
 
 window.toggleProfilePrivacy = async (currentPrivacy) => {
-    const newPrivacy = !currentPrivacy;
-
-    // Immediate UI Feedback (Optimistic)
-    const toggleBtn = document.querySelector('.privacy-toggle-btn'); // Assuming class name, but referencing by context
-    if (toggleBtn) toggleBtn.innerHTML = '⏳ Güncelleniyor...';
-
     try {
         const currentUser = AuthService.currentUser();
         if (!currentUser) return;
 
         await DBService.updateUserProfile(currentUser.uid, {
-            isPrivateProfile: newPrivacy
+            isPrivateProfile: !currentPrivacy
         });
 
-        // Manually update local cache to reflect change immediately
-        if (currentUserProfile) {
-            currentUserProfile.isPrivateProfile = newPrivacy;
-        }
-
-        await showModal('Başarılı', `Profiliniz artık ${newPrivacy ? 'Gizli 🔒' : 'Herkese Açık 🌐'}.`, false, 1500);
         openProfileView(currentUser.uid);
-
     } catch (e) {
-        console.error("Privacy toggle error:", e);
-        showModal('Hata', 'Gizlilik ayarı güncellenemedi.' + (e.message ? ` (${e.message})` : ''));
-        // Revert UI effectively happens by not reloading view or manually resetting if we had a specific button reference
-        openProfileView(AuthService.currentUser()?.uid);
+        showModal('Hata', 'Gizlilik ayarı güncellenemedi');
     }
 };
 

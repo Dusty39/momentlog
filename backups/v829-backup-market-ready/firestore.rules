@@ -85,17 +85,12 @@ service cloud.firestore {
                     && request.resource.data.userId == request.auth.uid
                     && isValidMoment(request.resource.data);
       
-      // Update protection: 
-      // 1. Time-sensitive edits (text, theme etc.) allowed for 5 mins for premium users
-      // 2. OR Likes/CommentsCount updates by anyone (if public/follower)
-      // 3. OR Owner can ALWAYS update visibility/privacy settings
+      // Update protection: Owner can edit (premium only, 5min window) OR toggle likes
       allow update: if canEditMoment()
                     || (isAuthenticated() 
                         && (isPublicMoment() || isFollower(resource.data.userId) || isOwner(resource.data.userId))
                         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentsCount'])
-                        && onlyModifiesOwnIdInArray('likes'))
-                    || (isOwner(resource.data.userId)
-                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPublic', 'visibility', 'isFriendsOnly', 'isPrivateProfile']));
+                        && onlyModifiesOwnIdInArray('likes'));
       
       allow delete: if isOwner(resource.data.userId);
       

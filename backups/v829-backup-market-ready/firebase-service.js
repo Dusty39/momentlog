@@ -137,10 +137,7 @@ const DBService = {
 
         // If privacy or display info changed, sync moments
         if (data.isPrivateProfile !== undefined || data.username || data.displayName || data.photoURL || data.isVerified !== undefined) {
-            // Run sync in background/silently to avoid blocking the main UI flow if it fails partially
-            this.syncUserMoments(uid, data).catch(err => {
-                console.warn("[DBService] Background sync warning (non-critical):", err);
-            });
+            await this.syncUserMoments(uid, data);
         }
     },
 
@@ -408,15 +405,9 @@ const DBService = {
         }
     },
 
-    // Görünürlük Ayarla (3-State: Public, Friends, Private)
-    async setMomentVisibility(id, visibilityState) {
-        // visibilityState: 'public' | 'friends' | 'private'
-        const updateData = {
-            visibility: visibilityState,
-            isPublic: visibilityState === 'public',
-            isFriendsOnly: visibilityState === 'friends'
-        };
-        return db.collection('moments').doc(id).update(updateData);
+    // Görünürlük Ayarla
+    async setMomentVisibility(id, isPublic) {
+        return db.collection('moments').doc(id).update({ isPublic: isPublic });
     },
 
     // Kişisel Anıları Getir
