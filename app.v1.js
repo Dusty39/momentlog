@@ -1740,7 +1740,7 @@ function setupEventListeners() {
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Herkese Açık";
         } else if (currentVisibility === 'friends') {
             friendsIcon?.classList.remove('hidden');
-            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Arkadaşlar";
+            if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Takipçiler";
         } else {
             privateIcon?.classList.remove('hidden');
             if (dom.visibilityToggle) dom.visibilityToggle.title = "Görünürlük: Sadece Ben";
@@ -2558,7 +2558,10 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
-                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="Görünürlük Değiştir">
+                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="${(() => {
+                    if (m.visibility === 'friends' || m.isFriendsOnly) return 'Görünürlük: Sadece Takipçiler';
+                    return m.isPublic ? 'Görünürlük: Herkese Açık' : 'Görünürlük: Sadece Ben';
+                })()}">
                             ${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
                     return m.isPublic ? '🌐' : '🔒';
