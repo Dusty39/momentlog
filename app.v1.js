@@ -4042,6 +4042,41 @@ window._handleCarouselScroll = (el) => {
     }
 };
 
+// --- Toast Notification ---
+window.showToast = function (message, duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification fade-in';
+    toast.textContent = message;
+
+    // Style it dynamically if not in CSS yet
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '80px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(39, 39, 42, 0.95)',
+        color: '#fff',
+        padding: '12px 24px',
+        borderRadius: '50px',
+        fontSize: '0.95rem',
+        fontWeight: '500',
+        zIndex: '10000',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        border: '1px solid rgba(255,255,255,0.1)',
+        backdropFilter: 'blur(10px)',
+        whiteSpace: 'nowrap'
+    });
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transition = 'opacity 0.5s, transform 0.5s';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 500);
+    }, duration);
+};
+
 window.handleShare = async (e, momentId) => {
     e.stopPropagation();
     const moment = moments.find(m => m.id === momentId);
