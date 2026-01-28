@@ -3597,7 +3597,13 @@ window.handleFollowAction = async (targetUid) => {
     followBtn.innerText = 'İşleniyor...';
 
     try {
-        await DBService.toggleFollow(targetUid);
+        // Determine action based on UI state to fix sync issues
+        // If button says 'takibi bırak' (has .following class), we intend to UNFOLLOW regardless of backend state
+        if (followBtn.classList.contains('following')) {
+            await DBService.unfollowUser(targetUid);
+        } else {
+            await DBService.followUser(targetUid);
+        }
     } catch (e) {
         console.error('Follow action error:', e);
         // Don't show error modal - action may have partially succeeded
