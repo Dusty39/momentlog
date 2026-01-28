@@ -189,6 +189,9 @@ const DBService = {
         if (!currentUser) throw new Error("Giriş yapmalısınız!");
         if (currentUser.uid === targetUid) throw new Error("Kendinizi takip edemezsiniz!");
 
+        // Ensure current user profile exists before updating (Fix for missing 'following' count)
+        await this.getUserProfile(currentUser.uid);
+
         const targetRef = db.collection('users').doc(targetUid);
         const targetDoc = await targetRef.get();
         if (!targetDoc.exists) return;
@@ -231,6 +234,9 @@ const DBService = {
     async unfollowUser(targetUid) {
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error("Giriş yapmalısınız!");
+
+        // Ensure current user profile exists before updating
+        await this.getUserProfile(currentUser.uid);
 
         // Remove from followers, pending
         await db.collection('users').doc(targetUid).update({
