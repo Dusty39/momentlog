@@ -128,10 +128,11 @@ service cloud.firestore {
       // Others can only ADD/REMOVE THEMSELVES from the followers array (for following/unfollowing).
       allow update: if isOwner(userId) 
                     || (isAuthenticated() 
-                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers', 'pendingFollowers', 'friends'])
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['followers', 'pendingFollowers', 'friends', 'following'])
                         && onlyModifiesOwnIdInArray('followers') 
                         && (request.resource.data.pendingFollowers == resource.data.pendingFollowers || onlyModifiesOwnIdInArray('pendingFollowers'))
-                        && (request.resource.data.friends == resource.data.friends || onlyModifiesOwnIdInArray('friends')));
+                        && (request.resource.data.friends == resource.data.friends || onlyModifiesOwnIdInArray('friends'))
+                        && (request.resource.data.following == resource.data.following || onlyModifiesOwnIdInArray('following')));
       
       allow delete: if isOwner(userId);
 
