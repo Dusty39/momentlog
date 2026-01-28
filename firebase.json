@@ -8,7 +8,7 @@
     ],
     "headers": [
       {
-        "source": "sw-v325.js",
+        "source": "sw-v326.js",
         "headers": [
           {
             "key": "Cache-Control",

@@ -1600,7 +1600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // We ONLY want to reload if there WAS a controller (meaning an update happened).
         const hadController = !!navigator.serviceWorker.controller;
 
-        navigator.serviceWorker.register('./sw.js')
+        navigator.serviceWorker.register('./sw-v326.js')
 
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
