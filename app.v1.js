@@ -2915,10 +2915,9 @@ function hideUploadProgress() {
 function renderMediaPreview() {
     if (!dom.previewArea) return;
 
-    const hasImages = currentMedia.some(m => m.type === 'image');
+    const hasMedia = currentMedia.some(m => m.type === 'image' || m.type === 'video');
 
     let html = currentMedia.map((m, i) => `
-// Video element includes: controls, playsinline (for iOS), and filter class
         <div class="preview-item">
             ${m.type === 'image'
             ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">`
@@ -2927,7 +2926,7 @@ function renderMediaPreview() {
         </div>
     `).join('');
 
-    if (hasImages) {
+    if (hasMedia) {
         html += `
             <div class="filter-trigger-container">
                 <button class="btn-filter-trigger" onclick="window.openFilterModal()">
