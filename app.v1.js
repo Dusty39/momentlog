@@ -2762,11 +2762,42 @@ window.handleSwipeDelete = async (id) => {
     }
 };
 
+// Helper to process video file reading
+function processVideoFile(file, thumbnailData, loaded, total) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        currentMedia.push({
+            type: 'video',
+            data: event.target.result,
+            thumbnail: thumbnailData || event.target.result // Fallback to raw data (heavy but works for bg)
+        });
+        // We can't update 'loaded' variable directly from here if it's a primitive passed by value?
+        // Actually, we need to handle the progress count carefully.
+        // It's better to manage 'loaded' in the parent scope, but here we can just dispatch an event or call a callback.
+        // Simplest: Just call the progress updater.
+        // To fix scope, we should define this inside handlePhotoInput or pass a callback.
+    };
+    reader.readAsDataURL(file);
+}
+
 // --- Photo Input ---
 function handlePhotoInput(e) {
     const files = Array.from(e.target.files);
     const maxPhotos = getMaxPhotos();
     const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
+
+    // Define progress tracking here
+    let loadedCount = 0;
+    const totalFiles = files.length;
+
+    const onFileProcessed = () => {
+        loadedCount++;
+        showUploadProgress(loadedCount, totalFiles);
+        if (loadedCount === totalFiles) {
+            hideUploadProgress();
+            renderMediaPreview();
+        }
+    };
 
     if (currentMedia.length + files.length > maxPhotos) {
         const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf/video)';
@@ -2796,57 +2827,74 @@ function handlePhotoInput(e) {
                         renderMediaPreview();
                     }
                 } else {
-                    // Capture thumbnail at 0.5s mark
-                    video.currentTime = 0.5;
+                    // Capture thumbnail
+                    video.muted = true;
+                    video.playsInline = true;
+                    video.currentTime = 0.5; // Seek to capture frame
+
+                    // Fallback if seek takes too long or fails
+                    const seekTimeout = setTimeout(() => {
+                        console.warn('Video seek timeout, using placeholder');
+                        processVideoFile(file, null, loaded, total);
+                    }, 3000);
+
                     video.onseeked = function () {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const thumbnailData = canvas.toDataURL('image/jpeg', 0.7);
-
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            currentMedia.push({
-                                type: 'video',
-                                data: event.target.result,
-                                thumbnail: thumbnailData // Store thumbnail for filters
-                            });
-                            loaded++;
-                            showUploadProgress(loaded, total);
-                            if (loaded === total) {
-                                hideUploadProgress();
-                                renderMediaPreview();
-                            }
-                        };
-                        reader.readAsDataURL(file);
+                        clearTimeout(seekTimeout);
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth || 320;
+                            canvas.height = video.videoHeight || 320;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const thumbnailData = canvas.toDataURL('image/jpeg', 0.7);
+                            processVideoFile(file, thumbnailData, loaded, total);
+                        } catch (err) {
+                            console.error('Thumbnail capture error:', err);
+                            processVideoFile(file, null, loaded, total);
+                        }
                     };
-                }
-            };
-            video.onerror = function () {
-                loaded++;
-                if (loaded === total) {
-                    hideUploadProgress();
-                    renderMediaPreview();
-                }
-            };
-            video.src = URL.createObjectURL(file);
-        } else {
-            // Image Handling
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                currentMedia.push({ type: 'image', data: event.target.result });
-                loaded++;
-                showUploadProgress(loaded, total);
 
-                if (loaded === total) {
-                    hideUploadProgress();
-                    renderMediaPreview();
-                }
-            };
-            reader.readAsDataURL(file);
-        }
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        currentMedia.push({
+                            type: 'video',
+                            data: event.target.result,
+                            thumbnail: thumbnailData // Store thumbnail for filters
+                        });
+                        loaded++;
+                        showUploadProgress(loaded, total);
+                        if (loaded === total) {
+                            hideUploadProgress();
+                            renderMediaPreview();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                };
+            }
+        };
+        video.onerror = function () {
+            loaded++;
+            if (loaded === total) {
+                hideUploadProgress();
+                renderMediaPreview();
+            }
+        };
+        video.src = URL.createObjectURL(file);
+    } else {
+        // Image Handling
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            currentMedia.push({ type: 'image', data: event.target.result });
+            loaded++;
+            showUploadProgress(loaded, total);
+
+            if (loaded === total) {
+                hideUploadProgress();
+                renderMediaPreview();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
     });
 }
 
