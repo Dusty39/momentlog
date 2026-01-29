@@ -2555,13 +2555,13 @@ function renderTimeline(searchQuery = '') {
                 <!-- 2. Müzik Grubu (Artık Kolaj İçinde) -->
 
                 <!-- 2 & 3 & 4. Stickers & Labels -->
-                ${images.length === 0 ? `
+                ${mediaItems.length === 0 ? `
                     <div class="text-moment-stickers-wrapper">
                         ${stickersHtml}
                     </div>
                 ` : ''}
 
-                ${m.voiceUrl && images.length === 0 ? `
+                ${m.voiceUrl && mediaItems.length === 0 ? `
                     <div class="card-labels-stack" style="margin-top: 10px;">
                         <div class="collage-music-wrapper" style="position: relative; margin-bottom: 5px; background: rgba(var(--accent-rgb), 0.1);">
                              <div class="collage-music-marquee">
