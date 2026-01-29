@@ -2905,17 +2905,18 @@ let currentFilterIndex = 0;
 let activeFilter = 'none';
 
 window.openFilterModal = () => {
-    const images = currentMedia.filter(m => m.type === 'image');
-    if (images.length === 0) return;
+    // Media includes both images and videos
+    const mediaItems = currentMedia.filter(m => m.type === 'image' || m.type === 'video');
+    if (mediaItems.length === 0) return;
 
     currentFilterIndex = 0;
-    activeFilter = 'none'; // Start fresh or keep current? Let's start fresh.
+    activeFilter = 'none';
 
     const modal = document.getElementById('photoFilterModal');
     modal.classList.remove('hidden');
 
     renderFilterCarousel();
-    updateFilterOptionsUI();
+    renderFilterOptions(); // New dynamic generation
 };
 
 window.closeFilterModal = () => {
@@ -2924,11 +2925,14 @@ window.closeFilterModal = () => {
 
 function renderFilterCarousel() {
     const carousel = document.getElementById('filterCarousel');
-    const images = currentMedia.filter(m => m.type === 'image');
+    const mediaItems = currentMedia.filter(m => m.type === 'image' || m.type === 'video');
 
-    carousel.innerHTML = images.map((img, i) => `
+    carousel.innerHTML = mediaItems.map((item, i) => `
         <div class="carousel-slide">
-            <img src="${img.data}" class="f-${activeFilter}" id="filterSlide-${i}">
+            ${item.type === 'video'
+            ? `<video src="${item.data}" class="f-${activeFilter}" id="filterSlide-${i}" muted loop playsinline></video>`
+            : `<img src="${item.data}" class="f-${activeFilter}" id="filterSlide-${i}">`
+        }
         </div>
     `).join('');
 
@@ -2967,7 +2971,48 @@ window.setFilter = (filterName) => {
     updateFilterOptionsUI();
 };
 
+// New: Dynamic Filter Options with Live Thumbnails
+function renderFilterOptions() {
+    const container = document.getElementById('dynamicFilterOptions');
+    if (!container) return;
+
+    // Get thumbnail: Prefer the first image/video in the list
+    const mediaItem = currentMedia.find(m => m.type === 'image' || m.type === 'video');
+    const thumbData = mediaItem ? (mediaItem.url || mediaItem.data) : '';
+
+    const filters = [
+        { id: 'none', label: 'Normal' },
+        { id: 'soft', label: 'Soft' },
+        { id: 'vintage', label: 'Vintage' },
+        { id: 'dramatic', label: 'Dramatik' },
+        { id: 'cinema', label: 'Sinema' },
+        { id: 'bw', label: 'Siyah Beyaz' },
+        { id: 'retro', label: 'Retro' },
+        { id: 'warm', label: 'Sıcak' },
+        { id: 'cool', label: 'Soğuk' },
+        { id: 'nostalgia', label: 'Nostalji' }
+    ];
+
+    container.innerHTML = filters.map(f => `
+        <div class="filter-option ${activeFilter === f.id ? 'active' : ''}" 
+             onclick="window.setFilter('${f.id}')" 
+             data-filter="${f.id}">
+             ${
+        // If it's a video, we can't easily set bg image unless we have a poster. 
+        // For now, if video, maybe just use a color or the video itself (too heavy).
+        // Use the data as background (works for images, for video dataURL might work if frame captured)
+        // If video is raw dataURL (base64) it might be huge.
+        // Optimization: Capture a frame? For MVP, reuse the same data.
+        `<div class="filter-preview-thumb ${f.id !== 'none' ? 'filtered-' + f.id : ''}" 
+                       style="background-image: url('${thumbData}');"></div>`
+        }
+            <span>${f.label}</span>
+        </div>
+    `).join('');
+}
+
 function updateFilterOptionsUI() {
+    // Just re-render to update 'active' class efficiently or toggle classes
     const options = document.querySelectorAll('.filter-option');
     options.forEach(opt => {
         const isMatch = opt.getAttribute('data-filter') === activeFilter;
@@ -3000,6 +3045,9 @@ window.applyFiltersToAll = async () => {
             if (currentMedia[i].type === 'image') {
                 currentMedia[i].data = await processImageWithFilter(currentMedia[i].data, filterStr);
                 currentMedia[i].filter = activeFilter; // Store name for preview class
+            } else if (currentMedia[i].type === 'video') {
+                // For video, we just store the filter name to apply it via CSS class during playback
+                currentMedia[i].filter = activeFilter;
             }
         }
 

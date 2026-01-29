@@ -398,48 +398,8 @@
             </div>
 
             <!-- Filter Selection Tabs -->
-            <div class="filter-options-scroll">
-                <div class="filter-option active" onclick="window.setFilter('none')" data-filter="none">
-                    <div class="filter-preview none"></div>
-                    <span>Normal</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('soft')" data-filter="soft">
-                    <div class="filter-preview soft"></div>
-                    <span>Soft</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('vintage')" data-filter="vintage">
-                    <div class="filter-preview vintage"></div>
-                    <span>Vintage</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('dramatic')" data-filter="dramatic">
-                    <div class="filter-preview dramatic"></div>
-                    <span>Dramatik</span>
-                </div>
-                <!-- Dupes removed -->
-                <div class="filter-option" onclick="window.setFilter('cinema')" data-filter="cinema">
-                    <div class="filter-preview cinema"></div>
-                    <span>Sinema</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('bw')" data-filter="bw">
-                    <div class="filter-preview bw"></div>
-                    <span>Siyah Beyaz</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('retro')" data-filter="retro">
-                    <div class="filter-preview retro"></div>
-                    <span>Retro</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('warm')" data-filter="warm">
-                    <div class="filter-preview warm"></div>
-                    <span>Sıcak</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('cool')" data-filter="cool">
-                    <div class="filter-preview cool"></div>
-                    <span>Soğuk</span>
-                </div>
-                <div class="filter-option" onclick="window.setFilter('nostalgia')" data-filter="nostalgia">
-                    <div class="filter-preview nostalgia"></div>
-                    <span>Nostalji</span>
-                </div>
+            <div class="filter-options-scroll" id="dynamicFilterOptions">
+                <!-- Dynamically populated by JS -->
             </div>
 
             <div class="modal-actions filter-actions">
