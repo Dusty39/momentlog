@@ -2796,17 +2796,32 @@ function handlePhotoInput(e) {
                         renderMediaPreview();
                     }
                 } else {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        currentMedia.push({ type: 'video', data: event.target.result });
-                        loaded++;
-                        showUploadProgress(loaded, total);
-                        if (loaded === total) {
-                            hideUploadProgress();
-                            renderMediaPreview();
-                        }
+                    // Capture thumbnail at 0.5s mark
+                    video.currentTime = 0.5;
+                    video.onseeked = function () {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const thumbnailData = canvas.toDataURL('image/jpeg', 0.7);
+
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            currentMedia.push({
+                                type: 'video',
+                                data: event.target.result,
+                                thumbnail: thumbnailData // Store thumbnail for filters
+                            });
+                            loaded++;
+                            showUploadProgress(loaded, total);
+                            if (loaded === total) {
+                                hideUploadProgress();
+                                renderMediaPreview();
+                            }
+                        };
+                        reader.readAsDataURL(file);
                     };
-                    reader.readAsDataURL(file);
                 }
             };
             video.onerror = function () {
@@ -2978,7 +2993,12 @@ function renderFilterOptions() {
 
     // Get thumbnail: Prefer the first image/video in the list
     const mediaItem = currentMedia.find(m => m.type === 'image' || m.type === 'video');
-    const thumbData = mediaItem ? (mediaItem.url || mediaItem.data) : '';
+
+    // For video, use the captured thumbnail. For image, use the data/url.
+    let thumbData = '';
+    if (mediaItem) {
+        thumbData = mediaItem.thumbnail || mediaItem.url || mediaItem.data;
+    }
 
     const filters = [
         { id: 'none', label: 'Normal' },
