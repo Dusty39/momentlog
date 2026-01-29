@@ -2786,9 +2786,16 @@ function handlePhotoInput(e) {
     const maxPhotos = getMaxPhotos();
     const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
 
-    // Define progress tracking here
+    if (currentMedia.length + files.length > maxPhotos) {
+        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf/video)';
+        showModal('Limit Aşıldı', `En fazla ${maxPhotos} medya ekleyebilirsiniz.${premiumMsg}`);
+        return;
+    }
+
+    // Show progress indicator
     let loadedCount = 0;
     const totalFiles = files.length;
+    showUploadProgress(loadedCount, totalFiles);
 
     const onFileProcessed = () => {
         loadedCount++;
@@ -2799,102 +2806,80 @@ function handlePhotoInput(e) {
         }
     };
 
-    if (currentMedia.length + files.length > maxPhotos) {
-        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf/video)';
-        showModal('Limit Aşıldı', `En fazla ${maxPhotos} medya ekleyebilirsiniz.${premiumMsg}`);
-        return;
-    }
-
-    // Show progress indicator
-    let loaded = 0;
-    const total = files.length;
-    showUploadProgress(loaded, total);
-
     files.forEach(file => {
         // Video Handling
         if (file.type.startsWith('video/')) {
             const video = document.createElement('video');
             video.preload = 'metadata';
+            video.muted = true;
+            video.playsInline = true;
+
+            // Helper to read file and push to array
+            const readFileAndPush = (thumbData) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    currentMedia.push({
+                        type: 'video',
+                        data: event.target.result,
+                        thumbnail: thumbData
+                    });
+                    onFileProcessed();
+                };
+                reader.onerror = onFileProcessed;
+                reader.readAsDataURL(file);
+            };
+
             video.onloadedmetadata = function () {
                 window.URL.revokeObjectURL(video.src);
                 const duration = video.duration;
 
                 if (duration > 15) {
                     showModal('Video Süresi', 'Hikaye modu için videolar en fazla 15 saniye olabilir.');
-                    loaded++;
-                    if (loaded === total) {
-                        hideUploadProgress();
-                        renderMediaPreview();
-                    }
+                    onFileProcessed(); // Skip adding but count as processed
                 } else {
                     // Capture thumbnail
-                    video.muted = true;
-                    video.playsInline = true;
-                    video.currentTime = 0.5; // Seek to capture frame
+                    video.currentTime = 0.5;
 
-                    // Fallback if seek takes too long or fails
+                    // Timeout safety
                     const seekTimeout = setTimeout(() => {
-                        console.warn('Video seek timeout, using placeholder');
-                        processVideoFile(file, null, loaded, total);
-                    }, 3000);
+                        console.warn('Video seek timeout');
+                        readFileAndPush(null);
+                    }, 2000);
 
                     video.onseeked = function () {
                         clearTimeout(seekTimeout);
                         try {
                             const canvas = document.createElement('canvas');
-                            canvas.width = video.videoWidth || 320;
-                            canvas.height = video.videoHeight || 320;
+                            canvas.width = video.videoWidth || 480;
+                            canvas.height = video.videoHeight || 480;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            const thumbnailData = canvas.toDataURL('image/jpeg', 0.7);
-                            processVideoFile(file, thumbnailData, loaded, total);
-                        } catch (err) {
-                            console.error('Thumbnail capture error:', err);
-                            processVideoFile(file, null, loaded, total);
+                            const thumb = canvas.toDataURL('image/jpeg', 0.7);
+                            readFileAndPush(thumb);
+                        } catch (e) {
+                            console.error('Thumbnail capture error:', e);
+                            readFileAndPush(null);
                         }
                     };
+                }
+            };
 
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        currentMedia.push({
-                            type: 'video',
-                            data: event.target.result,
-                            thumbnail: thumbnailData // Store thumbnail for filters
-                        });
-                        loaded++;
-                        showUploadProgress(loaded, total);
-                        if (loaded === total) {
-                            hideUploadProgress();
-                            renderMediaPreview();
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                };
-            }
-        };
-        video.onerror = function () {
-            loaded++;
-            if (loaded === total) {
-                hideUploadProgress();
-                renderMediaPreview();
-            }
-        };
-        video.src = URL.createObjectURL(file);
-    } else {
-        // Image Handling
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            currentMedia.push({ type: 'image', data: event.target.result });
-            loaded++;
-            showUploadProgress(loaded, total);
+            video.onerror = () => {
+                // If video fails to load, just try to read it as a file anyway (or fail)
+                readFileAndPush(null);
+            };
 
-            if (loaded === total) {
-                hideUploadProgress();
-                renderMediaPreview();
-            }
-        };
-        reader.readAsDataURL(file);
-    }
+            video.src = URL.createObjectURL(file);
+        } else {
+            // Image Handling
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentMedia.push({ type: 'image', data: event.target.result });
+                onFileProcessed();
+            };
+            reader.onerror = onFileProcessed;
+            reader.readAsDataURL(file);
+        }
     });
 }
 
