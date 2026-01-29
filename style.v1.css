@@ -3005,6 +3005,8 @@ h1 {
 .card-actions {
     padding: 8px 12px;
     display: flex;
+    align-items: center;
+    /* Fix vertical alignment */
     gap: 16px;
     border-top: 1px solid var(--border-subtle);
 }
@@ -3017,9 +3019,27 @@ h1 {
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     padding: 4px 8px;
     border-radius: 6px;
+    white-space: nowrap;
+    /* Prevent count from dropping to new line */
+}
+
+.visibility-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    /* Push to right if needed, though spacer handles it */
+}
+
+.visibility-status-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    white-space: nowrap;
 }
 
 .action-btn:hover {

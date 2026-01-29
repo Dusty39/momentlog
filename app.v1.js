@@ -2586,22 +2586,24 @@ function renderTimeline(searchQuery = '') {
                     const canEdit = isPremium && timeDiff < 5 * 60 * 1000;
                     return canEdit ? `<button class="action-btn edit-btn premium-feature" onclick="window.openEditMomentModal('${m.id}')" title="Düzenle (Premium)">✏️</button>` : '';
                 })()}
-                         <span class="visibility-status-text" style="font-size: 0.75rem; margin-right: 4px; color: var(--text-secondary); opacity: 0.8;">
-                             ${(() => {
+                        <div class="visibility-wrapper">
+                             <span class="visibility-status-text">
+                                 ${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return 'Takipçiler';
                     return m.isPublic ? 'Herkes' : 'Kendim';
                 })()}
-                         </span>
-                         <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="${(() => {
+                             </span>
+                             <button class="action-btn visibility-btn" onclick="window.toggleMomentVisibility('${m.id}', '${m.visibility || (m.isPublic ? 'public' : 'private')}')" title="${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return 'Görünürlük: Sadece Takipçiler';
                     return m.isPublic ? 'Görünürlük: Herkese Açık' : 'Görünürlük: Sadece Ben';
                 })()}">
-                            ${(() => {
+                                ${(() => {
                     if (m.visibility === 'friends' || m.isFriendsOnly) return '👥';
                     return m.isPublic ? '🌐' : '🔒';
                 })()}
-                        </button>
-                        <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
+                            </button>
+                             <button class="action-btn delete-btn" onclick="window.deleteMomentConfirm('${m.id}')" title="Sil">🗑️</button>
+                        </div>
                     ` : `
                         <button class="action-btn report-btn" onclick="window.openReportModal('${m.id}')" title="Şikayet Et">🚩</button>
                     `}
