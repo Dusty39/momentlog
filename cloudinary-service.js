@@ -19,8 +19,8 @@ const CloudinaryService = {
         formData.append('file', fileData);
         formData.append('upload_preset', this.UPLOAD_PRESET);
 
-        // Audio files belong to 'video' resource type in Cloudinary
-        const resourceType = type === 'audio' ? 'video' : 'image';
+        // Audio and Video files belong to 'video' resource type in Cloudinary
+        const resourceType = (type === 'audio' || type === 'video') ? 'video' : 'image';
 
         try {
             const response = await fetch(url, {

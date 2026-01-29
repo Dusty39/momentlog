@@ -2208,11 +2208,17 @@ async function saveMoment() {
             for (let i = 0; i < mediaToUpload.length; i++) {
                 const m = mediaToUpload[i];
                 try {
-                    // Standard compression for faster upload, but no longer forced by 1MB limit
-                    const compressedData = await compressImage(m.data, 0.8, 1200);
-                    if (compressedData) {
-                        const cloudinaryUrl = await CloudinaryService.upload(compressedData, 'image');
-                        uploadedMedia.push({ type: m.type || 'image', url: cloudinaryUrl });
+                    if (m.type === 'video') {
+                        // Video Upload (direct)
+                        const cloudinaryUrl = await CloudinaryService.upload(m.data, 'video');
+                        uploadedMedia.push({ type: 'video', url: cloudinaryUrl, filter: m.filter || null });
+                    } else {
+                        // Standard compression for faster upload, but no longer forced by 1MB limit
+                        const compressedData = await compressImage(m.data, 0.8, 1200);
+                        if (compressedData) {
+                            const cloudinaryUrl = await CloudinaryService.upload(compressedData, 'image');
+                            uploadedMedia.push({ type: 'image', url: cloudinaryUrl });
+                        }
                     }
                 } catch (uploadErr) {
                     console.error('Media upload error:', uploadErr);
@@ -2470,11 +2476,11 @@ function renderTimeline(searchQuery = '') {
         `;
 
         // Media Carousel Logic
-        const images = m.media?.filter(med => med.type === 'image') || [];
+        const mediaItems = m.media?.filter(med => med.type === 'image' || med.type === 'video') || [];
         let mediaHtml = '';
 
-        if (images.length > 0) {
-            const totalSlides = images.length + 1;
+        if (mediaItems.length > 0) {
+            const totalSlides = mediaItems.length + 1;
             mediaHtml = `
                 <div class="carousel-wrapper">
                     <div class="carousel-indicator hidden-fade"></div>
@@ -2502,13 +2508,21 @@ function renderTimeline(searchQuery = '') {
                         </div>
             `;
 
-            // Sequential Slides: Individual Photos
-            images.forEach(img => {
-                mediaHtml += `
-                    <div class="carousel-slide">
-                        <img src="${img.url || img.data}" alt="">
-                    </div>
-                `;
+            // Sequential Slides: Individual Photos/Videos
+            mediaItems.forEach(item => {
+                if (item.type === 'video') {
+                    mediaHtml += `
+                        <div class="carousel-slide">
+                            <video src="${item.url || item.data}" controls playsinline class="${item.filter ? 'filtered-' + item.filter : ''}" style="width:100%; height:100%; object-fit:cover;"></video>
+                        </div>
+                    `;
+                } else {
+                    mediaHtml += `
+                        <div class="carousel-slide">
+                            <img src="${item.url || item.data}" alt="" class="${item.filter ? 'filtered-' + item.filter : ''}">
+                        </div>
+                    `;
+                }
             });
 
             mediaHtml += `
@@ -2755,8 +2769,8 @@ function handlePhotoInput(e) {
     const isPremium = currentUserProfile?.isVerified || currentUserProfile?.isEarlyUser;
 
     if (currentMedia.length + files.length > maxPhotos) {
-        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf)';
-        showModal('Limit Aşıldı', `En fazla ${maxPhotos} fotoğraf ekleyebilirsiniz.${premiumMsg}`);
+        const premiumMsg = isPremium ? '' : ' (Premium: 7 fotoğraf/video)';
+        showModal('Limit Aşıldı', `En fazla ${maxPhotos} medya ekleyebilirsiniz.${premiumMsg}`);
         return;
     }
 
@@ -2766,18 +2780,58 @@ function handlePhotoInput(e) {
     showUploadProgress(loaded, total);
 
     files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            currentMedia.push({ type: 'image', data: event.target.result });
-            loaded++;
-            showUploadProgress(loaded, total);
+        // Video Handling
+        if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = function () {
+                window.URL.revokeObjectURL(video.src);
+                const duration = video.duration;
 
-            if (loaded === total) {
-                hideUploadProgress();
-                renderMediaPreview();
-            }
-        };
-        reader.readAsDataURL(file);
+                if (duration > 15) {
+                    showModal('Video Süresi', 'Hikaye modu için videolar en fazla 15 saniye olabilir.');
+                    loaded++;
+                    if (loaded === total) {
+                        hideUploadProgress();
+                        renderMediaPreview();
+                    }
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        currentMedia.push({ type: 'video', data: event.target.result });
+                        loaded++;
+                        showUploadProgress(loaded, total);
+                        if (loaded === total) {
+                            hideUploadProgress();
+                            renderMediaPreview();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            video.onerror = function () {
+                loaded++;
+                if (loaded === total) {
+                    hideUploadProgress();
+                    renderMediaPreview();
+                }
+            };
+            video.src = URL.createObjectURL(file);
+        } else {
+            // Image Handling
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentMedia.push({ type: 'image', data: event.target.result });
+                loaded++;
+                showUploadProgress(loaded, total);
+
+                if (loaded === total) {
+                    hideUploadProgress();
+                    renderMediaPreview();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
     });
 }
 
@@ -2816,8 +2870,11 @@ function renderMediaPreview() {
     const hasImages = currentMedia.some(m => m.type === 'image');
 
     let html = currentMedia.map((m, i) => `
+// Video element includes: controls, playsinline (for iOS), and filter class
         <div class="preview-item">
-            ${m.type === 'image' ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">` : `<audio src="${m.data}" controls></audio>`}
+            ${m.type === 'image'
+            ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">`
+            : `<video src="${m.data}" controls playsinline class="${m.filter ? 'filtered-' + m.filter : ''}"></video>`}
             <button class="remove-btn" onclick="removeMedia(${i})">×</button>
         </div>
     `).join('');
