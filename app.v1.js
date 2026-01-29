@@ -2255,6 +2255,34 @@ async function saveMoment() {
             return;
         }
 
+
+        // --- MUSIC RESOLUTION FIX ---
+        // Force resolve Spotify URL to MP3 preview if not already resolved by debounce
+        let resolvedMusicUrl = dom.musicUrlInput?.dataset?.previewUrl || null;
+        const inputMusicUrl = dom.musicUrlInput?.value?.trim();
+
+        if (inputMusicUrl && inputMusicUrl.includes('spotify.com') && !resolvedMusicUrl) {
+            if (saveBtn) saveBtn.innerHTML = '<span>Müzik İşleniyor...</span>';
+            console.log("Saving raw Spotify URL, attempting fallback resolution...");
+            try {
+                const metadata = await fetchMusicMetadata(inputMusicUrl);
+                if (metadata && metadata.previewUrl) {
+                    resolvedMusicUrl = metadata.previewUrl;
+                    // Also update title if missing
+                    if (!dom.musicInput.value.trim() && metadata.title) {
+                        dom.musicInput.value = metadata.title;
+                    }
+                }
+            } catch (musicErr) {
+                console.warn("Music resolution failed during save:", musicErr);
+                // Fallback: save raw URL (better than nothing, though playback might fail for others)
+                resolvedMusicUrl = inputMusicUrl;
+            }
+        } else if (inputMusicUrl && !inputMusicUrl.includes('spotify.com')) {
+            // Direct MP3 or other URL
+            resolvedMusicUrl = inputMusicUrl;
+        }
+
         const momentData = {
             text: String(text || ''),
             media: uploadedMedia,
@@ -2262,7 +2290,7 @@ async function saveMoment() {
             venue: venue,
             stickerText: stickerText,
             musicText: dom.musicInput?.value?.trim() || null,
-            musicUrl: dom.musicUrlInput?.dataset?.previewUrl || dom.musicUrlInput?.value?.trim() || null,
+            musicUrl: resolvedMusicUrl,
             voiceUrl: voiceUrl,
             theme: String(currentMomentTheme || 'minimal'),
             mood: String(currentMood || '😊'),
