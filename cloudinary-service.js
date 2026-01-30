@@ -19,6 +19,14 @@ const CloudinaryService = {
         formData.append('file', fileData);
         formData.append('upload_preset', this.UPLOAD_PRESET);
 
+        // Force trim to 15 seconds for videos/audio as a backup security measure
+        if (type === 'audio' || type === 'video') {
+            formData.append('eager', 'du_15,so_0,c_limit,w_1080,h_1920');
+            // Note: 'eager' transformations happen async. For immediate sync trimming, 
+            // the preset Incoming Transformation is best. 
+            // But we can also try passing 'transformation' params if unsigned upload allows (often restricted).
+        }
+
         // Audio and Video files belong to 'video' resource type in Cloudinary
         const resourceType = (type === 'audio' || type === 'video') ? 'video' : 'image';
 
