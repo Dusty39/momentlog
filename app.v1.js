@@ -2977,8 +2977,8 @@ function renderFilterCarousel() {
     carousel.innerHTML = mediaItems.map((item, i) => `
         <div class="carousel-slide">
             ${item.type === 'video'
-            ? `<video src="${item.data}" class="f-${activeFilter}" id="filterSlide-${i}" muted loop playsinline></video>`
-            : `<img src="${item.data}" class="f-${activeFilter}" id="filterSlide-${i}">`
+            ? `<video src="${item.data}" class="${activeFilter !== 'none' ? 'f-' + activeFilter : ''}" id="filterSlide-${i}" muted loop playsinline></video>`
+            : `<img src="${item.data}" class="${activeFilter !== 'none' ? 'f-' + activeFilter : ''}" id="filterSlide-${i}">`
         }
         </div>
     `).join('');
@@ -3010,9 +3010,9 @@ window.setFilter = (filterName) => {
     activeFilter = filterName;
 
     // Apply to all slides preview
-    const slides = document.querySelectorAll('.carousel-slide img');
-    slides.forEach(img => {
-        img.className = filterName === 'none' ? '' : `f-${filterName}`;
+    const slides = document.querySelectorAll('.carousel-slide img, .carousel-slide video');
+    slides.forEach(el => {
+        el.className = filterName === 'none' ? '' : `f-${filterName}`;
     });
 
     updateFilterOptionsUI();
