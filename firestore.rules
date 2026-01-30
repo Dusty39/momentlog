@@ -121,7 +121,7 @@ service cloud.firestore {
     // USERS COLLECTION
     // =============================================
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create: if isOwner(userId);
       
       // Update protection: Only owner can edit profile.
@@ -183,7 +183,7 @@ service cloud.firestore {
     }
 
     match /usernames/{username} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
