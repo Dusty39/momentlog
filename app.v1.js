@@ -2921,7 +2921,7 @@ function renderMediaPreview() {
         <div class="preview-item">
             ${m.type === 'image'
             ? `<img src="${m.data}" class="${m.filter ? 'filtered-' + m.filter : ''}">`
-            : `<video src="${m.data}" controls playsinline class="${m.filter ? 'filtered-' + m.filter : ''}"></video>`}
+            : `<video src="${m.data}" poster="${m.thumbnail}" controls playsinline class="${m.filter ? 'filtered-' + m.filter : ''}"></video>`}
             <button class="remove-btn" onclick="removeMedia(${i})">×</button>
         </div>
     `).join('');
@@ -2977,7 +2977,7 @@ function renderFilterCarousel() {
     carousel.innerHTML = mediaItems.map((item, i) => `
         <div class="carousel-slide">
             ${item.type === 'video'
-            ? `<video src="${item.data}" class="${activeFilter !== 'none' ? 'f-' + activeFilter : ''}" id="filterSlide-${i}" muted loop playsinline></video>`
+            ? `<video src="${item.data}" class="${activeFilter !== 'none' ? 'f-' + activeFilter : ''}" id="filterSlide-${i}" muted loop playsinline autoplay></video>`
             : `<img src="${item.data}" class="${activeFilter !== 'none' ? 'f-' + activeFilter : ''}" id="filterSlide-${i}">`
         }
         </div>
