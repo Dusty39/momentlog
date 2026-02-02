@@ -4963,3 +4963,78 @@ body.app-theme-vintage #exploreSearchInput {
     color: white;
     border-color: rgba(255, 255, 255, 0.2);
 }
+/* Video Moment Card (Reels Style) */
+.video-moment-card {
+    position: relative;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: 24px;
+    background: #000;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    aspect-ratio: 9/16; 
+    max-height: 80vh; 
+}
+
+@media (max-width: 768px) {
+    .video-moment-card {
+        aspect-ratio: 9/16;
+        max-height: 85vh;
+    }
+}
+
+.video-moment-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    z-index: 2;
+    pointer-events: none; 
+}
+
+.video-moment-overlay * {
+    pointer-events: auto;
+}
+
+.video-moment-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.video-moment-text {
+    font-size: 1rem;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.video-moment-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.video-action-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.video-action-btn svg {
+    width: 28px;
+    height: 28px;
+    stroke-width: 1.5;
+}
