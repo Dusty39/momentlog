@@ -142,15 +142,28 @@
         <main>
             <!-- Input Section (Write Mode) -->
             <div class="input-section hidden-mode">
+                <!-- Mode Tabs -->
+                <div class="input-mode-tabs">
+                    <button id="modePhotoBtn" class="mode-tab active" onclick="switchInputMode('photo')">📷
+                        Fotoğraf</button>
+                    <button id="modeVideoBtn" class="mode-tab" onclick="switchInputMode('video')">🎥 Video</button>
+                </div>
+
                 <textarea id="momentInput" placeholder="Bugün ne oldu? Bir anı bırak..." rows="3"></textarea>
                 <div class="media-preview" id="mediaPreview"></div>
 
                 <div class="input-toolbar">
                     <div class="tool-group">
-                        <!-- Fotoğraf -->
-                        <label class="tool-btn" title="Fotoğraf Ekle">
-                            <input type="file" id="photoInput" accept="image/*,video/*" multiple hidden>
+                        <!-- Fotoğraf Input (Photo Mode) -->
+                        <label class="tool-btn" id="photoInputLabel" title="Fotoğraf Ekle">
+                            <input type="file" id="photoInput" accept="image/*" multiple hidden>
                             📷
+                        </label>
+
+                        <!-- Video Input (Video Mode) -->
+                        <label class="tool-btn hidden" id="videoInputLabel" title="Video Ekle">
+                            <input type="file" id="videoInput" accept="video/*" hidden>
+                            🎥
                         </label>
 
                         <!-- Ses Kaydı -->
