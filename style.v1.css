@@ -5004,3 +5004,22 @@ body.app-theme-vintage #exploreSearchInput {
     height: 28px;
     stroke-width: 1.5;
 }
+
+/* EMERGENCY LAYOUT FIXES */
+.timeline-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    padding-bottom: 80px;
+}
+
+.moment-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-subtle);
+    width: 100%;
+}
