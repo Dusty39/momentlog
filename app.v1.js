@@ -1698,6 +1698,7 @@ function initializeUI() {
     dom.momentText = document.getElementById('momentText');
     dom.charCount = document.getElementById('charCount');
     dom.photoInput = document.getElementById('photoInput');
+    dom.videoInput = document.getElementById('videoInput'); // Fix: Init missing video input
     dom.photoPreview = document.getElementById('photoPreview');
     dom.addLocationBtn = document.getElementById('addLocationBtn');
     dom.locationStatus = document.getElementById('locationStatus');
