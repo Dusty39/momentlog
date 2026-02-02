@@ -148,13 +148,15 @@
             <div class="input-toolbar">
                 <div class="tool-group">
                     <!-- Fotoğraf Input (Photo Mode) -->
-                    <label class="tool-btn" id="photoInputLabel" title="Fotoğraf Ekle">
+                    <label class="tool-btn" id="photoInputLabel" title="Fotoğraf Ekle"
+                        onclick="window.prepareInputMode('photo')">
                         <input type="file" id="photoInput" accept="image/*" multiple hidden>
                         📷
                     </label>
 
                     <!-- Video Input (Video Mode) -->
-                    <label class="tool-btn hidden" id="videoInputLabel" title="Video Ekle">
+                    <label class="tool-btn" id="videoInputLabel" title="Video Ekle"
+                        onclick="window.prepareInputMode('video')">
                         <input type="file" id="videoInput" accept="video/*" hidden>
                         🎥
                     </label>
