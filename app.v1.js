@@ -44,6 +44,62 @@ function getMaxPhotos() {
     return 3; // Regular users
 }
 
+// --- Video Mode Logic ---
+let isVideoMode = false;
+
+window.switchInputMode = (mode) => {
+    isVideoMode = (mode === 'video');
+
+    // Toggle Tabs
+    document.getElementById('modePhotoBtn').classList.toggle('active', !isVideoMode);
+    document.getElementById('modeVideoBtn').classList.toggle('active', isVideoMode);
+
+    // Toggle Input Buttons
+    const photoLabel = document.getElementById('photoInputLabel');
+    const videoLabel = document.getElementById('videoInputLabel');
+    const recordBtn = document.getElementById('recordBtn');
+
+    if (isVideoMode) {
+        photoLabel.classList.add('hidden');
+        videoLabel.classList.remove('hidden');
+        recordBtn.classList.add('hidden'); // Disable voice memo in video mode
+
+        // Reset current media if switching modes?
+        // Let's be safe and clear pending media to avoid mixing types
+        if (currentMedia.length > 0) {
+            if (confirm('Mod değiştirildiğinde ekli medyalar temizlenir. Devam edilsin mi?')) {
+                currentMedia = [];
+                renderMediaPreview();
+                VoiceRecorder.recordedBlob = null;
+                VoiceRecorder.updateUI();
+            } else {
+                // Revert switch if cancelled
+                isVideoMode = !isVideoMode;
+                // Re-toggle logic would be recursive here, simpler to just return or fix UI
+                // For simplicity, force the UI back to match state
+                document.getElementById('modePhotoBtn').classList.toggle('active', !isVideoMode);
+                document.getElementById('modeVideoBtn').classList.toggle('active', isVideoMode);
+                if (!isVideoMode) {
+                    photoLabel.classList.remove('hidden');
+                    videoLabel.classList.add('hidden');
+                    recordBtn.classList.remove('hidden');
+                }
+                return;
+            }
+        }
+    } else {
+        photoLabel.classList.remove('hidden');
+        videoLabel.classList.add('hidden');
+        recordBtn.classList.remove('hidden');
+
+        // Clear media if switching back to photo and we had a video?
+        if (currentMedia.some(m => m.type === 'video')) {
+            currentMedia = [];
+            renderMediaPreview();
+        }
+    }
+};
+
 // --- Image Compression for Fallback (WebP 2K Ready) ---
 async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
     return new Promise((resolve) => {
@@ -2795,6 +2851,96 @@ function processVideoFile(file, thumbnailData, loaded, total) {
         // To fix scope, we should define this inside handlePhotoInput or pass a callback.
     };
     reader.readAsDataURL(file);
+}
+
+// --- Video Input ---
+function handleVideoInput(e) {
+    const file = e.target.files[0]; // Single video
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+        showModal('Hata', 'Lütfen geçerli bir video dosyası seçin.');
+        return;
+    }
+
+    if (currentMedia.length > 0) {
+        showModal('Bilgi', 'Video modunda sadece tek bir video eklenebilir.');
+        currentMedia = []; // Reset mechanism
+    }
+
+    // Show progress
+    showUploadProgress(0, 1);
+
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+
+    // Helper to finish processing
+    const finish = (thumbData) => {
+        currentMedia.push({
+            type: 'video',
+            data: video.src, // Revoked later? No, we need dataURL or objectURL. 
+            // Wait, previous logic used FileReader for dataURL which is heavy but works offline.
+            // Let's use FileReader for consistency with upload logic expecting base64 or blob.
+            thumbnail: thumbData
+        });
+
+        // We need the actual file data for upload later. 
+        // The current app logic relies on `data` being Base64 string for upload!
+        // So we must read it.
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            // Find the item we just pushed (last one) and update its data
+            const item = currentMedia[currentMedia.length - 1];
+            item.data = evt.target.result;
+            hideUploadProgress();
+            renderMediaPreview();
+        };
+        reader.readAsDataURL(file);
+    };
+
+    video.onloadedmetadata = function () {
+        // Duration check
+        if (video.duration > 15) {
+            showModal('Video Süresi', 'Hikaye videosu en fazla 15 saniye olabilir.');
+            hideUploadProgress();
+            e.target.value = ''; // Reset input
+            return;
+        }
+
+        // Capture thumbnail
+        if (video.readyState >= 2) {
+            capture();
+        } else {
+            video.onloadeddata = capture;
+        }
+
+        function capture() {
+            video.currentTime = 0.1;
+        }
+
+        video.onseeked = function () {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 480;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const thumb = canvas.toDataURL('image/jpeg', 0.7);
+                finish(thumb);
+            } catch (e) {
+                console.warn("Thumb capture failed", e);
+                finish(null);
+            }
+        };
+    };
+
+    video.onerror = () => {
+        finish(null);
+    };
+
+    video.src = URL.createObjectURL(file);
 }
 
 // --- Photo Input ---
