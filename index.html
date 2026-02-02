@@ -140,122 +140,114 @@
         </header>
 
         <main>
-            <!-- Input Section (Write Mode) -->
-            <div class="input-section hidden-mode">
-                <!-- Mode Tabs -->
-                <div class="input-mode-tabs">
-                    <button id="modePhotoBtn" class="mode-tab active" onclick="switchInputMode('photo')">📷
-                        Fotoğraf</button>
-                    <button id="modeVideoBtn" class="mode-tab" onclick="switchInputMode('video')">🎥 Video</button>
+
+
+            <textarea id="momentInput" placeholder="Bugün ne oldu? Bir anı bırak..." rows="3"></textarea>
+            <div class="media-preview" id="mediaPreview"></div>
+
+            <div class="input-toolbar">
+                <div class="tool-group">
+                    <!-- Fotoğraf Input (Photo Mode) -->
+                    <label class="tool-btn" id="photoInputLabel" title="Fotoğraf Ekle">
+                        <input type="file" id="photoInput" accept="image/*" multiple hidden>
+                        📷
+                    </label>
+
+                    <!-- Video Input (Video Mode) -->
+                    <label class="tool-btn hidden" id="videoInputLabel" title="Video Ekle">
+                        <input type="file" id="videoInput" accept="video/*" hidden>
+                        🎥
+                    </label>
+
+                    <!-- Ses Kaydı -->
+                    <button id="recordBtn" class="tool-btn" title="Ses Kaydı">🎤</button>
+                    <span id="recordingTimer" class="recording-timer hidden">00:00</span>
+
+                    <!-- Konum -->
+                    <button id="addLocationBtn" class="tool-btn" title="Gerçek Konum Ekle">📍</button>
+
+                    <!-- Tarih -->
+                    <button id="dateBtn" class="tool-btn" title="Tarih Seç"
+                        onclick="document.getElementById('momentDate').showPicker()">📅</button>
+                    <input type="date" id="momentDate" max=""
+                        style="position:absolute;visibility:hidden;width:0;height:0;">
+
+                    <!-- Şarkı Ekle -->
+                    <button id="musicBtn" class="tool-btn" title="Şarkı Seç">🎵</button>
+
+
+                    <!-- Koleksiyon -->
+                    <button id="collectionBtn" class="tool-btn" title="Koleksiyon Seç">📁</button>
+
+                    <!-- Görünürlük -->
+                    <button id="visibilityToggle" class="tool-btn" title="Görünürlük">
+                        <span id="privateIcon">🔒</span>
+                        <span id="friendsIcon" class="hidden">👥</span>
+                        <span id="visibleIcon" class="hidden">🌐</span>
+                    </button>
                 </div>
 
-                <textarea id="momentInput" placeholder="Bugün ne oldu? Bir anı bırak..." rows="3"></textarea>
-                <div class="media-preview" id="mediaPreview"></div>
-
-                <div class="input-toolbar">
-                    <div class="tool-group">
-                        <!-- Fotoğraf Input (Photo Mode) -->
-                        <label class="tool-btn" id="photoInputLabel" title="Fotoğraf Ekle">
-                            <input type="file" id="photoInput" accept="image/*" multiple hidden>
-                            📷
-                        </label>
-
-                        <!-- Video Input (Video Mode) -->
-                        <label class="tool-btn hidden" id="videoInputLabel" title="Video Ekle">
-                            <input type="file" id="videoInput" accept="video/*" hidden>
-                            🎥
-                        </label>
-
-                        <!-- Ses Kaydı -->
-                        <button id="recordBtn" class="tool-btn" title="Ses Kaydı">🎤</button>
-                        <span id="recordingTimer" class="recording-timer hidden">00:00</span>
-
-                        <!-- Konum -->
-                        <button id="addLocationBtn" class="tool-btn" title="Gerçek Konum Ekle">📍</button>
-
-                        <!-- Tarih -->
-                        <button id="dateBtn" class="tool-btn" title="Tarih Seç"
-                            onclick="document.getElementById('momentDate').showPicker()">📅</button>
-                        <input type="date" id="momentDate" max=""
-                            style="position:absolute;visibility:hidden;width:0;height:0;">
-
-                        <!-- Şarkı Ekle -->
-                        <button id="musicBtn" class="tool-btn" title="Şarkı Seç">🎵</button>
-
-
-                        <!-- Koleksiyon -->
-                        <button id="collectionBtn" class="tool-btn" title="Koleksiyon Seç">📁</button>
-
-                        <!-- Görünürlük -->
-                        <button id="visibilityToggle" class="tool-btn" title="Görünürlük">
-                            <span id="privateIcon">🔒</span>
-                            <span id="friendsIcon" class="hidden">👥</span>
-                            <span id="visibleIcon" class="hidden">🌐</span>
-                        </button>
-                    </div>
-
-                    <div class="input-actions">
-                        <div class="location-input-wrapper">
-                            <div class="sticker-input-container">
-                                <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
-                                    maxlength="30" class="sticker-input" autocomplete="off">
-                                <button id="themeBtn" class="inline-theme-btn" title="Tema Seç"
-                                    onclick="window.openThemeSelector()">🎨</button>
-                            </div>
-                            <input type="text" id="musicInput" placeholder="Şarkı adı - Sanatçı"
-                                class="music-input hidden">
-                            <input type="text" id="musicUrlInput" placeholder="Spotify linki yapıştır"
-                                class="music-url-input hidden">
-                            <input type="text" id="venueInput" placeholder="Neredesin?" class="venue-input hidden">
-                            <span id="locationStatus" class="location-badge hidden"></span>
+                <div class="input-actions">
+                    <div class="location-input-wrapper">
+                        <div class="sticker-input-container">
+                            <input type="text" id="stickerInput" placeholder="Manşet (Örn: Harika Bir Gün)"
+                                maxlength="30" class="sticker-input" autocomplete="off">
+                            <button id="themeBtn" class="inline-theme-btn" title="Tema Seç"
+                                onclick="window.openThemeSelector()">🎨</button>
                         </div>
-                        <button id="addMomentBtn" class="primary-btn">
-                            Kaydet ✓
-                        </button>
+                        <input type="text" id="musicInput" placeholder="Şarkı adı - Sanatçı" class="music-input hidden">
+                        <input type="text" id="musicUrlInput" placeholder="Spotify linki yapıştır"
+                            class="music-url-input hidden">
+                        <input type="text" id="venueInput" placeholder="Neredesin?" class="venue-input hidden">
+                        <span id="locationStatus" class="location-badge hidden"></span>
                     </div>
+                    <button id="addMomentBtn" class="primary-btn">
+                        Kaydet ✓
+                    </button>
                 </div>
             </div>
+    </div>
 
-            <!-- My Recent Moments (Compact List) -->
-            <div id="myRecentMoments" class="my-recent-moments hidden-mode">
-                <h4>Son Anılarım</h4>
-                <div id="myMomentsList" class="compact-moments-list"></div>
-            </div>
+    <!-- My Recent Moments (Compact List) -->
+    <div id="myRecentMoments" class="my-recent-moments hidden-mode">
+        <h4>Son Anılarım</h4>
+        <div id="myMomentsList" class="compact-moments-list"></div>
+    </div>
 
-            <!-- Explore Search -->
-            <div id="exploreSearchWrapper" class="explore-search-wrapper hidden-mode">
-                <div class="search-input-container">
-                    <input type="text" id="exploreSearchInput" placeholder="Kullanıcı (@), Konum veya Etiket (#)..."
-                        autocomplete="off">
-                    <button id="clearSearchBtn" class="clear-search-btn hidden">✕</button>
-                </div>
-            </div>
+    <!-- Explore Search -->
+    <div id="exploreSearchWrapper" class="explore-search-wrapper hidden-mode">
+        <div class="search-input-container">
+            <input type="text" id="exploreSearchInput" placeholder="Kullanıcı (@), Konum veya Etiket (#)..."
+                autocomplete="off">
+            <button id="clearSearchBtn" class="clear-search-btn hidden">✕</button>
+        </div>
+    </div>
 
-            <!-- Timeline Feed -->
-            <div id="timeline" class="timeline-feed">
-                <!-- Moments will be injected here -->
-            </div>
+    <!-- Timeline Feed -->
+    <div id="timeline" class="timeline-feed">
+        <!-- Moments will be injected here -->
+    </div>
 
-            <div id="dashboardFooter" class="dashboard-footer hidden-mode">
-                Created with ✨ by <span class="designer-name">Serhat Aykış</span>
-            </div>
+    <div id="dashboardFooter" class="dashboard-footer hidden-mode">
+        Created with ✨ by <span class="designer-name">Serhat Aykış</span>
+    </div>
 
-            <!-- Profile View (Moved inside main) -->
-            <div id="profileView" class="profile-page hidden-mode">
-                <div id="profileContent">
-                    <!-- Profile HTML injected here -->
-                </div>
-            </div>
+    <!-- Profile View (Moved inside main) -->
+    <div id="profileView" class="profile-page hidden-mode">
+        <div id="profileContent">
+            <!-- Profile HTML injected here -->
+        </div>
+    </div>
 
-            <!-- Notification View (Moved inside main) -->
-            <div id="notiView" class="noti-page hidden-mode">
-                <div class="noti-header">
-                </div>
-                <div id="notiContent" class="noti-list-content">
-                    <div class="loading">Yükleniyor...</div>
-                </div>
-            </div>
-        </main>
+    <!-- Notification View (Moved inside main) -->
+    <div id="notiView" class="noti-page hidden-mode">
+        <div class="noti-header">
+        </div>
+        <div id="notiContent" class="noti-list-content">
+            <div class="loading">Yükleniyor...</div>
+        </div>
+    </div>
+    </main>
 
     </div>
 
