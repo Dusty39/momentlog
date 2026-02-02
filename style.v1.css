@@ -88,10 +88,6 @@ header {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    flex-wrap: wrap;
-    /* Allow wrap on very small screens? Or scroll? */
-    /* Better to keep it centered and row, maybe tight gap if needed */
-    max-width: 100%;
 }
 
 .icon-btn {
@@ -267,40 +263,6 @@ h1 {
     position: relative;
     z-index: 10;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Input Mode Tabs */
-.input-mode-tabs {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.mode-tab {
-    background: transparent;
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    padding: 8px 20px;
-    border-radius: 99px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mode-tab:hover {
-    color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.mode-tab.active {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 /* Standardize Input for Readability */
@@ -506,20 +468,6 @@ textarea::placeholder {
 .tool-group {
     display: flex;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    /* Space for scrollbar if any, or touch area */
-    max-width: 100%;
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE/Edge */
-    mask-image: linear-gradient(to right, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
-}
-
-.tool-group::-webkit-scrollbar {
-    display: none;
 }
 
 .tool-btn {
@@ -4981,7 +4929,6 @@ body.app-theme-vintage #exploreSearchInput {
     color: white;
     border-color: rgba(255, 255, 255, 0.2);
 }
-
 /* Video Moment Card (Reels Style) */
 .video-moment-card {
     position: relative;
@@ -4989,9 +4936,9 @@ body.app-theme-vintage #exploreSearchInput {
     overflow: hidden;
     margin-bottom: 24px;
     background: #000;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    aspect-ratio: 9/16;
-    max-height: 80vh;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    aspect-ratio: 9/16; 
+    max-height: 80vh; 
 }
 
 @media (max-width: 768px) {
@@ -5007,9 +4954,9 @@ body.app-theme-vintage #exploreSearchInput {
     left: 0;
     width: 100%;
     padding: 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
     z-index: 2;
-    pointer-events: none;
+    pointer-events: none; 
 }
 
 .video-moment-overlay * {
@@ -5026,7 +4973,7 @@ body.app-theme-vintage #exploreSearchInput {
 .video-moment-text {
     font-size: 1rem;
     color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     margin-bottom: 16px;
     display: -webkit-box;
     -webkit-line-clamp: 3;
