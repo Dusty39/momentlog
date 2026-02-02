@@ -1755,6 +1755,10 @@ function setupEventListeners() {
         dom.photoInput.addEventListener('change', handlePhotoInput);
     }
 
+    if (dom.videoInput) {
+        dom.videoInput.addEventListener('change', handleVideoInput);
+    }
+
     // --- ROBUST DELEGATED EVENTS (Fixes "Dead Button" issues) ---
     document.body.addEventListener('click', (e) => {
         // 1. Profile Button
