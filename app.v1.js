@@ -2210,8 +2210,25 @@ async function saveMoment() {
                 try {
                     if (m.type === 'video') {
                         // Video Upload (direct)
+                        // Video Upload (direct)
                         const cloudinaryUrl = await CloudinaryService.upload(m.data, 'video');
-                        uploadedMedia.push({ type: 'video', url: cloudinaryUrl, filter: m.filter || null });
+
+                        let thumbnailUrl = null;
+                        if (m.thumbnail && m.thumbnail.startsWith('data:')) {
+                            try {
+                                thumbnailUrl = await CloudinaryService.upload(m.thumbnail, 'image');
+                            } catch (e) {
+                                console.warn('Thumbnail upload failed, will fallback to auto-generated');
+                            }
+                        }
+
+                        // Fallback: If no thumb uploaded, Cloudinary can generate one from video URL
+                        if (!thumbnailUrl && cloudinaryUrl) {
+                            // Replace extension with .jpg for auto-thumbnail
+                            thumbnailUrl = cloudinaryUrl.replace(/\.[^/.]+$/, ".jpg");
+                        }
+
+                        uploadedMedia.push({ type: 'video', url: cloudinaryUrl, filter: m.filter || null, thumbnailUrl: thumbnailUrl });
                     } else {
                         // Standard compression for faster upload, but no longer forced by 1MB limit
                         const compressedData = await compressImage(m.data, 0.8, 1200);
@@ -2513,7 +2530,7 @@ function renderTimeline(searchQuery = '') {
                 if (item.type === 'video') {
                     mediaHtml += `
                         <div class="carousel-slide">
-                            <video src="${item.url || item.data}" controls playsinline class="${item.filter ? 'filtered-' + item.filter : ''}" style="width:100%; height:100%; object-fit:cover;"></video>
+                            <video src="${item.url || item.data}" poster="${item.thumbnailUrl || (item.url ? item.url.replace(/\.[^/.]+$/, ".jpg") : '')}" controls playsinline class="${item.filter ? 'filtered-' + item.filter : ''}" style="width:100%; height:100%; object-fit:cover;"></video>
                         </div>
                     `;
                 } else {
@@ -2838,7 +2855,16 @@ function handlePhotoInput(e) {
                     onFileProcessed(); // Skip adding but count as processed
                 } else {
                     // Capture thumbnail
-                    video.currentTime = 0.5;
+                    // Wait for data to be loaded enough to seek
+                    if (video.readyState >= 2) {
+                        capture();
+                    } else {
+                        video.onloadeddata = capture;
+                    }
+
+                    function capture() {
+                        video.currentTime = 0.1; // Safer than 0.5 for short videos
+                    }
 
                     // Timeout safety
                     const seekTimeout = setTimeout(() => {
