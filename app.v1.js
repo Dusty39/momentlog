@@ -47,59 +47,22 @@ function getMaxPhotos() {
 // --- Video Mode Logic ---
 let isVideoMode = false;
 
-window.switchInputMode = (mode) => {
-    isVideoMode = (mode === 'video');
 
-    // Toggle Tabs
-    document.getElementById('modePhotoBtn').classList.toggle('active', !isVideoMode);
-    document.getElementById('modeVideoBtn').classList.toggle('active', isVideoMode);
 
-    // Toggle Input Buttons
-    const photoLabel = document.getElementById('photoInputLabel');
-    const videoLabel = document.getElementById('videoInputLabel');
+window.prepareInputMode = (mode) => {
+    const isVideo = (mode === 'video');
     const recordBtn = document.getElementById('recordBtn');
 
-    if (isVideoMode) {
-        photoLabel.classList.add('hidden');
-        videoLabel.classList.remove('hidden');
-        recordBtn.classList.add('hidden'); // Disable voice memo in video mode
+    isVideoMode = isVideo;
 
-        // Reset current media if switching modes?
-        // Let's be safe and clear pending media to avoid mixing types
-        if (currentMedia.length > 0) {
-            if (confirm('Mod değiştirildiğinde ekli medyalar temizlenir. Devam edilsin mi?')) {
-                currentMedia = [];
-                renderMediaPreview();
-                VoiceRecorder.recordedBlob = null;
-                VoiceRecorder.updateUI();
-            } else {
-                // Revert switch if cancelled
-                isVideoMode = !isVideoMode;
-                // Re-toggle logic would be recursive here, simpler to just return or fix UI
-                // For simplicity, force the UI back to match state
-                document.getElementById('modePhotoBtn').classList.toggle('active', !isVideoMode);
-                document.getElementById('modeVideoBtn').classList.toggle('active', isVideoMode);
-                if (!isVideoMode) {
-                    photoLabel.classList.remove('hidden');
-                    videoLabel.classList.add('hidden');
-                    recordBtn.classList.remove('hidden');
-                }
-                return;
-            }
-        }
-    } else {
-        photoLabel.classList.remove('hidden');
-        videoLabel.classList.add('hidden');
-        recordBtn.classList.remove('hidden');
-
-        // Clear media if switching back to photo and we had a video?
-        if (currentMedia.some(m => m.type === 'video')) {
-            currentMedia = [];
-            renderMediaPreview();
+    if (recordBtn) {
+        if (isVideoMode) {
+            recordBtn.classList.add('hidden');
+        } else {
+            recordBtn.classList.remove('hidden');
         }
     }
 };
-
 // --- Image Compression for Fallback (WebP 2K Ready) ---
 async function compressImage(dataUrl, quality = 0.65, maxWidth = 1080) {
     return new Promise((resolve) => {
