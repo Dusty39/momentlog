@@ -2544,6 +2544,60 @@ function renderTimeline(searchQuery = '') {
         const isLiked = m.likes?.includes(currentUser?.uid);
         const isOwner = currentUser?.uid === m.userId;
 
+        // Detect Video Moment (Single video, no images mix?? user said "video yüklediğimizde başka bir şey yükleyemeyelim")
+        // So if the primary media is a video, we treat it as a Video Moment.
+        const isVideoMoment = m.media && m.media.length === 1 && m.media[0].type === 'video';
+
+        if (isVideoMoment) {
+            const vid = m.media[0];
+            return `
+            <div class="video-moment-card theme-${m.theme || 'default'}" data-id="${m.id}">
+                <!-- Full Video -->
+                <video src="${vid.url}" poster="${vid.thumbnailUrl || (vid.url ? vid.url.replace(/\.[^/.]+$/, ".jpg") : '')}" 
+                       controls autoplay playsinline loop muted
+                       style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; z-index:1;"></video>
+                
+                <!-- Overlay Content -->
+                <div class="video-moment-overlay">
+                    <div class="video-moment-user" onclick="openProfileView('${m.userId}')">
+                         <div class="user-avatar" style="width:40px; height:40px; border:2px solid ${m.isVerified ? 'var(--accent)' : 'white'}">
+                            ${(m.userPhotoURL?.startsWith('http') || m.userPhotoURL?.startsWith('data:')) ? `<img src="${m.userPhotoURL}">` : (m.userPhotoURL || '👤')}
+                         </div>
+                         <div style="flex:1;">
+                            <div style="font-weight:700; color:white; font-size:0.95rem;">
+                                ${escapeHTML(m.userDisplayName || 'Anonim')}
+                                ${m.isVerified ? '✓' : ''}
+                            </div>
+                            <div style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+                                ${formattedDate} ${locationText}
+                            </div>
+                         </div>
+                         <!-- Follow Button could go here -->
+                    </div>
+
+                    ${m.text ? `<div class="video-moment-text">${escapeHTML(m.text)}</div>` : ''}
+
+                    <div class="video-moment-actions">
+                        <button class="video-action-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${m.id}')">
+                            <span style="font-size:1.5rem;">${isLiked ? '❤️' : '🤍'}</span>
+                            <span>${m.likes?.length || 0}</span>
+                        </button>
+                        <button class="video-action-btn" onclick="window.toggleComments('${m.id}')">
+                            <span style="font-size:1.5rem;">💬</span>
+                            <span>${m.commentsCount || 0}</span>
+                        </button>
+                        <div style="flex:1;"></div>
+                        ${m.musicText ? `
+                            <div class="collage-music-marquee" style="background:rgba(0,0,0,0.5); border-radius:100px; padding:6px 12px; max-width:140px;">
+                                🎵 ${escapeHTML(m.musicText)}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        // --- Standard Collage Render (for Photos / Text / Old Mixed) ---
         // Stickers Generator (Always Split: Time Left, Headline Right)
         const stickersHtml = `
             <div class="collage-stickers-overlay">
